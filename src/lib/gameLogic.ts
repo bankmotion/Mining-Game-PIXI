@@ -165,7 +165,6 @@ export const isInventoryFull = (miner: Miner): boolean => {
     (sum, count) => sum + count,
     0
   );
-  console.log(totalItems, miner.capacity);
   return totalItems >= miner.capacity;
 };
 
@@ -199,6 +198,19 @@ export const updateMinerState = (
         break;
       }
 
+      if (
+        miner?.targetPosition?.x === miner?.position?.x &&
+        miner?.targetPosition?.y === miner?.position?.y
+      ) {
+        const targetOre = ores.find((ore) => ore.id === miner.targetOreId);
+        if (targetOre && !targetOre.depleted) {
+          updatedMiner = {
+            ...updatedMiner,
+            state: "moving",
+          };
+        }
+      }
+
       // const nearestOre = findNearestOre(miner, ores, miners);
 
       // if (nearestOre) {
@@ -215,15 +227,15 @@ export const updateMinerState = (
     case "moving": {
       const targetOre = ores.find((ore) => ore.id === miner.targetOreId);
 
-      if (!targetOre || targetOre.depleted) {
-        updatedMiner = {
-          ...updatedMiner,
-          state: "seeking",
-          targetOreId: undefined,
-          targetPosition: undefined,
-        };
-        break;
-      }
+      // if (!targetOre || targetOre.depleted) {
+      //   updatedMiner = {
+      //     ...updatedMiner,
+      //     state: "seeking",
+      //     // targetOreId: undefined,
+      //     // targetPosition: undefined,
+      //   };
+      //   break;
+      // }
 
       if (miner.targetPosition) {
         updatedMiner = moveMinerTowards(
@@ -236,6 +248,7 @@ export const updateMinerState = (
           updatedMiner = {
             ...updatedMiner,
             state: "mining",
+            targetPosition: { ...targetOre.position },
             miningProgress: 0,
           };
         }
@@ -255,8 +268,8 @@ export const updateMinerState = (
         updatedMiner = {
           ...updatedMiner,
           state: "seeking",
-          targetOreId: undefined,
-          targetPosition: undefined,
+          // targetOreId: undefined,
+          // targetPosition: undefined,
           miningProgress: 0,
         };
         break;
@@ -308,8 +321,8 @@ export const updateMinerState = (
         updatedMiner = {
           ...updatedMiner,
           state: "seeking",
-          targetOreId: undefined,
-          targetPosition: undefined,
+          // targetOreId: undefined,
+          // targetPosition: undefined,
           miningProgress: 0,
           inventory: updatedInventory,
           inventoryValue: calculateInventoryValue(updatedInventory, OreData),
