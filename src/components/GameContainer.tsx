@@ -1,44 +1,60 @@
-
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { useGameState } from '@/hooks/useGameState';
-import { ResourceBar } from './ResourceBar';
-import { UpgradeShop } from './UpgradeShop';
-import { HiringStation } from './HiringStation';
-import { MineSelector } from './MineSelector';
-import { Maximize, Play, Pause, Settings, ShoppingBag, User, Map } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { IncomeForecast } from './IncomeForecast';
-import { toast } from 'sonner';
-import { SimpleMiningArea } from './SimpleMiningArea';
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { useGameState } from "@/hooks/useGameState";
+import { ResourceBar } from "./ResourceBar";
+import { UpgradeShop } from "./UpgradeShop";
+import { HiringStation } from "./HiringStation";
+import { MineSelector } from "./MineSelector";
+import {
+  Maximize,
+  Play,
+  Pause,
+  Settings,
+  ShoppingBag,
+  User,
+  Map,
+} from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { IncomeForecast } from "./IncomeForecast";
+import { toast } from "sonner";
+import { SimpleMiningArea } from "./SimpleMiningArea";
 
 export const GameContainer = () => {
-  const { 
-    gameState, 
-    isPaused, 
-    togglePause, 
-    buyUpgrade, 
-    hireMiner, 
-    unlockNewMine, 
-    switchMine 
+  const {
+    gameState,
+    isPaused,
+    togglePause,
+    buyUpgrade,
+    hireMiner,
+    unlockNewMine,
+    switchMine,
+    handleOreClick,
+    handleBaseClick,
   } = useGameState();
-  
-  const [activePanel, setActivePanel] = useState<'none' | 'upgrades' | 'hiring' | 'mines'>('none');
-  
+
+  const [activePanel, setActivePanel] = useState<
+    "none" | "upgrades" | "hiring" | "mines"
+  >("none");
+
   // Ensure game is properly initialized
   useEffect(() => {
     if (gameState.miners.length === 0 && gameState.ores.length === 0) {
       toast.info("Game world is initializing...");
     }
   }, [gameState.miners.length, gameState.ores.length]);
-  
+
   // Handle fullscreen toggling
   const toggleFullScreen = () => {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(err => {
+      document.documentElement.requestFullscreen().catch((err) => {
         console.error(`Error attempting to enable fullscreen: ${err.message}`);
-        toast.error('Could not enter fullscreen mode');
+        toast.error("Could not enter fullscreen mode");
       });
     } else {
       if (document.exitFullscreen) {
@@ -46,7 +62,7 @@ export const GameContainer = () => {
       }
     }
   };
-  
+
   return (
     <div className="w-full h-screen flex flex-col overflow-hidden bg-background">
       {/* Top Bar */}
@@ -54,13 +70,13 @@ export const GameContainer = () => {
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold pixel-font">DEFI Miners</h1>
         </div>
-        
-        <ResourceBar 
+
+        <ResourceBar
           resources={gameState.resources}
           money={gameState.money}
           moneyRate={gameState.moneyRate}
         />
-        
+
         <div className="flex items-center gap-2">
           <TooltipProvider>
             <Tooltip>
@@ -71,15 +87,19 @@ export const GameContainer = () => {
                   className="h-8 w-8"
                   onClick={togglePause}
                 >
-                  {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+                  {isPaused ? (
+                    <Play className="h-4 w-4" />
+                  ) : (
+                    <Pause className="h-4 w-4" />
+                  )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{isPaused ? 'Resume' : 'Pause'} Game</p>
+                <p>{isPaused ? "Resume" : "Pause"} Game</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          
+
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -97,15 +117,11 @@ export const GameContainer = () => {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          
+
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8"
-                >
+                <Button size="icon" variant="ghost" className="h-8 w-8">
                   <Settings className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -116,26 +132,29 @@ export const GameContainer = () => {
           </TooltipProvider>
         </div>
       </header>
-      
+
       {/* Main Content Area */}
       <div className="flex-1 flex relative overflow-hidden">
         {/* Left Control Panel */}
         <div className="glass-panel p-2 border-r border-white/10 flex flex-col gap-4 items-center">
           <Sheet>
             <SheetTrigger asChild>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="icon"
                 className="w-12 h-12 rounded-md hover:bg-primary/20"
-                onClick={() => setActivePanel('upgrades')}
+                onClick={() => setActivePanel("upgrades")}
               >
                 <ShoppingBag className="h-6 w-6" />
                 <span className="sr-only">Upgrades</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="pixel-container glass-panel border-r border-white/10 max-w-xs">
+            <SheetContent
+              side="left"
+              className="pixel-container glass-panel border-r border-white/10 max-w-xs"
+            >
               <div className="h-full overflow-y-auto pb-20">
-                <UpgradeShop 
+                <UpgradeShop
                   money={gameState.money}
                   upgradeLevels={gameState.upgrades}
                   onUpgrade={buyUpgrade}
@@ -143,22 +162,25 @@ export const GameContainer = () => {
               </div>
             </SheetContent>
           </Sheet>
-          
+
           <Sheet>
             <SheetTrigger asChild>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="icon"
                 className="w-12 h-12 rounded-md hover:bg-primary/20"
-                onClick={() => setActivePanel('hiring')}
+                onClick={() => setActivePanel("hiring")}
               >
                 <User className="h-6 w-6" />
                 <span className="sr-only">Hiring</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="pixel-container glass-panel border-r border-white/10 max-w-xs">
+            <SheetContent
+              side="left"
+              className="pixel-container glass-panel border-r border-white/10 max-w-xs"
+            >
               <div className="h-full overflow-y-auto pb-20">
-                <HiringStation 
+                <HiringStation
                   money={gameState.money}
                   miners={gameState.miners}
                   onHire={hireMiner}
@@ -166,22 +188,25 @@ export const GameContainer = () => {
               </div>
             </SheetContent>
           </Sheet>
-          
+
           <Sheet>
             <SheetTrigger asChild>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="icon"
                 className="w-12 h-12 rounded-md hover:bg-primary/20"
-                onClick={() => setActivePanel('mines')}
+                onClick={() => setActivePanel("mines")}
               >
                 <Map className="h-6 w-6" />
                 <span className="sr-only">Mines</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="pixel-container glass-panel border-r border-white/10 max-w-xs">
+            <SheetContent
+              side="left"
+              className="pixel-container glass-panel border-r border-white/10 max-w-xs"
+            >
               <div className="h-full overflow-y-auto pb-20">
-                <MineSelector 
+                <MineSelector
                   mines={gameState.mines}
                   activeMine={gameState.activeMine}
                   money={gameState.money}
@@ -191,22 +216,26 @@ export const GameContainer = () => {
               </div>
             </SheetContent>
           </Sheet>
-          
+
           <IncomeForecast moneyRate={gameState.moneyRate} />
         </div>
-        
+
         {/* Main Mining Area - now using simplified renderer */}
         <div className="flex-1 flex items-center justify-center p-4">
-          <SimpleMiningArea 
+          <SimpleMiningArea
             miners={gameState.miners}
             ores={gameState.ores}
             activeMine={gameState.activeMine}
+            onOreClick={handleOreClick}
+            onBaseClick={handleBaseClick}
           />
         </div>
       </div>
-      
+
       <footer className="glass-panel p-2 text-center text-xs text-muted-foreground border-t border-white/10">
-        <p>DEFI Miners &copy; {new Date().getFullYear()} - All rights reserved</p>
+        <p>
+          DEFI Miners &copy; {new Date().getFullYear()} - All rights reserved
+        </p>
       </footer>
     </div>
   );

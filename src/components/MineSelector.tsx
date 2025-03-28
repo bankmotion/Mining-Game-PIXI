@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatNumber } from '@/lib/utils';
-import { MineType } from '@/lib/gameLogic';
 import { Pickaxe, Lock, Check } from 'lucide-react';
+import { MineType } from '@/interfaces/MineType';
 
 interface MineSelectorProps {
   mines: Record<string, MineType>;
