@@ -1,19 +1,19 @@
 import { useState, useEffect, useRef } from "react";
-import { createMiner, MinerState } from "@/lib/miners";
-import { generateInitialOres, Ore } from "@/lib/ores";
+import { createMiner } from "@/lib/miners";
+import { generateInitialOres } from "@/lib/ores";
 import {
-  GameState,
-  calculateUpgradeCost,
   initializeGameState,
   updateGameState,
-  upgrades,
   unlockMine,
   setActiveMine,
   generateOresForMine,
-  mineTypes,
-  updateMinerState,
 } from "@/lib/gameLogic";
 import { toast } from "sonner";
+import { GameState } from "@/interfaces/GameType";
+import { CalculateUpgradeCost, Upgrades } from "@/constants/Upgrades";
+import { MinerState } from "@/interfaces/MinerTypes";
+import { Ore } from "@/interfaces/OreTypes";
+import { MineTypes } from "@/constants/Mine";
 
 export const useGameState = () => {
   const [gameState, setGameState] = useState<GameState>(initializeGameState);
@@ -126,7 +126,7 @@ export const useGameState = () => {
   const buyUpgrade = (upgradeId: string) => {
     setGameState((prevState) => {
       const currentLevel = prevState.upgrades[upgradeId] || 0;
-      const upgrade = upgrades.find((u) => u.id === upgradeId);
+      const upgrade = Upgrades.find((u) => u.id === upgradeId);
 
       if (!upgrade) return prevState;
 
@@ -136,7 +136,7 @@ export const useGameState = () => {
         return prevState;
       }
 
-      const cost = calculateUpgradeCost(upgrade, currentLevel);
+      const cost = CalculateUpgradeCost(upgrade, currentLevel);
 
       if (prevState.money < cost) {
         toast.error(`Not enough money to purchase ${upgrade.name}`);
@@ -350,7 +350,7 @@ export const useGameState = () => {
     hireMiner,
     unlockNewMine,
     switchMine,
-    availableMines: mineTypes,
+    availableMines: MineTypes,
     handleBaseClick,
     handleOreClick,
   };

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Miner } from "@/lib/miners";
-import { Ore, OreType, oreData } from "@/lib/ores";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { mineTypes } from "@/lib/gameLogic";
+import { Ore, OreType } from "@/interfaces/OreTypes";
+import { Miner } from "@/interfaces/MinerTypes";
+import { getOreColor, OreColors, OreData } from "@/constants/Ore";
+import { MineTypes } from "@/constants/Mine";
 
 interface SimpleMiningAreaProps {
   miners: Miner[];
@@ -25,27 +26,10 @@ const ResourceParticle = ({
   value: number;
   position: { x: number; y: number };
 }) => {
-  const oreColors: Record<OreType, string> = {
-    coal: "text-gray-100 bg-gray-800",
-    iron: "text-white bg-slate-500",
-    copper: "text-white bg-amber-600",
-    gold: "text-black bg-yellow-400",
-    crystal: "text-white bg-cyan-500",
-    gem: "text-white bg-purple-600",
-    legendary: "text-white bg-rose-600",
-    tin: "text-white bg-zinc-400",
-    silver: "text-black bg-gray-300",
-    mithril: "text-white bg-indigo-500",
-    thorium: "text-white bg-emerald-600",
-    platinum: "text-black bg-slate-200",
-    orichalcum: "text-white bg-orange-500",
-    uranium: "text-white bg-green-400",
-  };
-
   return (
     <div
       className={`absolute px-1 py-0.5 rounded-full ${
-        oreColors[type] || "bg-gray-800 text-white"
+        OreColors[type] || "bg-gray-800 text-white"
       } text-xs resource-particle font-bold`}
       style={{
         left: `${position.x}%`,
@@ -97,7 +81,7 @@ export const SimpleMiningArea = ({
 
   // Get base position from game logic
   const getBasePosition = () => {
-    const mine = mineTypes.find((m) => m.id === activeMine);
+    const mine = MineTypes.find((m) => m.id === activeMine);
     return mine ? mine.basePosition : { x: 15, y: 15 };
   };
 
@@ -125,7 +109,7 @@ export const SimpleMiningArea = ({
           // Calculate actual value based on miner's efficiency and ore type
           const miningAmount = 1; // Base amount - always 1 per mining operation
           // The value of the mined ore without any efficiency multipliers
-          const baseValue = oreData[ore.type].value;
+          const baseValue = OreData[ore.type].value;
 
           // Create a new resource particle showing the base value (unmodified by efficiency)
           const particle = {
@@ -172,42 +156,6 @@ export const SimpleMiningArea = ({
 
     prevMinersRef.current = miners;
   }, [miners, ores, basePosition]);
-
-  // Function to get color based on ore type
-  const getOreColor = (type: OreType) => {
-    switch (type) {
-      case "coal":
-        return "#1f2937";
-      case "iron":
-        return "#6b7280";
-      case "copper":
-        return "#d97706";
-      case "gold":
-        return "#fbbf24";
-      case "crystal":
-        return "#0ea5e9";
-      case "gem":
-        return "#8b5cf6";
-      case "legendary":
-        return "#ef4444";
-      case "tin":
-        return "#94a3b8";
-      case "silver":
-        return "#cbd5e1";
-      case "mithril":
-        return "#6366f1";
-      case "thorium":
-        return "#10b981";
-      case "platinum":
-        return "#e2e8f0";
-      case "orichalcum":
-        return "#f97316";
-      case "uranium":
-        return "#84cc16";
-      default:
-        return "#6b7280";
-    }
-  };
 
   // Function to get color based on miner type
   const getMinerColor = (type: string) => {
@@ -297,7 +245,7 @@ export const SimpleMiningArea = ({
             backgroundColor: getOreColor(ore.type),
             opacity: ore.depleted ? 0.4 : 1,
             transform: "translate(-50%, -50%)",
-            boxShadow: `0 0 ${oreData[ore.type].value / 5}px ${getOreColor(
+            boxShadow: `0 0 ${OreData[ore.type].value / 5}px ${getOreColor(
               ore.type
             )}`,
           }}
@@ -305,7 +253,7 @@ export const SimpleMiningArea = ({
         >
           {/* Show ore value when hovered */}
           <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 px-1 py-0.5 rounded text-[8px] white bg-black/70 opacity-0 hover:opacity-100 pointer-events-none whitespace-nowrap">
-            {ore.type} (Value: ${oreData[ore.type].value})
+            {ore.type} (Value: ${OreData[ore.type].value})
           </div>
 
           {ore.depleted && (
@@ -400,7 +348,7 @@ export const SimpleMiningArea = ({
 
       {/* Ore type legend - Updated to show value and moved to top-right corner */}
       <div className="absolute top-2 right-2 bg-black/50 p-1 rounded text-[8px] text-white grid grid-cols-2 gap-x-2 gap-y-1 max-w-[120px]">
-        {Object.entries(oreData)
+        {Object.entries(OreData)
           .slice(0, 6)
           .map(([type, data]) => (
             <div key={type} className="flex items-center gap-1">
