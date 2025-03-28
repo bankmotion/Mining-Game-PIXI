@@ -329,6 +329,7 @@ export const calculateResourceYield = (
 
 export const isInventoryFull = (miner: Miner): boolean => {
   const totalItems = Object.values(miner.inventory).reduce((sum, count) => sum + count, 0);
+  console.log(totalItems, miner.capacity);
   return totalItems >= miner.capacity;
 };
 
@@ -346,7 +347,7 @@ export const updateMinerState = (
   let collectedResources: { type: OreType; amount: number } | undefined;
   
   switch (miner.state) {
-    case 'seeking': {
+    case 'seeking': { 
       // If inventory is full, head to base
       if (isInventoryFull(miner)) {
         updatedMiner = {
@@ -358,16 +359,16 @@ export const updateMinerState = (
         break;
       }
       
-      const nearestOre = findNearestOre(miner, ores, miners);
+      // const nearestOre = findNearestOre(miner, ores, miners);
       
-      if (nearestOre) {
-        updatedMiner = {
-          ...updatedMiner,
-          state: 'moving',
-          targetOreId: nearestOre.id,
-          targetPosition: { ...nearestOre.position },
-        };
-      }
+      // if (nearestOre) {
+      //   updatedMiner = {
+      //     ...updatedMiner,
+      //     state: 'moving',
+      //     targetOreId: nearestOre.id,
+      //     targetPosition: { ...nearestOre.position },
+      //   };
+      // }
       break;
     }
     
@@ -475,6 +476,7 @@ export const updateMinerState = (
         updatedMiner = moveMinerTowards(updatedMiner, miner.targetPosition, deltaTime);
         
         if (!updatedMiner.targetPosition) {
+          // When miner reaches base, start resting
           updatedMiner = {
             ...updatedMiner,
             state: 'resting',
@@ -483,6 +485,7 @@ export const updateMinerState = (
           };
         }
       } else {
+        // If no target position, set it to base position
         updatedMiner = {
           ...updatedMiner,
           targetPosition: { ...basePosition },
