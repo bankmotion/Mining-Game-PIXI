@@ -363,13 +363,13 @@ export const useGameState = () => {
   const upgradeExistingEnergySource = (sourceId: string) => {
     setGameState((prevState) => {
       const newState = upgradeEnergySource(prevState, sourceId);
-      
+
       if (newState === prevState) {
         toast.error("Cannot upgrade energy source");
       } else {
         toast.success("Energy source upgraded!");
       }
-      
+
       return newState;
     });
   };

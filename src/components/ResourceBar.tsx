@@ -1,8 +1,8 @@
 import { OreType } from "@/interfaces/OreTypes";
 import { formatNumber } from "@/lib/utils";
-import { Pickaxe, Coins, CircleDollarSign, Gem, Zap } from "lucide-react";
 import { EnergyState } from "@/interfaces/EnergyTypes";
 import { Progress } from "@/components/ui/progress";
+import { Pickaxe, Coins, CircleDollarSign, Gem, Zap } from "lucide-react";
 
 interface ResourceBarProps {
   resources: Record<OreType, number>;
@@ -56,12 +56,20 @@ export const ResourceBar = ({
         <Zap className="w-4 h-4 text-yellow-400" />
         <div className="flex flex-col">
           <div className="flex items-center gap-1">
-            <span className="font-bold">{formatNumber(energy.currentEnergy)}</span>
-            <span className="text-xs text-muted-foreground">/ {formatNumber(energy.maxEnergy)}</span>
+            <span className="font-bold">
+              {formatNumber(energy.currentEnergy)}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              / {formatNumber(energy.maxEnergy)}
+            </span>
           </div>
           <div className="flex items-center gap-1 text-xs">
-            <span className="text-green-400">+{formatNumber(energy.energyRegenRate)}/s</span>
-            <span className="text-red-400">-{formatNumber(energy.energyConsumption)}/s</span>
+            <span className="text-green-400">
+              +{formatNumber(energy.energyRegenRate)}/s
+            </span>
+            <span className="text-red-400">
+              -{formatNumber(energy.energyConsumption)}/s
+            </span>
           </div>
         </div>
       </div>

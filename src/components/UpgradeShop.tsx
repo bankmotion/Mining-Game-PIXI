@@ -19,6 +19,9 @@ interface UpgradeShopProps {
   money: number;
   upgradeLevels: Record<string, number>;
   onUpgrade: (upgradeId: string) => void;
+  energySources: EnergySourceType[];
+  onBuildEnergySource: (type: EnergySource) => void;
+  onUpgradeEnergySource: (sourceId: string) => void;
 }
 
 // Map upgrade IDs to icons
