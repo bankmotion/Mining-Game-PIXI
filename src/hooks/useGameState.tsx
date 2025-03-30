@@ -14,6 +14,8 @@ import { CalculateUpgradeCost, Upgrades } from "@/constants/Upgrades";
 import { MinerState } from "@/interfaces/MinerTypes";
 import { Ore } from "@/interfaces/OreTypes";
 import { MineTypes } from "@/constants/Mine";
+import { EnergySource } from "@/interfaces/EnergyTypes";
+import { buildEnergySource, upgradeEnergySource } from "@/lib/energyLogic";
 
 export const useGameState = () => {
   const [gameState, setGameState] = useState<GameState>(initializeGameState);
@@ -342,6 +344,36 @@ export const useGameState = () => {
     });
   };
 
+  // Build a new energy source
+  const buildNewEnergySource = (type: EnergySource) => {
+    setGameState((prevState) => {
+      const newState = buildEnergySource(prevState, type);
+
+      if (newState === prevState) {
+        toast.error(`Not enough money to build this energy source`);
+      } else {
+        toast.success(`Built a new ${type} energy source`);
+      }
+
+      return newState;
+    });
+  };
+
+  // Upgrade an existing energy source
+  const upgradeExistingEnergySource = (sourceId: string) => {
+    setGameState((prevState) => {
+      const newState = upgradeEnergySource(prevState, sourceId);
+      
+      if (newState === prevState) {
+        toast.error("Cannot upgrade energy source");
+      } else {
+        toast.success("Energy source upgraded!");
+      }
+      
+      return newState;
+    });
+  };
+
   return {
     gameState,
     isPaused,
@@ -353,5 +385,7 @@ export const useGameState = () => {
     availableMines: MineTypes,
     handleBaseClick,
     handleOreClick,
+    buildNewEnergySource,
+    upgradeExistingEnergySource,
   };
 };

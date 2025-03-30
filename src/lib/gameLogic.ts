@@ -1,3 +1,8 @@
+import { MineTypes } from "@/constants/Mine";
+import { OreData } from "@/constants/Ore";
+import { GameState } from "@/interfaces/GameType";
+import { Miner } from "@/interfaces/MinerTypes";
+import { MineType } from "@/interfaces/MineType";
 import { Ore, OreType } from "@/interfaces/OreTypes";
 import {
   calculateDistance,
@@ -9,11 +14,9 @@ import {
   generateInitialOres,
   updateOreRegeneration,
 } from "./ores";
-import { Miner } from "@/interfaces/MinerTypes";
-import { MineType } from "@/interfaces/MineType";
-import { GameState } from "@/interfaces/GameType";
-import { OreData } from "@/constants/Ore";
-import { MineTypes } from "@/constants/Mine";
+import { EnergyState } from "@/interfaces/EnergyTypes";
+import { updateEnergyState } from "./energyLogic";
+import { InitialEnergyState } from "@/constants/Energy";
 
 export const findNearestOre = (
   miner: Miner,
@@ -175,7 +178,8 @@ export const updateMinerState = (
   deltaTime: number,
   upgrades: Record<string, number>,
   mineMultiplier: number = 1,
-  basePosition: { x: number; y: number } = { x: 15, y: 15 }
+  basePosition: { x: number; y: number } = { x: 15, y: 15 },
+  energyState: EnergyState
 ): {
   updatedMiner: Miner;
   updatedOre?: Ore;
@@ -184,6 +188,18 @@ export const updateMinerState = (
   let updatedMiner = { ...miner };
   let updatedOre: Ore | undefined;
   let collectedResources: { type: OreType; amount: number } | undefined;
+
+  // If blackout, freeze all actions
+  if (energyState.isBlackout) {
+    return {
+      updatedMiner: {
+        ...updatedMiner,
+        state: "seeking",
+        targetOreId: undefined,
+        targetPosition: undefined,
+      },
+    };
+  }
 
   switch (miner.state) {
     case "seeking": {
@@ -423,6 +439,8 @@ export const updateGameState = (
 ): GameState => {
   const newState = { ...state };
 
+  newState.energy = updateEnergyState(state.energy, state.miners, deltaTime);
+
   newState.ores = updateOreRegeneration(state.ores, deltaTime);
 
   const updatedMiners: Miner[] = [];
@@ -441,7 +459,8 @@ export const updateGameState = (
       deltaTime,
       state.upgrades,
       mineMultiplier,
-      basePosition
+      basePosition,
+      newState.energy
     );
 
     updatedMiners.push(updatedMiner);
@@ -565,6 +584,7 @@ export const initializeGameState = (): GameState => {
     lastUpdateTime: Date.now(),
     activeMine: "starter",
     mines,
+    energy: InitialEnergyState,
   };
 };
 

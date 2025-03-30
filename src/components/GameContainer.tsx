@@ -36,6 +36,8 @@ export const GameContainer = () => {
     switchMine,
     handleOreClick,
     handleBaseClick,
+    buildNewEnergySource,
+    upgradeExistingEnergySource,
   } = useGameState();
 
   const [activePanel, setActivePanel] = useState<
@@ -75,6 +77,7 @@ export const GameContainer = () => {
           resources={gameState.resources}
           money={gameState.money}
           moneyRate={gameState.moneyRate}
+          energy={gameState.energy}
         />
 
         <div className="flex items-center gap-2">
@@ -158,6 +161,9 @@ export const GameContainer = () => {
                   money={gameState.money}
                   upgradeLevels={gameState.upgrades}
                   onUpgrade={buyUpgrade}
+                  energySources={gameState.energy.energySources}
+                  onBuildEnergySource={buildNewEnergySource}
+                  onUpgradeEnergySource={upgradeExistingEnergySource}
                 />
               </div>
             </SheetContent>
@@ -228,6 +234,7 @@ export const GameContainer = () => {
             activeMine={gameState.activeMine}
             onOreClick={handleOreClick}
             onBaseClick={handleBaseClick}
+            isBlackout={gameState.energy.isBlackout}
           />
         </div>
       </div>

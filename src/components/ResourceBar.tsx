@@ -1,11 +1,14 @@
 import { OreType } from "@/interfaces/OreTypes";
 import { formatNumber } from "@/lib/utils";
-import { Pickaxe, Coins, CircleDollarSign, Gem } from "lucide-react";
+import { Pickaxe, Coins, CircleDollarSign, Gem, Zap } from "lucide-react";
+import { EnergyState } from "@/interfaces/EnergyTypes";
+import { Progress } from "@/components/ui/progress";
 
 interface ResourceBarProps {
   resources: Record<OreType, number>;
   money: number;
   moneyRate: number;
+  energy: EnergyState;
 }
 
 // Map ore types to colors
@@ -44,9 +47,28 @@ export const ResourceBar = ({
   resources,
   money,
   moneyRate,
+  energy,
 }: ResourceBarProps) => {
   return (
     <div className="flex items-center gap-4 overflow-x-auto hide-scrollbar px-2">
+      {/* Energy Display */}
+      <div className="flex items-center gap-2 bg-secondary/30 px-3 py-1 rounded-md">
+        <Zap className="w-4 h-4 text-yellow-400" />
+        <div className="flex flex-col">
+          <div className="flex items-center gap-1">
+            <span className="font-bold">{formatNumber(energy.currentEnergy)}</span>
+            <span className="text-xs text-muted-foreground">/ {formatNumber(energy.maxEnergy)}</span>
+          </div>
+          <div className="flex items-center gap-1 text-xs">
+            <span className="text-green-400">+{formatNumber(energy.energyRegenRate)}/s</span>
+            <span className="text-red-400">-{formatNumber(energy.energyConsumption)}/s</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="h-6 w-px bg-white/10 mx-1"></div>
+
+      {/* Money Display */}
       <div className="flex items-center gap-2 bg-secondary/30 px-3 py-1 rounded-md">
         <Coins className="w-4 h-4 text-yellow-400" />
         <span className="font-bold">{formatNumber(money)}</span>
@@ -58,6 +80,7 @@ export const ResourceBar = ({
 
       <div className="h-6 w-px bg-white/10 mx-1"></div>
 
+      {/* Resources Display */}
       <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar">
         {Object.entries(resources).map(([type, amount]) => (
           <div

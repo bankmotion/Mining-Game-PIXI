@@ -12,6 +12,7 @@ interface SimpleMiningAreaProps {
   activeMine: string;
   onOreClick?: (ore: Ore) => void;
   onBaseClick?: () => void;
+  isBlackout?: boolean;
 }
 
 // Resource particle component (rendered outside canvas for text)
@@ -68,6 +69,7 @@ export const SimpleMiningArea = ({
   activeMine = "starter",
   onOreClick,
   onBaseClick,
+  isBlackout = false,
 }: SimpleMiningAreaProps) => {
   const [particles, setParticles] = useState<
     Array<{
@@ -212,8 +214,19 @@ export const SimpleMiningArea = ({
 
   return (
     <div className="relative w-full h-full bg-emerald-700 rounded-lg overflow-hidden border border-emerald-900">
+      {/* Blackout Overlay */}
+      {isBlackout && (
+        <div className="absolute inset-0 bg-black/80 z-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-red-500 mb-2">BLACKOUT!</div>
+            <div className="text-sm text-white/70 mb-4">Energy levels critical</div>
+            <div className="text-sm text-white/50">All operations frozen</div>
+          </div>
+        </div>
+      )}
+
       {/* Grid layout for mining area */}
-      <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-1 p-1">
+      <div className={`absolute inset-0 grid grid-cols-3 grid-rows-3 gap-1 p-1 ${isBlackout ? 'opacity-50' : ''}`}>
         {/* Create grid sections that look like the map in the example */}
         {[...Array(9)].map((_, index) => (
           <div
@@ -230,7 +243,7 @@ export const SimpleMiningArea = ({
       </div>
 
       {/* Base station */}
-      <div onClick={onBaseClick} className="cursor-pointer">
+      <div onClick={isBlackout ? undefined : onBaseClick} className={`cursor-pointer ${isBlackout ? 'opacity-50' : ''}`}>
         <BaseStation position={basePosition} />
       </div>
 
@@ -238,7 +251,7 @@ export const SimpleMiningArea = ({
       {ores.map((ore) => (
         <div
           key={ore.id}
-          className="absolute w-4 h-4 rounded-full border border-white/20 transition-all cursor-pointer"
+          className={`absolute w-4 h-4 rounded-full border border-white/20 transition-all ${isBlackout ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           style={{
             left: `${ore.position.x}%`,
             top: `${ore.position.y}%`,
@@ -249,7 +262,7 @@ export const SimpleMiningArea = ({
               ore.type
             )}`,
           }}
-          onClick={() => onOreClick?.(ore)}
+          onClick={isBlackout ? undefined : () => onOreClick?.(ore)}
         >
           {/* Show ore value when hovered */}
           <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 px-1 py-0.5 rounded text-[8px] white bg-black/70 opacity-0 hover:opacity-100 pointer-events-none whitespace-nowrap">

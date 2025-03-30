@@ -1,3 +1,4 @@
+import { EnergyState } from "./EnergyTypes";
 import { Miner } from "./MinerTypes";
 import { MineType } from "./MineType";
 import { Ore, OreType } from "./OreTypes";
@@ -14,4 +15,5 @@ export interface GameState {
   lastUpdateTime: number;
   activeMine: string;
   mines: Record<string, MineType>;
+  energy: EnergyState;
 }
