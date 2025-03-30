@@ -13,6 +13,7 @@ import {
   ShoppingBag,
   User,
   Map,
+  Zap,
 } from "lucide-react";
 import {
   Tooltip,
@@ -24,6 +25,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { IncomeForecast } from "./IncomeForecast";
 import { toast } from "sonner";
 import { SimpleMiningArea } from "./SimpleMiningArea";
+import { EnergyManagement } from "./EnergyManagement";
 
 export const GameContainer = () => {
   const {
@@ -41,7 +43,7 @@ export const GameContainer = () => {
   } = useGameState();
 
   const [activePanel, setActivePanel] = useState<
-    "none" | "upgrades" | "hiring" | "mines"
+    "none" | "upgrades" | "hiring" | "mines" | "energy"
   >("none");
 
   // Ensure game is properly initialized
@@ -140,6 +142,33 @@ export const GameContainer = () => {
       <div className="flex-1 flex relative overflow-hidden">
         {/* Left Control Panel */}
         <div className="glass-panel p-2 border-r border-white/10 flex flex-col gap-4 items-center">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-12 h-12 rounded-md hover:bg-primary/20"
+                onClick={() => setActivePanel("energy")}
+              >
+                <Zap className="h-6 w-6 text-yellow-400" />
+                <span className="sr-only">Energy</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="left"
+              className="pixel-container glass-panel border-r border-white/10 max-w-xs"
+            >
+              <div className="h-full overflow-y-auto pb-20">
+                <EnergyManagement
+                  money={gameState.money}
+                  energySources={gameState.energy.energySources}
+                  onBuildEnergySource={buildNewEnergySource}
+                  onUpgradeEnergySource={upgradeExistingEnergySource}
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
+
           <Sheet>
             <SheetTrigger asChild>
               <Button
