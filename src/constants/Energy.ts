@@ -44,7 +44,7 @@ export const MiningEnergyConsumption = 20;
 export const MovementEnergyConsumption = 4;
 export const BlackoutThreshold = 0; // 10% energy remaining triggers blackout
 export const BlackoutUnlockedThreshold = 0.1; // 10% energy remaining triggers blackout
-export const InitialEnergyRegenRate = 1; // Initial regeneration rate of 10 energy per second
+export const InitialEnergyRegenRate = 3; // Initial regeneration rate of 10 energy per second
 
 export const InitialEnergyState: EnergyState = {
   currentEnergy: 1000,
