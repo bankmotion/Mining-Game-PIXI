@@ -184,21 +184,21 @@ export const PixiMiningArea = ({
 
           // Calculate progress (0 to 1)
           const progress =
-            1 - ore.regenerationTime / OreData[ore.type].regenerationTime; // 5 seconds regeneration time
+            ore.regenerationTime / OreData[ore.type].regenerationTime;
 
           // Clear previous drawing
           progressBar.clear();
 
           // Draw background (green bar)
           progressBar.beginFill(0x10b981, 0.3); // Emerald color with transparency
-          progressBar.drawRect(0, MineMap.tilewidth / 2, MineMap.tilewidth, 2);
+          progressBar.drawRect(0, MineMap.tileheight / 2, MineMap.tilewidth, 2);
           progressBar.endFill();
 
-          // Draw progress (yellow bar)
+          // Draw progress (yellow bar) from right to left
           progressBar.beginFill(0xf39c12, 0.8); // Amber color with transparency
           progressBar.drawRect(
             0,
-            MineMap.tilewidth / 2,
+            MineMap.tileheight / 2,
             MineMap.tilewidth * progress,
             2
           );
