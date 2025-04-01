@@ -1,7 +1,8 @@
 import * as PIXI from "pixi.js";
+import { Map, Tileset } from "@/interfaces/MapTypes";
 
 // Cache for loaded textures
-const textureCache: { [key: string]: PIXI.Texture } = {};
+export const textureCache: { [key: string]: PIXI.Texture } = {};
 
 // Create a fallback texture (gray rectangle)
 const createFallbackTexture = () => {
@@ -17,16 +18,19 @@ const createFallbackTexture = () => {
 };
 
 // Load a sprite texture
-export const loadSprite = async (path: string): Promise<PIXI.Texture> => {
+export const loadSprite = async (
+  path: string,
+  name: string
+): Promise<PIXI.Texture> => {
   try {
     // Check cache first
-    if (textureCache[path]) {
-      return textureCache[path];
+    if (textureCache[name]) {
+      return textureCache[name];
     }
 
     // Load the texture
     const texture = await PIXI.Texture.from(path);
-    textureCache[path] = texture;
+    textureCache[name] = texture;
     return texture;
   } catch (error) {
     console.error(`Failed to load sprite: ${path}`, error);
@@ -35,42 +39,28 @@ export const loadSprite = async (path: string): Promise<PIXI.Texture> => {
 };
 
 // Preload common sprites
-export const preloadSprites = async (onProgress?: (progress: number) => void) => {
-  const commonSprites = [
-    // Walls and Floors
-    "/assets/walls_and_floors/walls_floors.png",
-    "/assets/walls_and_floors/mine_breaking_animations.png",
-    
-    // Doors
-    "/assets/doors/mine_doors.png",
-    
-    // Mining Gems
-    "/assets/mining/gems/mining_gems.png",
-    "/assets/mining/gems/mining_gems_with_shadows.png",
-    "/assets/mining/gems/walls_gems.png",
-    
-    // Mine Carts
-    "/assets/mine_carts/cart_connectors.png",
-    "/assets/mine_carts/mine_carts.png",
-    "/assets/mine_carts/mine_cart_animation.png",
-    
-    // Props
-    "/assets/props/mine_lamps.png",
-    "/assets/props/lamp_animation.png",
-    "/assets/props/ladders.png",
-    "/assets/props/mine_props.png",
-    
-    // Character Assets
-    "/assets/character/push/clothes/full_body/overhalls/character_push_clothes_fullbody_overhalls_blue.png",
-    "/assets/character/push/hairstyles/radical_curve/character_push_hairstyles_radical_curve_black.png"
-  ];
+export const preloadSprites = async (
+  map: Map,
+  onProgress?: (progress: number) => void
+) => {
+  const spritesToLoad: { path: string; name: string }[] = [];
 
-  const total = commonSprites.length;
+  // Add tileset sprites
+  map.tilesets.forEach((tileset: Tileset) => {
+    if (tileset.image) {
+      spritesToLoad.push({
+        path: tileset.image,
+        name: tileset.name,
+      });
+    }
+  });
+
+  const total = spritesToLoad.length;
   let loaded = 0;
 
   // Load sprites sequentially to track progress
-  for (const sprite of commonSprites) {
-    await loadSprite(sprite);
+  for (const sprite of spritesToLoad) {
+    await loadSprite(sprite.path, sprite.name);
     loaded++;
     if (onProgress) {
       onProgress((loaded / total) * 100);
@@ -82,31 +72,12 @@ export const preloadSprites = async (onProgress?: (progress: number) => void) =>
 export const createTilesetTexture = (
   baseTexture: PIXI.BaseTexture,
   tileId: number,
-  tileset: {
-    firstgid: number;
-    source?: string;
-    columns?: number;
-    image?: string;
-    imageheight?: number;
-    imagewidth?: number;
-    margin?: number;
-    name?: string;
-    spacing?: number;
-    tilecount?: number;
-    tileheight?: number;
-    tilewidth?: number;
-    transparentcolor?: string;
-    tiles?: Array<{
-      id: number;
-      animation?: Array<{
-        duration: number;
-        tileid: number;
-      }>;
-    }>;
-  }
+  tileset: Tileset
 ): PIXI.Texture => {
   const localTileId = tileId - tileset.firstgid;
-  const columns = tileset.columns || Math.floor((tileset.imagewidth || 0) / (tileset.tilewidth || 16));
+  const columns =
+    tileset.columns ||
+    Math.floor((tileset.imagewidth || 0) / (tileset.tilewidth || 16));
   const tilesetRow = Math.floor(localTileId / columns);
   const tilesetCol = localTileId % columns;
 
@@ -119,4 +90,28 @@ export const createTilesetTexture = (
       tileset.tileheight || 16
     )
   );
-}; 
+};
+
+// Create a texture from a tileset
+export const createTilesetTextureOther = (
+  baseTexture: PIXI.BaseTexture,
+  tileId: number,
+  tileset: Tileset
+): PIXI.Texture => {
+  const localTileId = tileId - tileset.firstgid;
+  const columns =
+    tileset.columns ||
+    Math.floor((tileset.imagewidth || 0) / (tileset.tilewidth || 16));
+  const tilesetRow = Math.floor(localTileId / columns);
+  const tilesetCol = localTileId % columns;
+
+  return new PIXI.Texture(
+    baseTexture,
+    new PIXI.Rectangle(
+      tilesetCol * (tileset.tilewidth || 16) + tileset.tilewidth / 2,
+      tilesetRow * (tileset.tileheight || 16) + tileset.tileheight / 2,
+      tileset.tilewidth || 16,
+      tileset.tileheight || 16
+    )
+  );
+};

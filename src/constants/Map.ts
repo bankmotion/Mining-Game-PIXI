@@ -1,4 +1,6 @@
-export const MineMap = {
+import { Map } from "@/interfaces/MapTypes";
+
+export const MineMap: Map = {
   compressionlevel: -1,
   height: 20,
   infinite: false,
@@ -571,7 +573,8 @@ export const MineMap = {
     {
       columns: 42,
       firstgid: 1,
-      image: "/assets/walls_and_floors/walls_floors.png",
+      image:
+        "/assets/walls_and_floors/walls_floors.png",
       imageheight: 976,
       imagewidth: 672,
       margin: 0,
@@ -585,7 +588,8 @@ export const MineMap = {
     {
       columns: 6,
       firstgid: 2563,
-      image: "/assets/walls_and_floors/mine_breaking_animations.png",
+      image:
+        "/assets/walls_and_floors/mine_breaking_animations.png",
       imageheight: 64,
       imagewidth: 96,
       margin: 0,
@@ -627,7 +631,8 @@ export const MineMap = {
     {
       columns: 12,
       firstgid: 2836,
-      image: "/assets/mining/gems/mining_gems_with_shadows.png",
+      image:
+        "/assets/mining/gems/mining_gems_with_shadows.png",
       imageheight: 272,
       imagewidth: 192,
       margin: 0,
@@ -655,7 +660,8 @@ export const MineMap = {
     {
       columns: 5,
       firstgid: 3120,
-      image: "/assets/mine_carts/cart_connectors.png",
+      image:
+        "/assets/mine_carts/cart_connectors.png",
       imageheight: 64,
       imagewidth: 80,
       margin: 0,
@@ -738,7 +744,8 @@ export const MineMap = {
     {
       columns: 4,
       firstgid: 3373,
-      image: "/assets/mine_carts/mine_cart_animation.png",
+      image:
+        "/assets/mine_carts/mine_cart_animation.png",
       imageheight: 96,
       imagewidth: 128,
       margin: 8,
@@ -785,10 +792,6 @@ export const MineMap = {
       tileheight: 16,
       tilewidth: 16,
       transparentcolor: "#ff00ff",
-    },
-    {
-      firstgid: 3421,
-      source: "character_tools_drill_body_light_with_specs.tsx",
     },
     {
       columns: 12,
