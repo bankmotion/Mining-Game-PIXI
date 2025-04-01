@@ -214,44 +214,26 @@ export const updateMinerState = (
         break;
       }
 
+      // Check if miner has reached their target position
       if (
-        miner?.targetPosition?.x === miner?.position?.x &&
-        miner?.targetPosition?.y === miner?.position?.y
+        miner?.targetPosition &&
+        Math.abs(miner.position.x - miner.targetPosition.x) < 0.1 &&
+        Math.abs(miner.position.y - miner.targetPosition.y) < 0.1
       ) {
         const targetOre = ores.find((ore) => ore.id === miner.targetOreId);
         if (targetOre && !targetOre.depleted) {
           updatedMiner = {
             ...updatedMiner,
-            state: "moving",
+            state: "mining",
+            miningProgress: 0,
           };
         }
       }
-
-      // const nearestOre = findNearestOre(miner, ores, miners);
-
-      // if (nearestOre) {
-      //   updatedMiner = {
-      //     ...updatedMiner,
-      //     state: 'moving',
-      //     targetOreId: nearestOre.id,
-      //     targetPosition: { ...nearestOre.position },
-      //   };
-      // }
       break;
     }
 
     case "moving": {
       const targetOre = ores.find((ore) => ore.id === miner.targetOreId);
-
-      // if (!targetOre || targetOre.depleted) {
-      //   updatedMiner = {
-      //     ...updatedMiner,
-      //     state: "seeking",
-      //     // targetOreId: undefined,
-      //     // targetPosition: undefined,
-      //   };
-      //   break;
-      // }
 
       if (miner.targetPosition) {
         updatedMiner = moveMinerTowards(
@@ -260,15 +242,18 @@ export const updateMinerState = (
           deltaTime
         );
 
-        if (!updatedMiner.targetPosition) {
+        // Check if miner has reached the target position
+        if (
+          Math.abs(updatedMiner.position.x - miner.targetPosition.x) < 0.1 &&
+          Math.abs(updatedMiner.position.y - miner.targetPosition.y) < 0.1
+        ) {
           updatedMiner = {
             ...updatedMiner,
             state: "mining",
-            targetPosition: { ...targetOre.position },
             miningProgress: 0,
           };
         }
-      } else {
+      } else if (targetOre) {
         updatedMiner = {
           ...updatedMiner,
           targetPosition: { ...targetOre.position },
@@ -284,8 +269,6 @@ export const updateMinerState = (
         updatedMiner = {
           ...updatedMiner,
           state: "seeking",
-          // targetOreId: undefined,
-          // targetPosition: undefined,
           miningProgress: 0,
         };
         break;
@@ -325,8 +308,6 @@ export const updateMinerState = (
         updatedInventory[targetOre.type] =
           (updatedInventory[targetOre.type] || 0) + resourceAmount;
 
-        const oreBaseValue = OreData[targetOre.type].value;
-
         updatedOre = depleteOreVein(targetOre);
 
         collectedResources = {
@@ -337,8 +318,6 @@ export const updateMinerState = (
         updatedMiner = {
           ...updatedMiner,
           state: "seeking",
-          // targetOreId: undefined,
-          // targetPosition: undefined,
           miningProgress: 0,
           inventory: updatedInventory,
           inventoryValue: calculateInventoryValue(updatedInventory, OreData),
@@ -360,17 +339,19 @@ export const updateMinerState = (
           deltaTime
         );
 
-        if (!updatedMiner.targetPosition) {
-          // When miner reaches base, start resting
+        // Check if miner has reached the base
+        if (
+          Math.abs(updatedMiner.position.x - basePosition.x) < 0.1 &&
+          Math.abs(updatedMiner.position.y - basePosition.y) < 0.1
+        ) {
           updatedMiner = {
             ...updatedMiner,
             state: "resting",
             restProgress: 0,
-            restDuration: 5, // Base resting time in seconds
+            restDuration: 5,
           };
         }
       } else {
-        // If no target position, set it to base position
         updatedMiner = {
           ...updatedMiner,
           targetPosition: { ...basePosition },
@@ -380,15 +361,12 @@ export const updateMinerState = (
     }
 
     case "resting": {
-      // New state for resting at base
       const restSpeed = deltaTime;
       const newRestProgress = (updatedMiner.restProgress || 0) + restSpeed;
 
       if (newRestProgress >= (updatedMiner.restDuration || 5)) {
-        // Resting complete, calculate value of all resources
         const moneyGained = updatedMiner.inventoryValue;
 
-        // Empty inventory
         const emptyInventory: Record<OreType, number> = {
           coal: 0,
           iron: 0,
@@ -406,7 +384,6 @@ export const updateMinerState = (
           uranium: 0,
         };
 
-        // Return to seeking state with empty inventory
         updatedMiner = {
           ...updatedMiner,
           state: "seeking",
@@ -417,7 +394,7 @@ export const updateMinerState = (
         };
 
         collectedResources = {
-          type: "coal", // Dummy value - we'll use the real collection in updateGameState
+          type: "coal",
           amount: moneyGained,
         };
       } else {

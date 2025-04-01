@@ -1,5 +1,7 @@
 import { MinerType } from "@/interfaces/MinerTypes";
 
+export const BasePoint = { x: 19, y: 2 };
+
 export const MinerTypes: Record<
   MinerType,
   {

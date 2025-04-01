@@ -70,24 +70,27 @@ export const calculateInventoryValue = (
 
 // Calculate distance between two points
 export const calculateDistance = (
-  point1: { x: number; y: number },
-  point2: { x: number; y: number }
+  pos1: { x: number; y: number },
+  pos2: { x: number; y: number }
 ): number => {
-  const dx = point2.x - point1.x;
-  const dy = point2.y - point1.y;
+  const dx = pos2.x - pos1.x;
+  const dy = pos2.y - pos1.y;
   return Math.sqrt(dx * dx + dy * dy);
 };
 
-// Move a miner towards a target position
+// Move miner towards target position
 export const moveMinerTowards = (
   miner: Miner,
   targetPosition: { x: number; y: number },
   deltaTime: number
 ): Miner => {
-  const distance = calculateDistance(miner.position, targetPosition);
+  const speed = 2; // Base movement speed in tiles per second
+  const dx = targetPosition.x - miner.position.x;
+  const dy = targetPosition.y - miner.position.y;
+  // console.log(dx, dy);
+  const distance = Math.sqrt(dx * dx + dy * dy);
 
   if (distance < 0.1) {
-    // Target reached
     return {
       ...miner,
       position: { ...targetPosition },
@@ -95,23 +98,15 @@ export const moveMinerTowards = (
     };
   }
 
-  // Calculate movement direction and new position
-  const direction = {
-    x: (targetPosition.x - miner.position.x) / distance,
-    y: (targetPosition.y - miner.position.y) / distance,
-  };
-
-  const moveSpeed = miner.speed * 5 * deltaTime; // Boost base movement speed to make upgrades more noticeable
-  const moveFactor = Math.min(moveSpeed, distance);
-
-  const newPosition = {
-    x: miner.position.x + direction.x * moveFactor,
-    y: miner.position.y + direction.y * moveFactor,
-  };
+  const moveX = (dx / distance) * speed * deltaTime;
+  const moveY = (dy / distance) * speed * deltaTime;
+  // console.log(miner.position.x, miner.position.y);
 
   return {
     ...miner,
-    position: newPosition,
-    targetPosition: targetPosition,
+    position: {
+      x: miner.position.x + moveX,
+      y: miner.position.y + moveY,
+    },
   };
 };

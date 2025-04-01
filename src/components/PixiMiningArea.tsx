@@ -7,6 +7,7 @@ import { Miner } from "@/interfaces/MinerTypes";
 import { MineMap } from "@/constants/Map";
 import { MineTypes } from "@/constants/Mine";
 import { Tileset } from "@/interfaces/MapTypes";
+import { OreData } from "@/constants/Ore";
 import {
   loadSprite,
   preloadSprites,
@@ -15,6 +16,7 @@ import {
   createMinerTilesetTexture,
 } from "@/utils/spriteLoader";
 import { generateRandomOreType, createOre } from "@/lib/ores";
+import { BasePoint } from "@/constants/Miners";
 
 interface AnimatedSprite extends PIXI.Sprite {
   userData: {
@@ -54,10 +56,10 @@ const findValidOrePositions = (
 
       // Check if the position is valid (has floor and no mountain)
       if (floorTile !== 0 && mountainTile === 0) {
-        // Convert to percentage coordinates
+        // Store as tile coordinates instead of percentages
         validPositions.push({
-          x: (x / map.width) * 100,
-          y: (y / map.height) * 100,
+          x: x,
+          y: y,
         });
       }
     }
@@ -114,14 +116,10 @@ export const PixiMiningArea = ({
   const initAttemptedRef = useRef(false);
   const initCompletedRef = useRef(false);
 
-  // Add animation constants
-  const LIGHT_ANIMATION_FRAMES = 4;
-  const LIGHT_ANIMATION_SPEED = 0.1;
-
   // Get base position from game logic
   const getBasePosition = () => {
     const mine = MineTypes.find((m) => m.id === activeMine);
-    return mine ? mine.basePosition : { x: 15, y: 15 };
+    return mine ? mine.basePosition : { x: 0, y: 0 };
   };
 
   const basePosition = getBasePosition();
@@ -153,63 +151,148 @@ export const PixiMiningArea = ({
     }
   }, [loading]);
 
-  // Update game state
+  // Update miner positions and states
   const updateGame = React.useCallback(
     (app: PIXI.Application, container: PIXI.Container) => {
-      // Update miner positions and states
-      miners.forEach((miner) => {
-        // Update miner sprite position and state
-        const minerSprite = container.getChildByName(`miner-${miner.id}`);
-        if (minerSprite instanceof PIXI.Sprite) {
-          minerSprite.x = (miner.position.x / 100) * app.screen.width;
-          minerSprite.y = (miner.position.y / 100) * app.screen.height;
-
-          // Update mining progress bar if mining
-          if (miner.state === "mining") {
-            const progressBar = minerSprite.getChildByName("progress-bar");
-            if (progressBar instanceof PIXI.Graphics) {
-              progressBar.clear();
-              progressBar.beginFill(0x000000, 0.5);
-              progressBar.drawRect(-10, -15, 20, 4);
-              progressBar.endFill();
-              progressBar.beginFill(0x8b5cf6);
-              progressBar.drawRect(-10, -15, miner.miningProgress * 20, 4);
-              progressBar.endFill();
-            }
-          }
-        }
-      });
-
       // Update ore states
       ores.forEach((ore) => {
-        const oreSprite = container.getChildByName(`ore-${ore.id}`);
-        if (oreSprite instanceof PIXI.Sprite) {
-          oreSprite.alpha = ore.depleted ? 0.4 : 1;
+        const oreSprite = container.getChildByName(
+          `ore-${ore.id}`
+        ) as PIXI.Sprite;
+        if (!oreSprite) return;
 
-          // Update regeneration timer if depleted
-          if (ore.depleted) {
-            const timerText = oreSprite.getChildByName("timer-text");
-            if (timerText instanceof PIXI.Text) {
-              timerText.text = Math.ceil(ore.regenerationTime).toString();
-            }
+        oreSprite.alpha = ore.depleted ? 0.4 : 1;
+
+        // Update regeneration timer if depleted
+        if (ore.depleted) {
+          const timerText = oreSprite.getChildByName("timer-text") as PIXI.Text;
+          if (timerText) {
+            timerText.text = Math.ceil(ore.regenerationTime).toString();
           }
         }
       });
     },
-    [miners, ores]
+    [ores]
   );
+
+  // Update miner animations
+  const updateMinerAnimations = React.useCallback(
+    (deltaTime: number) => {
+      if (!appRef.current) return;
+      const app = appRef.current;
+      const gameContainer = app.stage.getChildAt(0) as PIXI.Container;
+      if (!gameContainer) return;
+
+      const minersContainer = gameContainer.getChildByName("Miners");
+      if (minersContainer) {
+        minersContainer.children.forEach((child) => {
+          if (child instanceof PIXI.Sprite) {
+            // Get miner ID from sprite name
+            const minerId = child.name.replace("miner-", "");
+            const miner = miners.find((m) => m.id === minerId);
+
+            if (miner) {
+              // Convert percentage-based position to tile coordinates
+              const tileX = (miner.position.x / 100) * MineMap.width;
+              const tileY = (miner.position.y / 100) * MineMap.height;
+
+              // Update sprite position
+              child.x = tileX * MineMap.tilewidth;
+              child.y = tileY * MineMap.tileheight;
+            }
+
+            // Handle animations if sprite has animation data
+            if ((child as AnimatedSprite).userData?.animation) {
+              const sprite = child as AnimatedSprite;
+              sprite.userData.time += deltaTime / 1000;
+
+              if (sprite.userData.time >= sprite.userData.animationSpeed) {
+                sprite.userData.time = 0;
+                sprite.userData.frame =
+                  (sprite.userData.frame + 1) %
+                  sprite.userData.animation.length;
+
+                // Update texture to next frame
+                const frameData =
+                  sprite.userData.animation[sprite.userData.frame];
+                const tileTexture = createMinerTilesetTexture(
+                  sprite.userData.baseTexture,
+                  sprite.userData.tileset.firstgid + frameData.tileid + 1,
+                  sprite.userData.tileset
+                );
+                sprite.texture = tileTexture;
+              }
+            }
+          }
+        });
+      }
+    },
+    [miners]
+  );
+
+  // Separate effect for miner animations
+  useEffect(() => {
+    if (!appRef.current) return;
+
+    const app = appRef.current;
+    const gameContainer = app.stage.getChildAt(0) as PIXI.Container;
+    if (!gameContainer) return;
+
+    // Add animation ticker
+    const tickerCallback = () => {
+      updateMinerAnimations(app.ticker.deltaMS);
+    };
+    app.ticker.add(tickerCallback);
+
+    // Cleanup
+    return () => {
+      app.ticker.remove(tickerCallback);
+    };
+  }, [updateMinerAnimations]);
 
   // Setup interactivity for ores and base
   const setupInteractivity = React.useCallback(
     (app: PIXI.Application, container: PIXI.Container) => {
       // Add base station
-      const baseSprite = new PIXI.Sprite();
+      const baseSprite = new PIXI.Container();
       baseSprite.x = (basePosition.x / 100) * app.screen.width;
       baseSprite.y = (basePosition.y / 100) * app.screen.height;
       baseSprite.width = 56; // 14 * 4
       baseSprite.height = 56;
       baseSprite.eventMode = "static";
       baseSprite.cursor = "pointer";
+
+      // Add background rectangle
+      const baseBackground = new PIXI.Graphics();
+      baseBackground.beginFill(0x4a5568, 0.8); // Slate gray with transparency
+      baseBackground.drawRoundedRect(-28, -28, 56, 56, 8);
+      baseBackground.endFill();
+      baseSprite.addChild(baseBackground);
+
+      // Add border
+      const baseBorder = new PIXI.Graphics();
+      baseBorder.lineStyle(2, 0x718096); // Slate gray border
+      baseBorder.drawRoundedRect(-28, -28, 56, 56, 8);
+      baseSprite.addChild(baseBorder);
+
+      // Add text
+      const baseText = new PIXI.Text("BASE", {
+        fontFamily: "Arial",
+        fontSize: 12,
+        fill: 0xffffff,
+        align: "center",
+        fontWeight: "bold",
+      });
+      baseText.anchor.set(0.5, 0.5);
+      baseSprite.addChild(baseText);
+
+      // Add glow effect
+      const glow = new PIXI.Graphics();
+      glow.beginFill(0x4a5568, 0.3);
+      glow.drawCircle(0, 0, 40);
+      glow.endFill();
+      baseSprite.addChildAt(glow, 0);
+
       baseSprite.on("pointerdown", () => {
         if (!isBlackout && onBaseClick) {
           onBaseClick();
@@ -217,63 +300,103 @@ export const PixiMiningArea = ({
       });
       container.addChild(baseSprite);
 
-      // Add miners
-      // miners.forEach((miner) => {
-      //   const minerSprite = new PIXI.Sprite();
-      //   minerSprite.name = `miner-${miner.id}`;
-      //   minerSprite.x = (miner.position.x / 100) * app.screen.width;
-      //   minerSprite.y = (miner.position.y / 100) * app.screen.height;
-      //   minerSprite.width = 32; // Adjust size as needed
-      //   minerSprite.height = 32;
-      //   minerSprite.anchor.set(0.5); // Center the sprite
-
-      //   // Add mining progress bar
-      //   const progressBar = new PIXI.Graphics();
-      //   progressBar.name = "progress-bar";
-      //   progressBar.visible = false;
-      //   minerSprite.addChild(progressBar);
-
-      //   // Add miner name text
-      //   const nameText = new PIXI.Text(miner.name, {
-      //     fontSize: 12,
-      //     fill: 0xffffff,
-      //     align: "center",
-      //   });
-      //   nameText.anchor.set(0.5, -1);
-      //   nameText.y = -20;
-      //   minerSprite.addChild(nameText);
-
-      //   container.addChild(minerSprite);
-      // });
-
       // Add ore nodes
       ores.forEach((ore) => {
-        const oreSprite = new PIXI.Sprite();
-        oreSprite.name = `ore-${ore.id}`;
-        oreSprite.x = (ore.position.x / 100) * app.screen.width;
-        oreSprite.y = (ore.position.y / 100) * app.screen.height;
-        oreSprite.width = 16;
-        oreSprite.height = 16;
-        oreSprite.eventMode = "static";
-        oreSprite.cursor = "pointer";
-        oreSprite.on("pointerdown", () => {
-          if (!isBlackout && onOreClick) {
-            onOreClick(ore);
+        const oreTileset = MineMap.tilesets.find(
+          (ts) => ts.name === "mining_ores"
+        );
+
+        if (oreTileset) {
+          // Create a texture for the ore
+          const tileTexture = createTilesetTexture(
+            textureCache["mining_ores"].baseTexture,
+            oreTileset.firstgid +
+              24 +
+              Object.keys(OreData).findIndex((or) => or === ore.type),
+            oreTileset
+          );
+
+          const oreSprite = new PIXI.Sprite(tileTexture);
+          oreSprite.name = `ore-${ore.id}`;
+          // Convert tile coordinates to pixel coordinates
+          oreSprite.x = ore.position.x * MineMap.tilewidth;
+          oreSprite.y = ore.position.y * MineMap.tileheight;
+          oreSprite.width = MineMap.tilewidth; // Make ores slightly larger
+          oreSprite.height = MineMap.tileheight;
+          // oreSprite.anchor.set(0.5); // Center the sprite
+          oreSprite.eventMode = "static";
+          oreSprite.cursor = "pointer";
+          oreSprite.on("pointerdown", () => {
+            if (!isBlackout && onOreClick) {
+              onOreClick(ore);
+            }
+          });
+
+          // Add regeneration timer text
+          const timerText = new PIXI.Text("", {
+            fontSize: 12,
+            fill: 0xffffff,
+            align: "center",
+          });
+          timerText.name = "timer-text";
+          timerText.anchor.set(0.5, -1);
+          timerText.y = -10;
+          oreSprite.addChild(timerText);
+
+          container.addChild(oreSprite);
+        }
+      });
+
+      // Add a dedicated container for miners
+      const minersContainer = new PIXI.Container();
+      minersContainer.name = "Miners";
+      container.addChild(minersContainer);
+
+      // Render miners in their dedicated container
+      miners.forEach((miner) => {
+        const characterTileset = MineMap.tilesets.find(
+          (ts) => ts.name === "character_push_body_green"
+        );
+
+        if (characterTileset) {
+          // Create a texture for the first frame of the animation
+          const tileTexture = createMinerTilesetTexture(
+            textureCache["character_push_body_green"].baseTexture,
+            characterTileset.firstgid + characterTileset.columns + 1, // Use the first frame of the push-right animation
+            characterTileset
+          );
+
+          const minerSprite = new PIXI.Sprite(tileTexture);
+          minerSprite.name = `miner-${miner.id}`;
+
+          // Position at (x,y) in tile coordinates
+          const tileX = (miner.position.x / 100) * MineMap.width;
+          const tileY = (miner.position.y / 100) * MineMap.height;
+          minerSprite.x = tileX * MineMap.tilewidth;
+          minerSprite.y = tileY * MineMap.tileheight;
+          minerSprite.width = MineMap.tilewidth;
+          minerSprite.height = MineMap.tileheight;
+
+          // Add animation data
+          const animationData = characterTileset.tiles?.find(
+            (t) => t.id === 24
+          )?.animation;
+          if (animationData) {
+            (minerSprite as AnimatedSprite).userData = {
+              frame: 0,
+              animationSpeed: 0.3, // 300ms per frame
+              time: 0,
+              tileset: characterTileset,
+              baseTexture:
+                textureCache["character_push_body_green"].baseTexture,
+              animation: animationData,
+            };
           }
-        });
 
-        // Add regeneration timer text
-        const timerText = new PIXI.Text("", {
-          fontSize: 12,
-          fill: 0xffffff,
-          align: "center",
-        });
-        timerText.name = "timer-text";
-        timerText.anchor.set(0.5, -1);
-        timerText.y = -10;
-        oreSprite.addChild(timerText);
-
-        container.addChild(oreSprite);
+          minersContainer.addChild(minerSprite);
+        } else {
+          console.log("Character tileset not found");
+        }
       });
     },
     [basePosition, isBlackout, onBaseClick, onOreClick, ores, miners]
@@ -348,64 +471,11 @@ export const PixiMiningArea = ({
             ore.position = generatedOres[index].position;
           }
         });
-
-        // Add a dedicated container for miners
-        const minersContainer = new PIXI.Container();
-        minersContainer.name = "Miners";
-        container.addChild(minersContainer);
-        layerContainers["Miners"] = minersContainer;
-
-        // Render miners in their dedicated container
-        minersContainer.removeChildren();
-        miners.forEach((miner) => {
-          const characterTileset = MineMap.tilesets.find(
-            (ts) => ts.name === "character_push_body_green"
-          );
-
-          if (characterTileset) {
-
-            // Create a texture for the first frame of the animation
-            const tileTexture = createMinerTilesetTexture(
-              textureCache["character_push_body_green"].baseTexture,
-              characterTileset.firstgid + characterTileset.columns + 1, // Use the first frame of the push-right animation
-              characterTileset
-            );
-
-            const minerSprite = new PIXI.Sprite(tileTexture);
-            minerSprite.name = `miner-${miner.id}`;
-            // Position at (19,2) in tile coordinates
-            minerSprite.x = MineMap.tilewidth * 19;
-            minerSprite.y = MineMap.tileheight * 2;
-            minerSprite.width = MineMap.tilewidth;
-            minerSprite.height = MineMap.tileheight;
-            // minerSprite.anchor.set(0.5);
-
-            // Add animation data
-            const animationData = characterTileset.tiles?.find(
-              (t) => t.id === 24
-            )?.animation;
-            if (animationData) {
-              (minerSprite as AnimatedSprite).userData = {
-                frame: 0,
-                animationSpeed: 0.3, // 300ms per frame
-                time: 0,
-                tileset: characterTileset,
-                baseTexture:
-                  textureCache["character_push_body_green"].baseTexture,
-                animation: animationData,
-              };
-            }
-
-            minersContainer.addChild(minerSprite);
-          } else {
-            console.log("Character tileset not found");
-          }
-        });
       } catch (error) {
         console.error("Error rendering map layers:", error);
       }
     },
-    [miners, ores, activeMine]
+    [ores, activeMine]
   );
 
   // Initialize PixiJS application
@@ -471,40 +541,10 @@ export const PixiMiningArea = ({
           console.log("Setting up interactivity...");
           setupInteractivity(app, gameContainer);
 
-          // Start the game loop
+          // Start the game loop using PIXI's ticker
           app.ticker.add(() => {
+            // Update game state
             updateGame(app, gameContainer);
-
-            // Update character animations
-            const minersContainer = gameContainer.getChildByName("Miners");
-            if (minersContainer) {
-              minersContainer.children.forEach((child) => {
-                if (
-                  child instanceof PIXI.Sprite &&
-                  (child as AnimatedSprite).userData?.animation
-                ) {
-                  const sprite = child as AnimatedSprite;
-                  sprite.userData.time += app.ticker.deltaMS / 1000;
-
-                  if (sprite.userData.time >= sprite.userData.animationSpeed) {
-                    sprite.userData.time = 0;
-                    sprite.userData.frame =
-                      (sprite.userData.frame + 1) %
-                      sprite.userData.animation.length;
-
-                    // Update texture to next frame
-                    const frameData =
-                      sprite.userData.animation[sprite.userData.frame];
-                    const tileTexture = createMinerTilesetTexture(
-                      sprite.userData.baseTexture,
-                      sprite.userData.tileset.firstgid + frameData.tileid + 1,
-                      sprite.userData.tileset
-                    );
-                    sprite.texture = tileTexture;
-                  }
-                }
-              });
-            }
           });
 
           // Mark initialization as complete

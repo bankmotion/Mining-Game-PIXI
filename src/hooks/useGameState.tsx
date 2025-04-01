@@ -16,6 +16,7 @@ import { Ore } from "@/interfaces/OreTypes";
 import { MineTypes } from "@/constants/Mine";
 import { EnergySource } from "@/interfaces/EnergyTypes";
 import { buildEnergySource, upgradeEnergySource } from "@/lib/energyLogic";
+import { MineMap } from "@/constants/Map";
 
 export const useGameState = () => {
   const [gameState, setGameState] = useState<GameState>(initializeGameState);
@@ -330,12 +331,31 @@ export const useGameState = () => {
   // Handle ore click - make miners target the clicked ore
   const handleOreClick = (ore: Ore) => {
     setGameState((prevState) => {
-      const updatedMiners = prevState.miners.map((miner) => ({
-        ...miner,
-        state: "moving" as MinerState,
-        targetOreId: ore.id,
-        targetPosition: { ...ore.position },
-      }));
+      const updatedMiners = prevState.miners.map((miner) => {
+        // If miner is already mining or moving to this ore, don't change their state
+        if (miner.targetOreId === ore.id && (miner.state === "mining" || miner.state === "moving")) {
+          return miner;
+        }
+
+        // If miner is resting or returning to base, let them complete that first
+        if (miner.state === "resting" || miner.state === "returning") {
+          return miner;
+        }
+
+        // Convert tile coordinates to percentage-based coordinates
+        const targetPosition = {
+          x: (ore.position.x / MineMap.width) * 100,
+          y: (ore.position.y / MineMap.height) * 100
+        };
+
+        // Otherwise, make the miner move to the ore
+        return {
+          ...miner,
+          state: "moving" as MinerState,
+          targetOreId: ore.id,
+          targetPosition,
+        };
+      });
 
       return {
         ...prevState,

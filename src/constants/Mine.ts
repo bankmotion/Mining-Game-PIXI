@@ -1,4 +1,5 @@
 import { MineType } from "@/interfaces/MineType";
+import { MineMap } from "./Map";
 
 export const MineTypes: MineType[] = [
   {
@@ -10,7 +11,7 @@ export const MineTypes: MineType[] = [
     resourceMultiplier: 1,
     rareOreChance: 1,
     oreCount: 20,
-    basePosition: { x: 15, y: 15 },
+    basePosition: { x: 19 * 100 / MineMap.width, y: 2 * 100 / MineMap.height },
   },
   {
     id: "advanced",
