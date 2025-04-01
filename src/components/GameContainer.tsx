@@ -24,7 +24,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { IncomeForecast } from "./IncomeForecast";
 import { toast } from "sonner";
-import { SimpleMiningArea } from "./SimpleMiningArea";
+import { PixiMiningArea } from "./PixiMiningArea";
 import { EnergyManagement } from "./EnergyManagement";
 
 export const GameContainer = () => {
@@ -255,9 +255,9 @@ export const GameContainer = () => {
           <IncomeForecast moneyRate={gameState.moneyRate} />
         </div>
 
-        {/* Main Mining Area - now using simplified renderer */}
+        {/* Main Mining Area - using PixiJS renderer */}
         <div className="flex-1 flex items-center justify-center p-4">
-          <SimpleMiningArea
+          <PixiMiningArea
             miners={gameState.miners}
             ores={gameState.ores}
             activeMine={gameState.activeMine}

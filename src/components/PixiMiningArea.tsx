@@ -4,80 +4,122 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Ore, OreType } from "@/interfaces/OreTypes";
 import { Miner } from "@/interfaces/MinerTypes";
+import { MineMap } from "@/constants/Map";
+import { MineTypes } from "@/constants/Mine";
+import {
+  loadSprite,
+  preloadSprites,
+  createTilesetTexture,
+} from "@/utils/spriteLoader";
+import { generateRandomOreType, createOre } from "@/lib/ores";
+
+interface AnimatedSprite extends PIXI.Sprite {
+  userData: {
+    frame: number;
+    animationSpeed: number;
+    time: number;
+  };
+}
 
 interface PixiMiningAreaProps {
   miners: Miner[];
   ores: Ore[];
+  activeMine?: string;
+  onOreClick?: (ore: Ore) => void;
+  onBaseClick?: () => void;
+  isBlackout?: boolean;
 }
 
-// Resource particle component (rendered outside canvas for text)
-const ResourceParticle = ({
-  type,
-  amount,
-  position,
-}: {
-  type: OreType;
-  amount: number;
-  position: { x: number; y: number };
-}) => {
-  const oreColors: Record<OreType, string> = {
-    coal: "text-gray-100 bg-gray-800",
-    iron: "text-white bg-slate-500",
-    copper: "text-white bg-amber-600",
-    gold: "text-black bg-yellow-400",
-    crystal: "text-white bg-cyan-500",
-    gem: "text-white bg-purple-600",
-    legendary: "text-white bg-rose-600",
-    tin: "text-white bg-zinc-400",
-    silver: "text-black bg-gray-300",
-    mithril: "text-white bg-indigo-500",
-    thorium: "text-white bg-emerald-600",
-    platinum: "text-black bg-slate-200",
-    orichalcum: "text-white bg-orange-500",
-    uranium: "text-white bg-green-400",
-  };
+// Function to find valid positions for ores on the map
+const findValidOrePositions = (
+  map: typeof MineMap
+): Array<{ x: number; y: number }> => {
+  const validPositions: Array<{ x: number; y: number }> = [];
+  const floorLayer = map.layers.find((l) => l.name === "Floor");
+  const mountainLayer = map.layers.find((l) => l.name === "Mountains");
 
-  return (
-    <div
-      className={`absolute px-1 py-0.5 rounded-full ${
-        oreColors[type] || "bg-gray-800 text-white"
-      } text-xs resource-particle font-bold`}
-      style={{
-        left: `${position.x}%`,
-        top: `${position.y}%`,
-      }}
-    >
-      +{amount}
-    </div>
-  );
+  if (!floorLayer || !mountainLayer) return validPositions;
+
+  for (let y = 0; y < map.height; y++) {
+    for (let x = 0; x < map.width; x++) {
+      const index = y * map.width + x;
+      const floorTile = floorLayer.data[index];
+      const mountainTile = mountainLayer.data[index];
+
+      // Check if the position is valid (has floor and no mountain)
+      if (floorTile !== 0 && mountainTile === 0) {
+        // Convert to percentage coordinates
+        validPositions.push({
+          x: (x / map.width) * 100,
+          y: (y / map.height) * 100,
+        });
+      }
+    }
+  }
+
+  return validPositions;
 };
 
-export const PixiMiningArea = ({ miners, ores }: PixiMiningAreaProps) => {
+// Function to generate ores at valid positions
+const generateOresAtPositions = (
+  positions: Array<{ x: number; y: number }>,
+  count: number,
+  rareOreChance: number = 1
+): Ore[] => {
+  const ores: Ore[] = [];
+  const availablePositions = [...positions];
+
+  // Shuffle positions
+  for (let i = availablePositions.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [availablePositions[i], availablePositions[j]] = [
+      availablePositions[j],
+      availablePositions[i],
+    ];
+  }
+
+  // Take only the number of positions we need
+  const selectedPositions = availablePositions.slice(0, count);
+
+  // Generate ores at selected positions
+  for (const position of selectedPositions) {
+    const type = generateRandomOreType(rareOreChance);
+    ores.push(createOre(type, position));
+  }
+
+  return ores;
+};
+
+export const PixiMiningArea = ({
+  miners,
+  ores,
+  activeMine = "starter",
+  onOreClick,
+  onBaseClick,
+  isBlackout = false,
+}: PixiMiningAreaProps) => {
   const pixiContainerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<PIXI.Application | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(5);
   const [loadingError, setLoadingError] = useState<string | null>(null);
-  const [particles, setParticles] = useState<
-    Array<{
-      id: string;
-      type: OreType;
-      amount: number;
-      position: { x: number; y: number };
-    }>
-  >([]);
-
-  // Keep track of previous miners to detect mining completion
-  const prevMinersRef = useRef<Miner[]>([]);
-
-  // Theme for colored tiles
-  const [tileTheme, setTileTheme] = useState<
-    "blue" | "brown" | "green" | "gray"
-  >("blue");
 
   // Flag to track if initialization has been attempted and completed
   const initAttemptedRef = useRef(false);
   const initCompletedRef = useRef(false);
+  const lightSpritesRef = useRef<AnimatedSprite[]>([]);
+
+  // Add animation constants
+  const LIGHT_ANIMATION_FRAMES = 4;
+  const LIGHT_ANIMATION_SPEED = 0.1;
+
+  // Get base position from game logic
+  const getBasePosition = () => {
+    const mine = MineTypes.find((m) => m.id === activeMine);
+    return mine ? mine.basePosition : { x: 15, y: 15 };
+  };
+
+  const basePosition = getBasePosition();
 
   // Progress simulation with timeout
   useEffect(() => {
@@ -89,7 +131,6 @@ export const PixiMiningArea = ({ miners, ores }: PixiMiningAreaProps) => {
         });
       }, 200);
 
-      // Timeout for initialization - if it doesn't complete within 10 seconds, show error
       const timeoutId = setTimeout(() => {
         if (loading && !initCompletedRef.current) {
           console.error("PixiJS initialization timed out");
@@ -107,620 +148,466 @@ export const PixiMiningArea = ({ miners, ores }: PixiMiningAreaProps) => {
     }
   }, [loading]);
 
-  // Initialize PixiJS app with error handling
-  useEffect(() => {
-    // Do nothing if already attempted or no container
-    if (!pixiContainerRef.current || initAttemptedRef.current) return;
+  // Update game state
+  const updateGame = React.useCallback(
+    (app: PIXI.Application, container: PIXI.Container) => {
+      // Update miner positions and states
+      miners.forEach((miner) => {
+        // Update miner sprite position and state
+        const minerSprite = container.getChildByName(`miner-${miner.id}`);
+        if (minerSprite instanceof PIXI.Sprite) {
+          minerSprite.x = (miner.position.x / 100) * app.screen.width;
+          minerSprite.y = (miner.position.y / 100) * app.screen.height;
 
-    // Mark initialization as attempted to prevent multiple attempts
-    initAttemptedRef.current = true;
-    console.log("Attempting to initialize PixiJS...");
+          // Update mining progress bar if mining
+          if (miner.state === "mining") {
+            const progressBar = minerSprite.getChildByName("progress-bar");
+            if (progressBar instanceof PIXI.Graphics) {
+              progressBar.clear();
+              progressBar.beginFill(0x000000, 0.5);
+              progressBar.drawRect(-10, -15, 20, 4);
+              progressBar.endFill();
+              progressBar.beginFill(0x8b5cf6);
+              progressBar.drawRect(-10, -15, miner.miningProgress * 20, 4);
+              progressBar.endFill();
+            }
+          }
+        }
+      });
 
-    const initializePixi = async () => {
-      try {
-        // Create PIXI Application with safety checks
-        const app = new PIXI.Application({
-          width: 320,
-          height: 320,
-          backgroundColor: 0x2a4858,
-          antialias: false,
-          resolution: window.devicePixelRatio || 1,
+      // Update ore states
+      ores.forEach((ore) => {
+        const oreSprite = container.getChildByName(`ore-${ore.id}`);
+        if (oreSprite instanceof PIXI.Sprite) {
+          oreSprite.alpha = ore.depleted ? 0.4 : 1;
+
+          // Update regeneration timer if depleted
+          if (ore.depleted) {
+            const timerText = oreSprite.getChildByName("timer-text");
+            if (timerText instanceof PIXI.Text) {
+              timerText.text = Math.ceil(ore.regenerationTime).toString();
+            }
+          }
+        }
+      });
+    },
+    [miners, ores]
+  );
+
+  // Setup interactivity for ores and base
+  const setupInteractivity = React.useCallback(
+    (app: PIXI.Application, container: PIXI.Container) => {
+      // Add base station
+      const baseSprite = new PIXI.Sprite();
+      baseSprite.x = (basePosition.x / 100) * app.screen.width;
+      baseSprite.y = (basePosition.y / 100) * app.screen.height;
+      baseSprite.width = 56; // 14 * 4
+      baseSprite.height = 56;
+      baseSprite.eventMode = "static";
+      baseSprite.cursor = "pointer";
+      baseSprite.on("pointerdown", () => {
+        if (!isBlackout && onBaseClick) {
+          onBaseClick();
+        }
+      });
+      container.addChild(baseSprite);
+
+      // Add miners
+      miners.forEach((miner) => {
+        const minerSprite = new PIXI.Sprite();
+        minerSprite.name = `miner-${miner.id}`;
+        minerSprite.x = (miner.position.x / 100) * app.screen.width;
+        minerSprite.y = (miner.position.y / 100) * app.screen.height;
+        minerSprite.width = 32; // Adjust size as needed
+        minerSprite.height = 32;
+        minerSprite.anchor.set(0.5); // Center the sprite
+
+        // Add mining progress bar
+        const progressBar = new PIXI.Graphics();
+        progressBar.name = "progress-bar";
+        progressBar.visible = false;
+        minerSprite.addChild(progressBar);
+
+        // Add miner name text
+        const nameText = new PIXI.Text(miner.name, {
+          fontSize: 12,
+          fill: 0xffffff,
+          align: "center",
+        });
+        nameText.anchor.set(0.5, -1);
+        nameText.y = -20;
+        minerSprite.addChild(nameText);
+
+        container.addChild(minerSprite);
+      });
+
+      // Add ore nodes
+      ores.forEach((ore) => {
+        const oreSprite = new PIXI.Sprite();
+        oreSprite.name = `ore-${ore.id}`;
+        oreSprite.x = (ore.position.x / 100) * app.screen.width;
+        oreSprite.y = (ore.position.y / 100) * app.screen.height;
+        oreSprite.width = 16;
+        oreSprite.height = 16;
+        oreSprite.eventMode = "static";
+        oreSprite.cursor = "pointer";
+        oreSprite.on("pointerdown", () => {
+          if (!isBlackout && onOreClick) {
+            onOreClick(ore);
+          }
         });
 
-        // Set pixel art mode (no smoothing)
-        PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+        // Add regeneration timer text
+        const timerText = new PIXI.Text("", {
+          fontSize: 12,
+          fill: 0xffffff,
+          align: "center",
+        });
+        timerText.name = "timer-text";
+        timerText.anchor.set(0.5, -1);
+        timerText.y = -10;
+        oreSprite.addChild(timerText);
 
-        setLoadingProgress(70);
-        console.log("PixiJS application created");
+        container.addChild(oreSprite);
+      });
+    },
+    [basePosition, isBlackout, onBaseClick, onOreClick, ores, miners]
+  );
 
-        // Add the canvas to the DOM safely
-        if (pixiContainerRef.current && !pixiContainerRef.current.firstChild) {
-          pixiContainerRef.current.appendChild(app.view as unknown as Node);
-          appRef.current = app;
-
-          // Create main containers
-          const worldContainer = new PIXI.Container();
-          worldContainer.name = "world";
-          app.stage.addChild(worldContainer);
-
-          // Create floor, walls, miners, and ores containers
-          const floorContainer = new PIXI.Container();
-          floorContainer.name = "floor";
-
-          const wallsContainer = new PIXI.Container();
-          wallsContainer.name = "walls";
-
-          const oresContainer = new PIXI.Container();
-          oresContainer.name = "ores";
-
-          const minersContainer = new PIXI.Container();
-          minersContainer.name = "miners";
-
-          worldContainer.addChild(floorContainer);
-          worldContainer.addChild(wallsContainer);
-          worldContainer.addChild(oresContainer);
-          worldContainer.addChild(minersContainer);
-
-          setLoadingProgress(85);
-          console.log("PixiJS containers created");
-
-          // Start with initial rendering - with a small delay to let the DOM update
-          setTimeout(() => {
+  // Render map layers with sprites
+  const renderMapLayers = React.useCallback(
+    async (app: PIXI.Application, container: PIXI.Container) => {
+      try {
+        // First, load all tileset textures
+        const tilesetTextures: { [key: string]: PIXI.BaseTexture } = {};
+        for (const tileset of MineMap.tilesets) {
+          if (tileset.image) {
             try {
-              renderFloorTiles(tileTheme);
-              renderWalls(tileTheme);
-              console.log("Initial rendering complete");
-              setLoadingProgress(100);
-              initCompletedRef.current = true;
-              setTimeout(() => setLoading(false), 500);
+              const texture = await loadSprite(tileset.image);
+              tilesetTextures[tileset.name] = texture.baseTexture;
             } catch (error) {
-              console.error("Error during initial rendering:", error);
-              handleInitError("Failed during initial rendering");
+              console.error(`Failed to load tileset: ${tileset.name}`, error);
             }
-          }, 100);
-        } else {
-          handleInitError("Container not available or already has content");
-        }
-      } catch (error) {
-        console.error("Error initializing PixiJS:", error);
-        handleInitError("Failed to initialize graphics engine");
-      }
-    };
-
-    const handleInitError = (message: string) => {
-      setLoadingError(message);
-      setLoadingProgress(100);
-      setTimeout(() => setLoading(false), 500);
-      toast.error(
-        "Using simplified mining view due to graphics initialization error"
-      );
-    };
-
-    // Start initialization with a small delay to ensure DOM is ready
-    setTimeout(initializePixi, 100);
-
-    // Cleanup on unmount
-    return () => {
-      if (appRef.current) {
-        try {
-          appRef.current.destroy(true, true);
-        } catch (error) {
-          console.error("Error destroying PixiJS app:", error);
-        }
-        appRef.current = null;
-      }
-    };
-  }, [tileTheme]);
-
-  // Render floor tiles
-  const renderFloorTiles = (theme: "blue" | "brown" | "green" | "gray") => {
-    if (!appRef.current) return;
-
-    try {
-      // Get the floor container
-      const worldContainer = appRef.current.stage.getChildByName(
-        "world"
-      ) as PIXI.Container;
-      if (!worldContainer) {
-        console.error("World container not found");
-        return;
-      }
-
-      const floorContainer = worldContainer.getChildByName(
-        "floor"
-      ) as PIXI.Container;
-      if (!floorContainer) {
-        console.error("Floor container not found");
-        return;
-      }
-
-      // Clear existing floor
-      floorContainer.removeChildren();
-
-      // Define theme colors
-      const themeColors = {
-        blue: { main: 0x2a4858, alt: 0x3e6378 },
-        brown: { main: 0x4a3728, alt: 0x624a35 },
-        green: { main: 0x2a4a2a, alt: 0x3a633a },
-        gray: { main: 0x3a3a3a, alt: 0x4a4a4a },
-      };
-
-      const colors = themeColors[theme];
-
-      // Create a grid of floor tiles
-      const tileSize = 32;
-      for (let y = 0; y < 10; y++) {
-        for (let x = 0; x < 10; x++) {
-          // Alternate colors for a checkerboard pattern
-          const isDark = (x + y) % 2 === 0;
-          const color = isDark ? colors.main : colors.alt;
-
-          const tile = new PIXI.Graphics();
-          tile.beginFill(color);
-          tile.drawRect(0, 0, tileSize, tileSize);
-          tile.endFill();
-
-          // Add some texture/noise to each tile
-          tile.beginFill(0xffffff, 0.05);
-          for (let i = 0; i < 5; i++) {
-            const dotX = Math.random() * tileSize;
-            const dotY = Math.random() * tileSize;
-            const dotSize = Math.random() * 3 + 1;
-            tile.drawCircle(dotX, dotY, dotSize);
           }
-          tile.endFill();
-
-          // Position the tile
-          tile.x = x * tileSize;
-          tile.y = y * tileSize;
-
-          floorContainer.addChild(tile);
         }
+
+        // Load miner sprite
+        try {
+          // const minerTexture = await loadSprite(
+          //   "/assets/character/tools_drill/chracter_body/character_tools_drill_body_brown.png"
+          // );
+          // tilesetTextures["miner"] = minerTexture.baseTexture;
+        } catch (error) {
+          console.error("Failed to load miner sprite:", error);
+        }
+
+        // Create containers for each layer
+        const layerContainers: { [key: string]: PIXI.Container } = {};
+        MineMap.layers.forEach((layer) => {
+          const layerContainer = new PIXI.Container();
+          layerContainer.name = layer.name;
+          container.addChild(layerContainer);
+          layerContainers[layer.name] = layerContainer;
+        });
+
+        // Render each layer
+        for (const layer of MineMap.layers) {
+          const layerContainer = layerContainers[layer.name];
+          if (!layerContainer) continue;
+
+          layerContainer.removeChildren();
+
+          if (layer.type === "tilelayer") {
+            for (let i = 0; i < layer.data.length; i++) {
+              const tileId = layer.data[i];
+              if (tileId === 0) continue; // skip empty tiles
+
+              const x = (i % layer.width) * MineMap.tilewidth;
+              const y = Math.floor(i / layer.width) * MineMap.tileheight;
+
+              // Find the tileset for this tile
+              const tileset = MineMap.tilesets.find(
+                (ts) =>
+                  tileId >= ts.firstgid &&
+                  tileId < ts.firstgid + (ts.tilecount || 0)
+              );
+
+              if (tileset && tilesetTextures[tileset.name]) {
+                // Create a texture for this specific tile
+                const tileTexture = createTilesetTexture(
+                  tilesetTextures[tileset.name],
+                  tileId,
+                  tileset
+                );
+
+                // Create and position the sprite
+                const tile = new PIXI.Sprite(tileTexture);
+                tile.x = x;
+                tile.y = y;
+                layerContainer.addChild(tile);
+              }
+            }
+          } else if (layer.type === "objectgroup") {
+            if (layer.name === "Light") {
+              // Clear previous light sprites
+              lightSpritesRef.current.forEach(sprite => sprite.destroy());
+              lightSpritesRef.current = [];
+
+              // Create light sprites
+              for (const object of layer.objects) {
+                if (object.gid) {
+                  const tileset = MineMap.tilesets.find(
+                    (ts) =>
+                      object.gid >= ts.firstgid &&
+                      object.gid < ts.firstgid + (ts.tilecount || 0)
+                  );
+
+                  if (tileset && tilesetTextures[tileset.name]) {
+                    // Create a texture for this specific tile
+                    const tileTexture = createTilesetTexture(
+                      tilesetTextures[tileset.name],
+                      object.gid,
+                      tileset
+                    );
+
+                    // Create and position the sprite
+                    const sprite = new PIXI.Sprite(tileTexture) as AnimatedSprite;
+                    sprite.x = object.x;
+                    sprite.y = object.y;
+                    sprite.width = object.width;
+                    sprite.height = object.height;
+                    
+                    // Add animation properties
+                    sprite.userData = {
+                      frame: 0,
+                      animationSpeed: LIGHT_ANIMATION_SPEED,
+                      time: 0
+                    };
+
+                    layerContainer.addChild(sprite as PIXI.Sprite);
+                    lightSpritesRef.current.push(sprite);
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // Find valid positions for ores
+        const validPositions = findValidOrePositions(MineMap);
+
+        // Generate ores at valid positions
+        const generatedOres = generateOresAtPositions(
+          validPositions,
+          ores.length,
+          MineTypes.find((m) => m.id === activeMine)?.rareOreChance || 1
+        );
+        console.log(generatedOres);
+
+        // Update ore positions with generated positions
+        ores.forEach((ore, index) => {
+          if (generatedOres[index]) {
+            ore.position = generatedOres[index].position;
+          }
+        });
+
+        // Update miner sprites with texture
+        miners.forEach((miner) => {
+          const minerSprite = container.getChildByName(`miner-${miner.id}`);
+          if (minerSprite instanceof PIXI.Sprite && tilesetTextures["miner"]) {
+            minerSprite.texture = new PIXI.Texture(tilesetTextures["miner"]);
+          }
+        });
+
+        // Add animation ticker
+        app.ticker.add((delta) => {
+          lightSpritesRef.current.forEach(sprite => {
+            sprite.userData.time += delta;
+            if (sprite.userData.time >= sprite.userData.animationSpeed) {
+              sprite.userData.time = 0;
+              sprite.userData.frame = (sprite.userData.frame + 1) % LIGHT_ANIMATION_FRAMES;
+              
+              // Update sprite texture based on frame
+              const tileset = MineMap.tilesets.find(
+                (ts) => ts.name === "mine_props"
+              );
+              if (tileset && tilesetTextures[tileset.name]) {
+                const baseGid = 3364; // Base GID for light animation
+                const newGid = baseGid + sprite.userData.frame;
+                const tileTexture = createTilesetTexture(
+                  tilesetTextures[tileset.name],
+                  newGid,
+                  tileset
+                );
+                sprite.texture = tileTexture;
+              }
+            }
+          });
+        });
+
+      } catch (error) {
+        console.error("Error rendering map layers:", error);
       }
-    } catch (error) {
-      console.error("Error rendering floor tiles:", error);
-    }
-  };
+    },
+    [miners, ores, activeMine]
+  );
 
-  // Render walls
-  const renderWalls = (theme: "blue" | "brown" | "green" | "gray") => {
-    if (!appRef.current) return;
+  // Initialize PixiJS application
+  useEffect(() => {
+    // Wait for next frame to ensure container is mounted
+    const frameId = requestAnimationFrame(() => {
+      if (!pixiContainerRef.current || initAttemptedRef.current) {
+        return;
+      }
 
-    try {
-      // Get the walls container
-      const worldContainer = appRef.current.stage.getChildByName(
-        "world"
-      ) as PIXI.Container;
-      if (!worldContainer) return;
+      initAttemptedRef.current = true;
+      console.log("Starting PixiJS initialization...");
 
-      const wallsContainer = worldContainer.getChildByName(
-        "walls"
-      ) as PIXI.Container;
-      if (!wallsContainer) return;
+      // Create PixiJS application
+      const app = new PIXI.Application({
+        width: pixiContainerRef.current.clientWidth,
+        height: pixiContainerRef.current.clientHeight,
+        backgroundColor: 0x1a1a1a,
+        resolution: window.devicePixelRatio || 1,
+        autoDensity: true,
+        resizeTo: pixiContainerRef.current,
+      });
 
-      // Clear existing walls
-      wallsContainer.removeChildren();
+      // Add the canvas to the container
+      pixiContainerRef.current.appendChild(app.view as HTMLCanvasElement);
 
-      // Define theme colors for walls
-      const themeColors = {
-        blue: 0x1a2e3a,
-        brown: 0x2e1f1a,
-        green: 0x1a2e1a,
-        gray: 0x2a2a2a,
+      // Store the application reference
+      appRef.current = app;
+
+      // Create game container with scaling
+      const gameContainer = new PIXI.Container();
+      const scale = Math.min(
+        app.screen.width / (MineMap.width * MineMap.tilewidth),
+        app.screen.height / (MineMap.height * MineMap.tileheight)
+      );
+      gameContainer.scale.set(scale);
+      gameContainer.x =
+        (app.screen.width - MineMap.width * MineMap.tilewidth * scale) / 2;
+      gameContainer.y =
+        (app.screen.height - MineMap.height * MineMap.tileheight * scale) / 2;
+      app.stage.addChild(gameContainer);
+
+      // Load sprites and initialize the game
+      const initializeGame = async () => {
+        try {
+          // Preload sprites with progress tracking
+          console.log("Preloading sprites...");
+          await preloadSprites((progress) => {
+            console.log(`Sprite loading progress: ${progress}%`);
+            setLoadingProgress(Math.min(90, 5 + progress * 0.85));
+          });
+
+          // Render map layers
+          console.log("Rendering map layers...");
+          await renderMapLayers(app, gameContainer);
+
+          // Add interactive elements
+          console.log("Setting up interactivity...");
+          setupInteractivity(app, gameContainer);
+
+          // Start the game loop
+          app.ticker.add(() => {
+            updateGame(app, gameContainer);
+          });
+
+          // Mark initialization as complete
+          console.log("Initialization complete!");
+          initCompletedRef.current = true;
+          setLoadingProgress(100);
+          setTimeout(() => setLoading(false), 500);
+        } catch (error) {
+          console.error("Failed to initialize game:", error);
+          setLoadingError(
+            "Failed to initialize game. Using fallback renderer."
+          );
+          setLoadingProgress(100);
+          setTimeout(() => setLoading(false), 500);
+        }
       };
 
-      const wallColor = themeColors[theme];
-      const tileSize = 32;
+      initializeGame();
 
-      // Create walls
-      // Top wall
-      for (let x = 0; x < 10; x++) {
-        const wall = new PIXI.Graphics();
-        wall.beginFill(wallColor);
-        wall.drawRect(0, 0, tileSize, tileSize);
-        wall.endFill();
-        wall.x = x * tileSize;
-        wall.y = 0;
-        wallsContainer.addChild(wall);
-      }
-
-      // Bottom wall
-      for (let x = 0; x < 10; x++) {
-        const wall = new PIXI.Graphics();
-        wall.beginFill(wallColor);
-        wall.drawRect(0, 0, tileSize, tileSize);
-        wall.endFill();
-        wall.x = x * tileSize;
-        wall.y = 9 * tileSize;
-        wallsContainer.addChild(wall);
-      }
-
-      // Left wall
-      for (let y = 1; y < 9; y++) {
-        const wall = new PIXI.Graphics();
-        wall.beginFill(wallColor);
-        wall.drawRect(0, 0, tileSize, tileSize);
-        wall.endFill();
-        wall.x = 0;
-        wall.y = y * tileSize;
-        wallsContainer.addChild(wall);
-      }
-
-      // Right wall
-      for (let y = 1; y < 9; y++) {
-        const wall = new PIXI.Graphics();
-        wall.beginFill(wallColor);
-        wall.drawRect(0, 0, tileSize, tileSize);
-        wall.endFill();
-        wall.x = 9 * tileSize;
-        wall.y = y * tileSize;
-        wallsContainer.addChild(wall);
-      }
-
-      // Add some random walls inside
-      for (let i = 0; i < 5; i++) {
-        const x = Math.floor(Math.random() * 8 + 1);
-        const y = Math.floor(Math.random() * 8 + 1);
-
-        // Only place if not already a wall
-        const existingWall = wallsContainer.children.find(
-          (child) => child.x === x * tileSize && child.y === y * tileSize
+      // Handle window resize
+      const handleResize = () => {
+        if (!pixiContainerRef.current) return;
+        app.renderer.resize(
+          pixiContainerRef.current.clientWidth,
+          pixiContainerRef.current.clientHeight
         );
+      };
 
-        if (!existingWall) {
-          const wall = new PIXI.Graphics();
-          wall.beginFill(wallColor);
-          wall.drawRect(0, 0, tileSize, tileSize);
-          wall.endFill();
-          wall.x = x * tileSize;
-          wall.y = y * tileSize;
-          wallsContainer.addChild(wall);
-        }
-      }
-    } catch (error) {
-      console.error("Error rendering walls:", error);
-    }
-  };
+      window.addEventListener("resize", handleResize);
 
-  // Update miners when they change
-  useEffect(() => {
-    if (!appRef.current || loading) return;
-
-    try {
-      // Get the miners container
-      const worldContainer = appRef.current.stage.getChildByName(
-        "world"
-      ) as PIXI.Container;
-      if (!worldContainer) return;
-
-      const minersContainer = worldContainer.getChildByName(
-        "miners"
-      ) as PIXI.Container;
-      if (!minersContainer) return;
-
-      // Clear existing miners
-      minersContainer.removeChildren();
-
-      // Create new miners
-      miners.forEach((miner) => {
-        const x = (miner.position.x / 100) * 320;
-        const y = (miner.position.y / 100) * 320;
-
-        // Create miner graphics
-        const minerGraphic = new PIXI.Graphics();
-
-        // Color based on miner type
-        let color = 0x6b7280; // Default gray
-        switch (miner.type) {
-          case "basic":
-            color = 0x60a5fa;
-            break; // blue
-          case "expert":
-            color = 0xf59e0b;
-            break; // amber
-          case "hauler":
-            color = 0x10b981;
-            break; // emerald
-          case "prospector":
-            color = 0x8b5cf6;
-            break; // violet
-          case "engineer":
-            color = 0xef4444;
-            break; // red
-        }
-
-        // Draw miner as a colored circle
-        minerGraphic.beginFill(color);
-        minerGraphic.drawCircle(0, 0, 8);
-        minerGraphic.endFill();
-
-        // Add white border
-        minerGraphic.lineStyle(2, 0xffffff);
-        minerGraphic.drawCircle(0, 0, 8);
-
-        // Draw mining progress bar if mining
-        if (miner.state === "mining") {
-          const progressWidth = (miner.miningProgress / 5) * 20;
-
-          // Progress bar background
-          minerGraphic.beginFill(0x000000, 0.5);
-          minerGraphic.drawRect(-10, -15, 20, 4);
-          minerGraphic.endFill();
-
-          // Progress bar fill
-          minerGraphic.beginFill(0x8b5cf6);
-          minerGraphic.drawRect(-10, -15, progressWidth, 4);
-          minerGraphic.endFill();
-        }
-
-        // Position the miner
-        minerGraphic.x = x;
-        minerGraphic.y = y;
-
-        minersContainer.addChild(minerGraphic);
-      });
-    } catch (error) {
-      console.error("Error updating miners:", error);
-    }
-  }, [miners, loading]);
-
-  // Update ores when they change
-  useEffect(() => {
-    if (!appRef.current || loading) return;
-
-    try {
-      // Get the ores container
-      const worldContainer = appRef.current.stage.getChildByName(
-        "world"
-      ) as PIXI.Container;
-      if (!worldContainer) return;
-
-      const oresContainer = worldContainer.getChildByName(
-        "ores"
-      ) as PIXI.Container;
-      if (!oresContainer) return;
-
-      // Clear existing ores
-      oresContainer.removeChildren();
-
-      // Create new ores
-      ores.forEach((ore) => {
-        const x = (ore.position.x / 100) * 320 - 8;
-        const y = (ore.position.y / 100) * 320 - 8;
-
-        // Create ore graphics
-        const oreGraphic = new PIXI.Graphics();
-
-        // Color based on ore type
-        let color = 0x6b7280; // Default gray
-        switch (ore.type) {
-          case "coal":
-            color = 0x1f2937;
-            break;
-          case "iron":
-            color = 0x6b7280;
-            break;
-          case "copper":
-            color = 0xd97706;
-            break;
-          case "gold":
-            color = 0xfbbf24;
-            break;
-          case "crystal":
-            color = 0x0ea5e9;
-            break;
-          case "gem":
-            color = 0x8b5cf6;
-            break;
-          case "legendary":
-            color = 0xef4444;
-            break;
-          case "tin":
-            color = 0x94a3b8;
-            break;
-          case "silver":
-            color = 0xcbd5e1;
-            break;
-          case "mithril":
-            color = 0x6366f1;
-            break;
-          case "thorium":
-            color = 0x10b981;
-            break;
-          case "platinum":
-            color = 0xe2e8f0;
-            break;
-          case "orichalcum":
-            color = 0xf97316;
-            break;
-          case "uranium":
-            color = 0x84cc16;
-            break;
-        }
-
-        if (ore.depleted) {
-          // Draw depleted ore with reduced opacity
-          oreGraphic.beginFill(color, 0.4);
-          oreGraphic.drawRect(0, 0, 16, 16);
-          oreGraphic.endFill();
-
-          // Add regeneration timer text
-          const text = new PIXI.Text(`${Math.ceil(ore.regenerationTime)}`, {
-            fontFamily: "monospace",
-            fontSize: 12,
-            fill: 0xffffff,
-            align: "center",
-          });
-          text.anchor.set(0.5);
-          text.position.set(8, 8);
-          oreGraphic.addChild(text);
-        } else {
-          // Draw active ore
-          oreGraphic.beginFill(color);
-          oreGraphic.drawRect(0, 0, 16, 16);
-          oreGraphic.endFill();
-
-          // Add shine effect (small white circle in corner)
-          oreGraphic.beginFill(0xffffff, 0.7);
-          oreGraphic.drawCircle(4, 4, 2);
-          oreGraphic.endFill();
-        }
-
-        // Position the ore
-        oreGraphic.x = x;
-        oreGraphic.y = y;
-
-        oresContainer.addChild(oreGraphic);
-      });
-    } catch (error) {
-      console.error("Error updating ores:", error);
-    }
-  }, [ores, loading]);
-
-  // Detect when mining is completed to show resource particles
-  useEffect(() => {
-    if (loading) return;
-
-    const prevMiners = prevMinersRef.current;
-
-    miners.forEach((miner) => {
-      const prevMiner = prevMiners.find((m) => m.id === miner.id);
-
-      // If miner just changed from mining to seeking, they completed mining
-      if (
-        prevMiner &&
-        prevMiner.state === "mining" &&
-        miner.state === "seeking" &&
-        prevMiner.targetOreId
-      ) {
-        const ore = ores.find((o) => o.id === prevMiner.targetOreId);
-        if (ore) {
-          // Create a new resource particle
-          const particle = {
-            id: `particle-${Date.now()}-${Math.random()}`,
-            type: ore.type,
-            amount: 1, // Simplified
-            position: { ...ore.position },
-          };
-
-          setParticles((prev) => [...prev, particle]);
-
-          // Remove the particle after animation completes
-          setTimeout(() => {
-            setParticles((prev) => prev.filter((p) => p.id !== particle.id));
-          }, 1000);
-        }
-      }
+      // Cleanup function
+      return () => {
+        window.removeEventListener("resize", handleResize);
+        app.destroy(true, { children: true, texture: true, baseTexture: true });
+      };
     });
 
-    prevMinersRef.current = miners;
-  }, [miners, ores, loading]);
+    return () => {
+      cancelAnimationFrame(frameId);
+    };
+  }, [setupInteractivity, updateGame, renderMapLayers]);
 
-  // Change theme periodically
-  useEffect(() => {
-    if (loading) return;
-
-    const themes: Array<"blue" | "brown" | "green" | "gray"> = [
-      "blue",
-      "brown",
-      "green",
-      "gray",
-    ];
-    const themeInterval = setInterval(() => {
-      const randomTheme = themes[Math.floor(Math.random() * themes.length)];
-      setTileTheme(randomTheme);
-
-      // Update tiles with new theme
-      try {
-        renderFloorTiles(randomTheme);
-        renderWalls(randomTheme);
-      } catch (error) {
-        console.error("Error changing theme:", error);
-      }
-    }, 30000); // Change theme every 30 seconds
-
-    return () => clearInterval(themeInterval);
-  }, [loading]);
-
-  // Fallback component for when PixiJS fails to initialize
-  const renderFallback = () => {
-    return (
-      <div className="w-full h-full bg-slate-800 rounded-lg flex items-center justify-center">
-        <div className="text-center max-w-xs p-4 bg-slate-900/50 rounded-lg">
-          <h3 className="text-xl font-bold text-white mb-2">Mining Area</h3>
-          <p className="text-gray-300 mb-4">
-            {miners.length} miners working on {ores.length} resource nodes
-          </p>
-          <div className="grid grid-cols-4 gap-2">
-            {miners.map((miner, i) => (
-              <div
-                key={i}
-                className="w-8 h-8 rounded-full flex items-center justify-center"
-                style={{
-                  background:
-                    miner.type === "basic"
-                      ? "#60a5fa"
-                      : miner.type === "expert"
-                      ? "#f59e0b"
-                      : miner.type === "hauler"
-                      ? "#10b981"
-                      : miner.type === "prospector"
-                      ? "#8b5cf6"
-                      : "#ef4444",
-                }}
-              >
-                <span className="text-xs text-white font-bold">
-                  {miner.type[0].toUpperCase()}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
+  // Render loading screen
   if (loading) {
     return (
       <div className="pixel-container glass-panel relative w-full h-full rounded-lg overflow-hidden animate-fade-in shadow-xl border border-white/10 flex flex-col items-center justify-center gap-4">
         <div className="text-center">
+          <h3 className="text-xl font-bold text-white mb-2">
+            Loading Mining Area
+          </h3>
           <p className="text-white mb-2">
-            Initializing pixel world... {Math.round(loadingProgress)}%
+            {loadingProgress < 30
+              ? "Initializing PixiJS..."
+              : loadingProgress < 60
+              ? "Loading game assets..."
+              : loadingProgress < 90
+              ? "Setting up mining environment..."
+              : "Finalizing..."}
           </p>
-          <div className="w-48 h-2 bg-gray-700 rounded-full overflow-hidden">
+          <div className="w-64 h-2 bg-slate-800 rounded-full overflow-hidden">
             <Progress value={loadingProgress} className="h-full" />
           </div>
         </div>
         <p className="text-xs text-gray-400 max-w-xs text-center">
-          {loadingError || "Creating pixelated mining simulation..."}
+          {loadingError || "Preparing your mining operation..."}
         </p>
+        <div className="flex gap-2 mt-4">
+          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse delay-100"></div>
+          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse delay-200"></div>
+        </div>
       </div>
     );
   }
 
-  // If PixiJS failed to initialize properly, show fallback
-  if (!appRef.current) {
-    return renderFallback();
+  // Render blackout overlay if needed
+  if (isBlackout) {
+    return (
+      <div className="relative w-full h-full">
+        <div ref={pixiContainerRef} className="w-full h-full opacity-50" />
+        <div className="absolute inset-0 bg-black/80 z-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-red-500 mb-2">
+              BLACKOUT!
+            </div>
+            <div className="text-sm text-white/70 mb-4">
+              Energy levels critical
+            </div>
+            <div className="text-sm text-white/50">All operations frozen</div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  return (
-    <div className="pixel-container glass-panel relative w-full h-full rounded-lg overflow-hidden animate-fade-in shadow-xl border border-white/10">
-      {/* PixiJS container */}
-      <div
-        ref={pixiContainerRef}
-        className="absolute inset-0"
-        style={{ width: "100%", height: "100%" }}
-      />
-
-      {/* Resource particles (rendered as DOM elements for better text) */}
-      {particles.map((particle) => (
-        <ResourceParticle
-          key={particle.id}
-          type={particle.type}
-          amount={particle.amount}
-          position={particle.position}
-        />
-      ))}
-    </div>
-  );
+  // Render the PixiJS container
+  return <div ref={pixiContainerRef} className="w-full h-full" />;
 };
