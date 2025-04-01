@@ -17,17 +17,7 @@ import {
 } from "@/utils/spriteLoader";
 import { generateRandomOreType, createOre } from "@/lib/ores";
 import { BasePoint } from "@/constants/Miners";
-
-interface AnimatedSprite extends PIXI.Sprite {
-  userData: {
-    frame: number;
-    animationSpeed: number;
-    time: number;
-    tileset: Tileset;
-    baseTexture: PIXI.BaseTexture;
-    animation?: { tileid: number; duration: number }[];
-  };
-}
+import { AnimatedSprite } from "@/interfaces/PixiTypes";
 
 interface PixiMiningAreaProps {
   miners: Miner[];
@@ -315,8 +305,7 @@ export const PixiMiningArea = ({
     (app: PIXI.Application, container: PIXI.Container) => {
       // Add base station
       const baseSprite = new PIXI.Container();
-      baseSprite.x =
-        (basePosition.x / 100) * MineMap.width * MineMap.tilewidth ;
+      baseSprite.x = (basePosition.x / 100) * MineMap.width * MineMap.tilewidth;
       baseSprite.y =
         (basePosition.y / 100) * MineMap.height * MineMap.tileheight -
         MineMap.tileheight * 1.5;
@@ -359,7 +348,7 @@ export const PixiMiningArea = ({
         fontWeight: "bold",
       });
       baseText.anchor.set(0, 0.5); // Anchor to left center
-      baseText.x = -MineMap.tilewidth/2 + 5; // Position slightly inside the left edge
+      baseText.x = -MineMap.tilewidth / 2 + 5; // Position slightly inside the left edge
       baseSprite.addChild(baseText);
 
       // Add glow effect
