@@ -1,4 +1,9 @@
-import { FirstNames, LastNames, MinerTypes } from "@/constants/Miners";
+import {
+  FirstNames,
+  InitialSpeed,
+  LastNames,
+  MinerTypes,
+} from "@/constants/Miners";
 import { Miner, MinerType } from "@/interfaces/MinerTypes";
 import { OreType } from "@/interfaces/OreTypes";
 
@@ -84,7 +89,7 @@ export const moveMinerTowards = (
   targetPosition: { x: number; y: number },
   deltaTime: number
 ): Miner => {
-  const speed = 2; // Base movement speed in tiles per second
+  const speed = InitialSpeed; // Base movement speed in tiles per second
   const dx = targetPosition.x - miner.position.x;
   const dy = targetPosition.y - miner.position.y;
   // console.log(dx, dy);

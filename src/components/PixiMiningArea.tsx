@@ -315,41 +315,57 @@ export const PixiMiningArea = ({
     (app: PIXI.Application, container: PIXI.Container) => {
       // Add base station
       const baseSprite = new PIXI.Container();
-      baseSprite.x = (basePosition.x / 100) * app.screen.width;
-      baseSprite.y = (basePosition.y / 100) * app.screen.height;
-      baseSprite.width = 56; // 14 * 4
-      baseSprite.height = 56;
+      baseSprite.x =
+        (basePosition.x / 100) * MineMap.width * MineMap.tilewidth ;
+      baseSprite.y =
+        (basePosition.y / 100) * MineMap.height * MineMap.tileheight -
+        MineMap.tileheight * 1.5;
+      baseSprite.width = MineMap.tilewidth;
+      baseSprite.height = MineMap.tileheight;
       baseSprite.eventMode = "static";
       baseSprite.cursor = "pointer";
 
       // Add background rectangle
       const baseBackground = new PIXI.Graphics();
       baseBackground.beginFill(0x4a5568, 0.8); // Slate gray with transparency
-      baseBackground.drawRoundedRect(-28, -28, 56, 56, 8);
+      baseBackground.drawRoundedRect(
+        -MineMap.tilewidth / 2,
+        -MineMap.tileheight / 2,
+        MineMap.tilewidth * 2,
+        MineMap.tileheight,
+        4
+      );
       baseBackground.endFill();
       baseSprite.addChild(baseBackground);
 
       // Add border
       const baseBorder = new PIXI.Graphics();
-      baseBorder.lineStyle(2, 0x718096); // Slate gray border
-      baseBorder.drawRoundedRect(-28, -28, 56, 56, 8);
+      baseBorder.lineStyle(1, 0x718096); // Slate gray border
+      baseBorder.drawRoundedRect(
+        -MineMap.tilewidth / 2,
+        -MineMap.tileheight / 2,
+        MineMap.tilewidth * 2,
+        MineMap.tileheight,
+        4
+      );
       baseSprite.addChild(baseBorder);
 
       // Add text
       const baseText = new PIXI.Text("BASE", {
         fontFamily: "Arial",
-        fontSize: 12,
+        fontSize: 8,
         fill: 0xffffff,
-        align: "center",
+        align: "left",
         fontWeight: "bold",
       });
-      baseText.anchor.set(0.5, 0.5);
+      baseText.anchor.set(0, 0.5); // Anchor to left center
+      baseText.x = -MineMap.tilewidth/2 + 5; // Position slightly inside the left edge
       baseSprite.addChild(baseText);
 
       // Add glow effect
       const glow = new PIXI.Graphics();
       glow.beginFill(0x4a5568, 0.3);
-      glow.drawCircle(0, 0, 40);
+      glow.drawCircle(0, 0, 16);
       glow.endFill();
       baseSprite.addChildAt(glow, 0);
 
