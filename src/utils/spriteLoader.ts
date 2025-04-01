@@ -93,7 +93,7 @@ export const createTilesetTexture = (
 };
 
 // Create a texture from a tileset
-export const createTilesetTextureOther = (
+export const createMinerTilesetTexture = (
   baseTexture: PIXI.BaseTexture,
   tileId: number,
   tileset: Tileset
@@ -104,14 +104,13 @@ export const createTilesetTextureOther = (
     Math.floor((tileset.imagewidth || 0) / (tileset.tilewidth || 16));
   const tilesetRow = Math.floor(localTileId / columns);
   const tilesetCol = localTileId % columns;
-
   return new PIXI.Texture(
     baseTexture,
     new PIXI.Rectangle(
       tilesetCol * (tileset.tilewidth || 16) + tileset.tilewidth / 2,
       tilesetRow * (tileset.tileheight || 16) + tileset.tileheight / 2,
-      tileset.tilewidth || 16,
-      tileset.tileheight || 16
+      tileset.tilewidth|| 16,
+      tileset.tileheight|| 16
     )
   );
 };

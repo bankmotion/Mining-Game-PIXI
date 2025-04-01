@@ -12,7 +12,7 @@ import {
   preloadSprites,
   createTilesetTexture,
   textureCache,
-  createTilesetTextureOther,
+  createMinerTilesetTexture,
 } from "@/utils/spriteLoader";
 import { generateRandomOreType, createOre } from "@/lib/ores";
 
@@ -365,7 +365,7 @@ export const PixiMiningArea = ({
           if (characterTileset) {
 
             // Create a texture for the first frame of the animation
-            const tileTexture = createTilesetTextureOther(
+            const tileTexture = createMinerTilesetTexture(
               textureCache["character_push_body_green"].baseTexture,
               characterTileset.firstgid + characterTileset.columns + 1, // Use the first frame of the push-right animation
               characterTileset
@@ -495,7 +495,7 @@ export const PixiMiningArea = ({
                     // Update texture to next frame
                     const frameData =
                       sprite.userData.animation[sprite.userData.frame];
-                    const tileTexture = createTilesetTextureOther(
+                    const tileTexture = createMinerTilesetTexture(
                       sprite.userData.baseTexture,
                       sprite.userData.tileset.firstgid + frameData.tileid + 1,
                       sprite.userData.tileset
