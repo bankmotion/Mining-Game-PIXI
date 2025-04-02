@@ -3,6 +3,50 @@ import { MinerType } from "@/interfaces/MinerTypes";
 export const BasePoint = { x: 19, y: 2 };
 export const InitialSpeed = 5;
 
+// Animation types for miners
+export enum MinerAnimationType {
+  Standing = "standing",
+  WalkingRight = "walking_right",
+  WalkingLeft = "walking_left",
+  WalkingUp = "walking_up",
+  WalkingDown = "walking_down",
+  Drilling = "drilling",
+}
+
+// Animation data for different states
+export const MinerAnimations = {
+  [MinerAnimationType.Standing]: {
+    tileName: "character_push_body_green",
+    animationId: 220, // Idle animation frame ID
+    animationSpeed: 0.3,
+  },
+  [MinerAnimationType.WalkingRight]: {
+    tileName: "character_push_body_green",
+    animationId: 24, // Idle animation frame ID
+    animationSpeed: 0.3,
+  },
+  [MinerAnimationType.WalkingLeft]: {
+    tileName: "character_push_body_green",
+    animationId: 120, // Walking animation frame ID
+    animationSpeed: 0.3,
+  },
+  [MinerAnimationType.WalkingDown]: {
+    tileName: "character_push_body_green",
+    animationId: 216, // Mining animation frame ID
+    animationSpeed: 0.4, // Slightly faster for mining
+  },
+  [MinerAnimationType.WalkingUp]: {
+    tileName: "character_push_body_green",
+    animationId: 312, // Mining animation frame ID
+    animationSpeed: 0.4, // Slightly faster for mining
+  },
+  [MinerAnimationType.Drilling]: {
+    tileName: "drill_body_green",
+    animationId: 12,
+    animationSpeed: 0.3,
+  },
+};
+
 export const MinerTypes: Record<
   MinerType,
   {

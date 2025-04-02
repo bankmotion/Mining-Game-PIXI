@@ -9,6 +9,7 @@ import {
 import { Ore } from "@/interfaces/OreTypes";
 import { OreData } from "@/constants/Ore";
 import { Miner } from "@/interfaces/MinerTypes";
+import { MinerAnimations, MinerAnimationType } from "@/constants/Miners";
 
 // Cache for base sprite configurations
 const baseSpriteCache = new Map<string, PIXI.Container>();
@@ -41,7 +42,7 @@ export const createBaseSprite = (
   isBlackout: boolean
 ): PIXI.Sprite => {
   const cacheKey = `${config.x}-${config.y}-${config.width}-${config.height}`;
-  
+
   // Check cache first
   if (baseSpriteCache.has(cacheKey)) {
     const cachedSprite = baseSpriteCache.get(cacheKey)!;
@@ -64,7 +65,7 @@ export const createBaseSprite = (
 
   // Create graphics with optimized settings
   const graphics = new PIXI.Graphics();
-  
+
   // Draw background with rounded corners
   graphics.beginFill(config.backgroundColor, config.backgroundAlpha);
   graphics.drawRoundedRect(
@@ -206,7 +207,7 @@ export const createMinerSprite = (miner: Miner): PIXI.Sprite => {
 
   // Add animation data with optimized settings
   const animationData = characterTileset.tiles?.find(
-    (t) => t.id === 24
+    (t) => t.id === MinerAnimations[MinerAnimationType.Standing].animationId
   )?.animation;
   if (animationData) {
     (minerSprite as AnimatedSprite).userData = {

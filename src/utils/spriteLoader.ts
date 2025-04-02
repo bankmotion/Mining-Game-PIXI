@@ -54,6 +54,7 @@ export const preloadSprites = async (
       });
     }
   });
+  console.log(spritesToLoad.map((sprite) => sprite.name));
 
   const total = spritesToLoad.length;
   let loaded = 0;
@@ -104,13 +105,14 @@ export const createMinerTilesetTexture = (
     Math.floor((tileset.imagewidth || 0) / (tileset.tilewidth || 16));
   const tilesetRow = Math.floor(localTileId / columns);
   const tilesetCol = localTileId % columns;
+  console.log(tileId, tileset);
   return new PIXI.Texture(
     baseTexture,
     new PIXI.Rectangle(
       tilesetCol * (tileset.tilewidth || 16) + tileset.tilewidth / 2,
       tilesetRow * (tileset.tileheight || 16) + tileset.tileheight / 2,
-      tileset.tilewidth|| 16,
-      tileset.tileheight|| 16
+      tileset.tilewidth || 16,
+      tileset.tileheight || 16
     )
   );
 };

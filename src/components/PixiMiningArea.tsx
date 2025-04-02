@@ -6,7 +6,7 @@ import { useInteractivity } from "@/hooks/useInteractivity";
 import { Miner } from "@/interfaces/MinerTypes";
 import { Ore } from "@/interfaces/OreTypes";
 import { renderMapLayers } from "@/lib/mapUtils";
-import { preloadSprites, textureCache } from "@/utils/spriteLoader";
+import { preloadSprites } from "@/utils/spriteLoader";
 import * as PIXI from "pixi.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 

@@ -6,6 +6,7 @@ import { Miner } from "@/interfaces/MinerTypes";
 import { AnimatedSprite } from "@/interfaces/PixiTypes";
 import { createMinerTilesetTexture, textureCache } from "@/utils/spriteLoader";
 import { OreData } from "@/constants/Ore";
+import { MinerAnimations, MinerAnimationType } from "@/constants/Miners";
 
 interface UseGameStateProps {
   appRef: React.RefObject<PIXI.Application>;
@@ -103,9 +104,40 @@ export const useGameUpdate = ({ appRef, miners, ores }: UseGameStateProps) => {
               child.y = tileY * MineMap.tileheight;
             }
 
+            const animationType =
+              miner?.state === "mining"
+                ? MinerAnimationType.Drilling
+                : miner?.state === "moving" || miner?.state === "returning"
+                ? MinerAnimationType.WalkingLeft
+                : MinerAnimationType.Standing;
+
+            const animationD = MinerAnimations[animationType];
+            const characterTileset = MineMap.tilesets.find(
+              (ts) => ts.name === animationD.tileName
+            );
+            const animationData = characterTileset.tiles?.find(
+              (t) => t.id === animationD.animationId
+            )?.animation;
+
+            // Update sprite's animation data if it changed
+            const sprite = child as AnimatedSprite;
+            if (
+              !sprite.userData?.animation ||
+              sprite.userData.animationType !== animationType
+            ) {
+              sprite.userData = {
+                frame: 0,
+                animationSpeed: animationD.animationSpeed,
+                time: 0,
+                tileset: characterTileset,
+                baseTexture: textureCache[animationD.tileName].baseTexture,
+                animation: animationData,
+                animationType: animationType,
+              };
+            }
+
             // Handle animations if sprite has animation data
-            if ((child as AnimatedSprite).userData?.animation) {
-              const sprite = child as AnimatedSprite;
+            if (sprite.userData?.animation) {
               sprite.userData.time += deltaTime / 1000;
 
               if (sprite.userData.time >= sprite.userData.animationSpeed) {

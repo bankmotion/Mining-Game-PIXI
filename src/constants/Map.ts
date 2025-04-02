@@ -456,8 +456,7 @@ export const MineMap: Map = {
     {
       columns: 42,
       firstgid: 1,
-      image:
-        "/assets/walls_and_floors/walls_floors.png",
+      image: "/assets/walls_and_floors/walls_floors.png",
       imageheight: 976,
       imagewidth: 672,
       margin: 0,
@@ -471,8 +470,7 @@ export const MineMap: Map = {
     {
       columns: 6,
       firstgid: 2563,
-      image:
-        "/assets/walls_and_floors/mine_breaking_animations.png",
+      image: "/assets/walls_and_floors/mine_breaking_animations.png",
       imageheight: 64,
       imagewidth: 96,
       margin: 0,
@@ -514,8 +512,7 @@ export const MineMap: Map = {
     {
       columns: 12,
       firstgid: 2836,
-      image:
-        "/assets/mining/gems/mining_gems_with_shadows.png",
+      image: "/assets/mining/gems/mining_gems_with_shadows.png",
       imageheight: 272,
       imagewidth: 192,
       margin: 0,
@@ -543,8 +540,7 @@ export const MineMap: Map = {
     {
       columns: 5,
       firstgid: 3120,
-      image:
-        "/assets/mine_carts/cart_connectors.png",
+      image: "/assets/mine_carts/cart_connectors.png",
       imageheight: 64,
       imagewidth: 80,
       margin: 0,
@@ -627,8 +623,7 @@ export const MineMap: Map = {
     {
       columns: 4,
       firstgid: 3373,
-      image:
-        "/assets/mine_carts/mine_cart_animation.png",
+      image: "/assets/mine_carts/mine_cart_animation.png",
       imageheight: 96,
       imagewidth: 128,
       margin: 8,
@@ -846,6 +841,15 @@ export const MineMap: Map = {
           animation: [
             {
               duration: 300,
+              tileid: 220,
+            },
+          ],
+          id: 220,
+        },
+        {
+          animation: [
+            {
+              duration: 300,
               tileid: 24,
             },
             {
@@ -875,204 +879,88 @@ export const MineMap: Map = {
           animation: [
             {
               duration: 300,
-              tileid: 25,
+              tileid: 120,
             },
             {
               duration: 300,
-              tileid: 29,
+              tileid: 124,
             },
             {
               duration: 300,
-              tileid: 33,
+              tileid: 128,
             },
             {
               duration: 300,
-              tileid: 37,
+              tileid: 132,
             },
             {
               duration: 300,
-              tileid: 41,
+              tileid: 136,
             },
             {
               duration: 300,
-              tileid: 45,
+              tileid: 140,
             },
           ],
-          id: 25,
+          id: 120,
         },
         {
           animation: [
             {
               duration: 300,
-              tileid: 26,
+              tileid: 216,
             },
             {
               duration: 300,
-              tileid: 30,
+              tileid: 220,
             },
             {
               duration: 300,
-              tileid: 34,
+              tileid: 224,
             },
             {
               duration: 300,
-              tileid: 38,
+              tileid: 228,
             },
             {
               duration: 300,
-              tileid: 42,
+              tileid: 232,
             },
             {
               duration: 300,
-              tileid: 46,
+              tileid: 236,
             },
           ],
-          id: 26,
+          id: 216,
         },
         {
           animation: [
             {
               duration: 300,
-              tileid: 27,
+              tileid: 312,
             },
             {
               duration: 300,
-              tileid: 31,
+              tileid: 316,
             },
             {
               duration: 300,
-              tileid: 35,
+              tileid: 320,
             },
             {
               duration: 300,
-              tileid: 39,
+              tileid: 324,
             },
             {
               duration: 300,
-              tileid: 43,
+              tileid: 328,
             },
             {
               duration: 300,
-              tileid: 47,
+              tileid: 332,
             },
           ],
-          id: 27,
-        },
-        {
-          animation: [
-            {
-              duration: 300,
-              tileid: 48,
-            },
-            {
-              duration: 300,
-              tileid: 52,
-            },
-            {
-              duration: 300,
-              tileid: 56,
-            },
-            {
-              duration: 300,
-              tileid: 60,
-            },
-            {
-              duration: 300,
-              tileid: 64,
-            },
-            {
-              duration: 300,
-              tileid: 68,
-            },
-          ],
-          id: 48,
-        },
-        {
-          animation: [
-            {
-              duration: 300,
-              tileid: 49,
-            },
-            {
-              duration: 300,
-              tileid: 53,
-            },
-            {
-              duration: 300,
-              tileid: 57,
-            },
-            {
-              duration: 300,
-              tileid: 61,
-            },
-            {
-              duration: 300,
-              tileid: 65,
-            },
-            {
-              duration: 300,
-              tileid: 69,
-            },
-          ],
-          id: 49,
-        },
-        {
-          animation: [
-            {
-              duration: 300,
-              tileid: 50,
-            },
-            {
-              duration: 300,
-              tileid: 54,
-            },
-            {
-              duration: 300,
-              tileid: 58,
-            },
-            {
-              duration: 300,
-              tileid: 62,
-            },
-            {
-              duration: 300,
-              tileid: 66,
-            },
-            {
-              duration: 300,
-              tileid: 70,
-            },
-          ],
-          id: 50,
-        },
-        {
-          animation: [
-            {
-              duration: 300,
-              tileid: 51,
-            },
-            {
-              duration: 300,
-              tileid: 55,
-            },
-            {
-              duration: 300,
-              tileid: 59,
-            },
-            {
-              duration: 300,
-              tileid: 63,
-            },
-            {
-              duration: 300,
-              tileid: 67,
-            },
-            {
-              duration: 300,
-              tileid: 71,
-            },
-          ],
-          id: 51,
+          id: 312,
         },
       ],
       tilewidth: 16,
@@ -1590,7 +1478,7 @@ export const MineMap: Map = {
       tilewidth: 16,
       transparentcolor: "#ff00ff",
     },
-    
+
     {
       columns: 9,
       firstgid: 5053,
@@ -1602,6 +1490,41 @@ export const MineMap: Map = {
       spacing: 0,
       tilecount: 80,
       tileheight: 16,
+      tilewidth: 16,
+      transparentcolor: "#ff00ff",
+    },
+
+    {
+      columns: 16,
+      firstgid: 5133,
+      image:
+        "/assets/character/tools_drill/character_body/character_tools_drill_body_green.png",
+      imageheight: 256,
+      imagewidth: 192,
+      margin: 0,
+      name: "drill_body_green",
+      spacing: 0,
+      tilecount: 192,
+      tileheight: 16,
+      tiles: [
+        {
+          animation: [
+            {
+              duration: 300,
+              tileid: 12,
+            },
+            {
+              duration: 300,
+              tileid: 16,
+            },
+            {
+              duration: 300,
+              tileid: 20,
+            },
+          ],
+          id: 12,
+        },
+      ],
       tilewidth: 16,
       transparentcolor: "#ff00ff",
     },

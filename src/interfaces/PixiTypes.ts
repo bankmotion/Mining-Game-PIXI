@@ -9,6 +9,7 @@ export interface AnimatedSprite extends PIXI.Sprite {
     tileset: Tileset;
     baseTexture: PIXI.BaseTexture;
     animation?: { tileid: number; duration: number }[];
+    animationType?: string;
   };
 }
 
