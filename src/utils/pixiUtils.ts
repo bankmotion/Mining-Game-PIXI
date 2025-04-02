@@ -10,11 +10,50 @@ import { Ore } from "@/interfaces/OreTypes";
 import { OreData } from "@/constants/Ore";
 import { Miner } from "@/interfaces/MinerTypes";
 
+// Cache for base sprite configurations
+const baseSpriteCache = new Map<string, PIXI.Container>();
+
+// Cache for ore sprites
+const oreSpriteCache = new Map<string, PIXI.Sprite>();
+
+// Cache for miner sprites
+const minerSpriteCache = new Map<string, PIXI.Sprite>();
+
+// Cache for text styles
+const textStyles = {
+  base: new PIXI.TextStyle({
+    fontFamily: "Arial",
+    fontSize: 14,
+    fill: 0xffffff,
+    align: "left",
+    fontWeight: "bold",
+  }),
+  timer: new PIXI.TextStyle({
+    fontSize: 12,
+    fill: 0xffffff,
+    align: "center",
+  }),
+};
+
 export const createBaseSprite = (
   config: BaseSpriteConfig,
   onBaseClick: () => void,
   isBlackout: boolean
 ): PIXI.Sprite => {
+  const cacheKey = `${config.x}-${config.y}-${config.width}-${config.height}`;
+  
+  // Check cache first
+  if (baseSpriteCache.has(cacheKey)) {
+    const cachedSprite = baseSpriteCache.get(cacheKey)!;
+    if (!isBlackout && onBaseClick) {
+      cachedSprite.eventMode = "static";
+      cachedSprite.cursor = "pointer";
+      cachedSprite.removeAllListeners();
+      cachedSprite.on("pointerdown", onBaseClick);
+    }
+    return cachedSprite as PIXI.Sprite;
+  }
+
   const baseSprite = new PIXI.Container();
   baseSprite.x = config.x;
   baseSprite.y = config.y;
@@ -23,39 +62,34 @@ export const createBaseSprite = (
   baseSprite.eventMode = "static";
   baseSprite.cursor = "pointer";
 
-  // Add background rectangle
-  const baseBg = new PIXI.Graphics();
-  baseBg.beginFill(config.backgroundColor, config.backgroundAlpha);
-  baseBg.drawRoundedRect(
+  // Create graphics with optimized settings
+  const graphics = new PIXI.Graphics();
+  
+  // Draw background with rounded corners
+  graphics.beginFill(config.backgroundColor, config.backgroundAlpha);
+  graphics.drawRoundedRect(
     -config.width / 2,
     -config.height / 2,
     config.width * 2,
     config.height,
     4
   );
-  baseBg.endFill();
-  baseSprite.addChild(baseBg);
+  graphics.endFill();
 
-  // Add border rectangle
-  const baseBorder = new PIXI.Graphics();
-  baseBorder.lineStyle(1, config.borderColor);
-  baseBorder.drawRoundedRect(
+  // Draw border
+  graphics.lineStyle(1, config.borderColor);
+  graphics.drawRoundedRect(
     -config.width / 2,
     -config.height / 2,
     config.width * 2,
     config.height,
     4
   );
-  baseSprite.addChild(baseBorder);
 
-  // Add text
-  const baseText = new PIXI.Text("BASE", {
-    fontFamily: "Arial",
-    fontSize: config.fontSize,
-    fill: config.textColor,
-    align: "left",
-    fontWeight: "bold",
-  });
+  baseSprite.addChild(graphics);
+
+  // Add text with cached style
+  const baseText = new PIXI.Text("BASE", textStyles.base);
   baseText.anchor.set(0, 0.5);
   baseText.x = -config.width / 2 + 5;
   baseSprite.addChild(baseText);
@@ -71,6 +105,9 @@ export const createBaseSprite = (
     baseSprite.on("pointerdown", onBaseClick);
   }
 
+  // Cache the sprite
+  baseSpriteCache.set(cacheKey, baseSprite);
+
   return baseSprite as PIXI.Sprite;
 };
 
@@ -79,6 +116,19 @@ export const createOreSprite = (
   onOreClick: (ore: Ore) => void,
   isBlackout: boolean
 ): PIXI.Sprite => {
+  // Check cache first
+  if (oreSpriteCache.has(ore.id)) {
+    const cachedSprite = oreSpriteCache.get(ore.id)!;
+    cachedSprite.alpha = ore.depleted ? 0.4 : 1;
+    if (!isBlackout && onOreClick) {
+      cachedSprite.eventMode = "static";
+      cachedSprite.cursor = "pointer";
+      cachedSprite.removeAllListeners();
+      cachedSprite.on("pointerdown", () => onOreClick(ore));
+    }
+    return cachedSprite;
+  }
+
   const oreTileset = MineMap.tilesets.find((ts) => ts.name === "mining_ores");
   if (!oreTileset) {
     throw new Error("Ore tileset not found");
@@ -91,6 +141,7 @@ export const createOreSprite = (
       Object.keys(OreData).findIndex((or) => or === ore.type),
     oreTileset
   );
+
   const oreSprite = new PIXI.Sprite(tileTexture);
   oreSprite.name = `ore-${ore.id}`;
   oreSprite.x = ore.position.x * MineMap.tilewidth;
@@ -105,22 +156,30 @@ export const createOreSprite = (
     oreSprite.on("pointerdown", () => onOreClick(ore));
   }
 
-  // Add regeneration timer text
-  const timerText = new PIXI.Text("", {
-    fontSize: 12,
-    fill: 0xffffff,
-    align: "center",
-  });
+  // Add regeneration timer text with cached style
+  const timerText = new PIXI.Text("", textStyles.timer);
   timerText.name = "timer-text";
   timerText.anchor.set(0.5, -1);
   timerText.y = -10;
   oreSprite.addChild(timerText);
 
+  // Cache the sprite
+  oreSpriteCache.set(ore.id, oreSprite);
+
   return oreSprite;
 };
 
-// Create miner sprite with animation
 export const createMinerSprite = (miner: Miner): PIXI.Sprite => {
+  // Check cache first
+  if (minerSpriteCache.has(miner.id)) {
+    const cachedSprite = minerSpriteCache.get(miner.id)!;
+    const tileX = (miner.position.x / 100) * MineMap.width;
+    const tileY = (miner.position.y / 100) * MineMap.height;
+    cachedSprite.x = tileX * MineMap.tilewidth;
+    cachedSprite.y = tileY * MineMap.tileheight;
+    return cachedSprite;
+  }
+
   const characterTileset = MineMap.tilesets.find(
     (ts) => ts.name === "character_push_body_green"
   );
@@ -145,7 +204,7 @@ export const createMinerSprite = (miner: Miner): PIXI.Sprite => {
   minerSprite.width = MineMap.tilewidth;
   minerSprite.height = MineMap.tileheight;
 
-  // Add animation data
+  // Add animation data with optimized settings
   const animationData = characterTileset.tiles?.find(
     (t) => t.id === 24
   )?.animation;
@@ -160,5 +219,15 @@ export const createMinerSprite = (miner: Miner): PIXI.Sprite => {
     };
   }
 
+  // Cache the sprite
+  minerSpriteCache.set(miner.id, minerSprite);
+
   return minerSprite;
+};
+
+// Cleanup function to clear caches
+export const clearSpriteCaches = () => {
+  baseSpriteCache.clear();
+  oreSpriteCache.clear();
+  minerSpriteCache.clear();
 };

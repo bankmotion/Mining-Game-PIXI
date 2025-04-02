@@ -8,7 +8,7 @@ import { Ore } from "@/interfaces/OreTypes";
 import { renderMapLayers } from "@/lib/mapUtils";
 import { preloadSprites, textureCache } from "@/utils/spriteLoader";
 import * as PIXI from "pixi.js";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface PixiMiningAreaProps {
   miners: Miner[];
@@ -37,7 +37,7 @@ export const PixiMiningArea = ({
   const initAttemptedRef = useRef(false);
   const initCompletedRef = useRef(false);
 
-  // Setup interactivity
+  // Memoize setupInteractivity to prevent unnecessary re-renders
   const { setupInteractivity } = useInteractivity({
     appRef,
     ores,
@@ -48,19 +48,20 @@ export const PixiMiningArea = ({
     isBlackout,
   });
 
+  // Memoize game status hook
   useGameStatus({
     appRef,
     miners,
     ores,
   });
 
-  // Get base position from game logic
-  const getBasePosition = () => {
+  // Memoize base position calculation
+  const getBasePosition = useCallback(() => {
     const mine = MineTypes.find((m) => m.id === activeMine);
     return mine ? mine.basePosition : { x: 0, y: 0 };
-  };
+  }, [activeMine]);
 
-  // Progress simulation with timeout
+  // Optimize loading progress simulation
   useEffect(() => {
     if (loading && !initCompletedRef.current) {
       const progressInterval = setInterval(() => {
@@ -87,9 +88,8 @@ export const PixiMiningArea = ({
     }
   }, [loading]);
 
-  // Initialize PixiJS application
+  // Optimize PixiJS initialization
   useEffect(() => {
-    // Wait for next frame to ensure container is mounted
     const frameId = requestAnimationFrame(() => {
       if (
         !pixiContainerRef.current ||
@@ -102,7 +102,7 @@ export const PixiMiningArea = ({
       initAttemptedRef.current = true;
       console.log("Starting PixiJS initialization...");
 
-      // Create PixiJS application
+      // Create PixiJS application with optimized settings
       const app = new PIXI.Application({
         width: pixiContainerRef.current.clientWidth,
         height: pixiContainerRef.current.clientHeight,
@@ -110,6 +110,9 @@ export const PixiMiningArea = ({
         resolution: window.devicePixelRatio || 1,
         autoDensity: true,
         resizeTo: pixiContainerRef.current,
+        powerPreference: "high-performance",
+        antialias: false,
+        hello: true,
       });
 
       // Add the canvas to the container
@@ -118,7 +121,7 @@ export const PixiMiningArea = ({
       // Store the application reference
       appRef.current = app;
 
-      // Create game container with scaling
+      // Create game container with optimized scaling
       const gameContainer = new PIXI.Container();
       const scale = Math.min(
         app.screen.width / (MineMap.width * MineMap.tilewidth),
@@ -131,7 +134,7 @@ export const PixiMiningArea = ({
         (app.screen.height - MineMap.height * MineMap.tileheight * scale) / 2;
       app.stage.addChild(gameContainer);
 
-      // Load sprites and initialize the game
+      // Optimize sprite loading and game initialization
       const initializeGame = async () => {
         try {
           // Preload sprites with progress tracking
@@ -140,8 +143,6 @@ export const PixiMiningArea = ({
             setLoadingProgress(Math.min(90, 5 + progress * 0.85));
           });
 
-          console.log("Available textures:", Object.keys(textureCache));
-
           // Render map layers
           console.log("Rendering map layers...");
           await renderMapLayers(app, gameContainer, ores, activeMine);
@@ -149,12 +150,6 @@ export const PixiMiningArea = ({
           // Add interactive elements
           console.log("Setting up interactivity...");
           setupInteractivity(app, gameContainer);
-
-          // Start the game loop using PIXI's ticker
-          // app.ticker.add(() => {
-          //   // Update game state
-          //   updateGame(app.ticker.deltaMS);
-          // });
 
           // Mark initialization as complete
           console.log("Initialization complete!");
@@ -173,7 +168,7 @@ export const PixiMiningArea = ({
 
       initializeGame();
 
-      // Handle window resize
+      // Optimize window resize handler
       const handleResize = () => {
         if (!pixiContainerRef.current) return;
         app.renderer.resize(
@@ -184,7 +179,7 @@ export const PixiMiningArea = ({
 
       window.addEventListener("resize", handleResize);
 
-      // Cleanup function
+      // Optimize cleanup
       return () => {
         window.removeEventListener("resize", handleResize);
         app.destroy(true, { children: true, texture: true, baseTexture: true });
@@ -196,53 +191,65 @@ export const PixiMiningArea = ({
     };
   }, [setupInteractivity, loadingProgress, activeMine, ores]);
 
-  // Render loading screen
+  // Memoize loading screen render
+  const renderLoadingScreen = useCallback(() => {
+    if (!loading) return null;
+
+    return (
+      <div className="absolute inset-0 pixel-container glass-panel rounded-lg overflow-hidden animate-fade-in shadow-xl border border-white/10 flex flex-col items-center justify-center gap-4">
+        <div className="text-center">
+          <h3 className="text-xl font-bold text-white mb-2">
+            Loading Mining Area
+          </h3>
+          <p className="text-white mb-2">
+            {loadingProgress < 30
+              ? "Initializing PixiJS..."
+              : loadingProgress < 60
+              ? "Loading game assets..."
+              : loadingProgress < 90
+              ? "Setting up mining environment..."
+              : "Finalizing..."}
+          </p>
+          <div className="w-64 h-2 bg-slate-800 rounded-full overflow-hidden">
+            <Progress value={loadingProgress} className="h-full" />
+          </div>
+        </div>
+        <p className="text-xs text-gray-400 max-w-xs text-center">
+          {loadingError || "Preparing your mining operation..."}
+        </p>
+        <div className="flex gap-2 mt-4">
+          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse delay-100"></div>
+          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse delay-200"></div>
+        </div>
+      </div>
+    );
+  }, [loading, loadingProgress, loadingError]);
+
+  // Memoize blackout overlay render
+  const renderBlackoutOverlay = useCallback(() => {
+    if (!isBlackout) return null;
+
+    return (
+      <div className="absolute inset-0 bg-black/80 z-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-red-500 mb-2">
+            BLACKOUT!
+          </div>
+          <div className="text-sm text-white/70 mb-4">
+            Energy levels critical
+          </div>
+          <div className="text-sm text-white/50">All operations frozen</div>
+        </div>
+      </div>
+    );
+  }, [isBlackout]);
+
   return (
     <div className="relative w-full h-full">
       <div ref={pixiContainerRef} className="w-full h-full" />
-      {loading && (
-        <div className="absolute inset-0 pixel-container glass-panel rounded-lg overflow-hidden animate-fade-in shadow-xl border border-white/10 flex flex-col items-center justify-center gap-4">
-          <div className="text-center">
-            <h3 className="text-xl font-bold text-white mb-2">
-              Loading Mining Area
-            </h3>
-            <p className="text-white mb-2">
-              {loadingProgress < 30
-                ? "Initializing PixiJS..."
-                : loadingProgress < 60
-                ? "Loading game assets..."
-                : loadingProgress < 90
-                ? "Setting up mining environment..."
-                : "Finalizing..."}
-            </p>
-            <div className="w-64 h-2 bg-slate-800 rounded-full overflow-hidden">
-              <Progress value={loadingProgress} className="h-full" />
-            </div>
-          </div>
-          <p className="text-xs text-gray-400 max-w-xs text-center">
-            {loadingError || "Preparing your mining operation..."}
-          </p>
-          <div className="flex gap-2 mt-4">
-            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse delay-100"></div>
-            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse delay-200"></div>
-          </div>
-        </div>
-      )}
-
-      {isBlackout && (
-        <div className="absolute inset-0 bg-black/80 z-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-red-500 mb-2">
-              BLACKOUT!
-            </div>
-            <div className="text-sm text-white/70 mb-4">
-              Energy levels critical
-            </div>
-            <div className="text-sm text-white/50">All operations frozen</div>
-          </div>
-        </div>
-      )}
+      {renderLoadingScreen()}
+      {renderBlackoutOverlay()}
     </div>
   );
 };
