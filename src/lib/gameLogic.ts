@@ -239,7 +239,8 @@ export const updateMinerState = (
         updatedMiner = moveMinerTowards(
           updatedMiner,
           miner.targetPosition,
-          deltaTime
+          deltaTime,
+          miner.state
         );
 
         // Check if miner has reached the target position
@@ -336,7 +337,8 @@ export const updateMinerState = (
         updatedMiner = moveMinerTowards(
           updatedMiner,
           miner.targetPosition,
-          deltaTime
+          deltaTime,
+          miner.state
         );
 
         // Check if miner has reached the base

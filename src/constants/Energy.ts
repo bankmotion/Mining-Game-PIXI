@@ -40,7 +40,7 @@ export const EnergySourceData: Record<
   },
 };
 
-export const MiningEnergyConsumption = 20;
+export const MiningEnergyConsumption = 10;
 export const MovementEnergyConsumption = 4;
 export const BlackoutThreshold = 0; // 10% energy remaining triggers blackout
 export const BlackoutUnlockedThreshold = 0.1; // 10% energy remaining triggers blackout

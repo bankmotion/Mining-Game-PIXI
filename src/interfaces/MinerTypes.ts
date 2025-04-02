@@ -6,6 +6,7 @@ export type MinerState =
   | "mining"
   | "returning"
   | "resting";
+  
 export type MinerType =
   | "basic"
   | "expert"

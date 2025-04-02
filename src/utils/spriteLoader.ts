@@ -105,7 +105,7 @@ export const createMinerTilesetTexture = (
     Math.floor((tileset.imagewidth || 0) / (tileset.tilewidth || 16));
   const tilesetRow = Math.floor(localTileId / columns);
   const tilesetCol = localTileId % columns;
-  console.log(tileId, tileset);
+
   return new PIXI.Texture(
     baseTexture,
     new PIXI.Rectangle(

@@ -4,7 +4,7 @@ import {
   LastNames,
   MinerTypes,
 } from "@/constants/Miners";
-import { Miner, MinerType } from "@/interfaces/MinerTypes";
+import { Miner, MinerState, MinerType } from "@/interfaces/MinerTypes";
 import { OreType } from "@/interfaces/OreTypes";
 
 // Generate a random miner name
@@ -87,9 +87,10 @@ export const calculateDistance = (
 export const moveMinerTowards = (
   miner: Miner,
   targetPosition: { x: number; y: number },
-  deltaTime: number
+  deltaTime: number,
+  state: MinerState
 ): Miner => {
-  const speed = InitialSpeed; // Base movement speed in tiles per second
+  const speed = InitialSpeed * (state === "moving" ? 1 : 2);
   const dx = targetPosition.x - miner.position.x;
   const dy = targetPosition.y - miner.position.y;
   // console.log(dx, dy);
