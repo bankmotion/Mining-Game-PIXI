@@ -13,7 +13,7 @@ interface UseGameStateProps {
   ores: Ore[];
 }
 
-export const useGameStatus = ({ appRef, miners, ores }: UseGameStateProps) => {
+export const useGameUpdate = ({ appRef, miners, ores }: UseGameStateProps) => {
   // Update ore states
   const updateOreStates = useCallback(
     (deltaTime: number) => {

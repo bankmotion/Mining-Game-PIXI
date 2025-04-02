@@ -1,7 +1,7 @@
 import { Progress } from "@/components/ui/progress";
 import { MineMap } from "@/constants/Map";
 import { MineTypes } from "@/constants/Mine";
-import { useGameStatus } from "@/hooks/useGameStatus";
+import { useGameUpdate } from "@/hooks/useGameUpdate";
 import { useInteractivity } from "@/hooks/useInteractivity";
 import { Miner } from "@/interfaces/MinerTypes";
 import { Ore } from "@/interfaces/OreTypes";
@@ -49,7 +49,7 @@ export const PixiMiningArea = ({
   });
 
   // Memoize game status hook
-  useGameStatus({
+  useGameUpdate({
     appRef,
     miners,
     ores,
@@ -233,9 +233,7 @@ export const PixiMiningArea = ({
     return (
       <div className="absolute inset-0 bg-black/80 z-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-2xl font-bold text-red-500 mb-2">
-            BLACKOUT!
-          </div>
+          <div className="text-2xl font-bold text-red-500 mb-2">BLACKOUT!</div>
           <div className="text-sm text-white/70 mb-4">
             Energy levels critical
           </div>
