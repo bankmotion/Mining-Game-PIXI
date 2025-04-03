@@ -5,7 +5,7 @@ import { useGameUpdate } from "@/hooks/useGameUpdate";
 import { useInteractivity } from "@/hooks/useInteractivity";
 import { Miner } from "@/interfaces/MinerTypes";
 import { Ore } from "@/interfaces/OreTypes";
-import { renderMapLayers } from "@/lib/mapUtils";
+import { renderMapLayers } from "@/lib/mapLogic";
 import { preloadSprites } from "@/utils/spriteLoader";
 import * as PIXI from "pixi.js";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -99,11 +99,11 @@ export const PixiMiningArea = ({
         return;
       }
 
-    initAttemptedRef.current = true;
+      initAttemptedRef.current = true;
       console.log("Starting PixiJS initialization...");
 
       // Create PixiJS application with optimized settings
-        const app = new PIXI.Application({
+      const app = new PIXI.Application({
         width: pixiContainerRef.current.clientWidth,
         height: pixiContainerRef.current.clientHeight,
         backgroundColor: 0x1a1a1a,
@@ -111,7 +111,7 @@ export const PixiMiningArea = ({
         autoDensity: true,
         resizeTo: pixiContainerRef.current,
         powerPreference: "high-performance",
-          antialias: false,
+        antialias: false,
         hello: true,
       });
 
@@ -119,7 +119,7 @@ export const PixiMiningArea = ({
       pixiContainerRef.current.appendChild(app.view as HTMLCanvasElement);
 
       // Store the application reference
-          appRef.current = app;
+      appRef.current = app;
 
       const tileCountX = Math.floor(app.screen.width / MapTile.width);
       const tileCountY = Math.floor(app.screen.height / MapTile.height);
@@ -157,9 +157,9 @@ export const PixiMiningArea = ({
 
           // Mark initialization as complete
           console.log("Initialization complete!");
-              initCompletedRef.current = true;
-      setLoadingProgress(100);
-      setTimeout(() => setLoading(false), 500);
+          initCompletedRef.current = true;
+          setLoadingProgress(100);
+          setTimeout(() => setLoading(false), 500);
         } catch (error) {
           console.error("Failed to initialize game:", error);
           setLoadingError(

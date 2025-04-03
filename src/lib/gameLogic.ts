@@ -1,175 +1,23 @@
+import { InitialEnergyState } from "@/constants/Energy";
 import { MineTypes } from "@/constants/Mine";
 import { OreData } from "@/constants/Ore";
+import { EnergyState } from "@/interfaces/EnergyTypes";
 import { GameState } from "@/interfaces/GameType";
 import { Miner } from "@/interfaces/MinerTypes";
 import { MineType } from "@/interfaces/MineType";
 import { Ore, OreType } from "@/interfaces/OreTypes";
+import { updateEnergyState } from "./energyLogic";
 import {
-  calculateDistance,
   calculateInventoryValue,
+  isInventoryFull,
   moveMinerTowards,
 } from "./miners";
 import {
+  calculateResourceYield,
   depleteOreVein,
   generateInitialOres,
   updateOreRegeneration,
 } from "./ores";
-import { EnergyState } from "@/interfaces/EnergyTypes";
-import { updateEnergyState } from "./energyLogic";
-import { InitialEnergyState } from "@/constants/Energy";
-
-export const findNearestOre = (
-  miner: Miner,
-  ores: Ore[],
-  miners: Miner[]
-): Ore | undefined => {
-  const availableOres = ores.filter((ore) => {
-    if (ore.depleted) return false;
-
-    const isTargeted = miners.some(
-      (m) =>
-        m.id !== miner.id &&
-        m.targetOreId === ore.id &&
-        (m.state === "mining" || m.state === "moving")
-    );
-
-    return !isTargeted;
-  });
-
-  if (availableOres.length === 0) return undefined;
-
-  if (miner.type === "expert" && miner.specialization) {
-    const specializedOres = availableOres.filter(
-      (ore) => ore.type === miner.specialization
-    );
-    if (specializedOres.length > 0) {
-      let closestOre = specializedOres[0];
-      let closestDistance = calculateDistance(
-        miner.position,
-        closestOre.position
-      );
-
-      for (let i = 1; i < specializedOres.length; i++) {
-        const ore = specializedOres[i];
-        const distance = calculateDistance(miner.position, ore.position);
-        if (distance < closestDistance) {
-          closestOre = ore;
-          closestDistance = distance;
-        }
-      }
-
-      return closestOre;
-    }
-  }
-
-  if (miner.type === "prospector") {
-    const valuableOres = [...availableOres].sort(
-      (a, b) => OreData[b.type].value - OreData[a.type].value
-    );
-    const topOres = valuableOres.slice(
-      0,
-      Math.max(1, Math.floor(valuableOres.length * 0.3))
-    );
-
-    if (topOres.length > 0) {
-      let closestOre = topOres[0];
-      let closestDistance = calculateDistance(
-        miner.position,
-        closestOre.position
-      );
-
-      for (let i = 1; i < topOres.length; i++) {
-        const ore = topOres[i];
-        const distance = calculateDistance(miner.position, ore.position);
-        if (distance < closestDistance) {
-          closestOre = ore;
-          closestDistance = distance;
-        }
-      }
-
-      return closestOre;
-    }
-  }
-
-  if (miner.type === "engineer") {
-    const hardOres = [...availableOres].sort(
-      (a, b) => OreData[b.type].hardness - OreData[a.type].hardness
-    );
-    const topHardOres = hardOres.slice(
-      0,
-      Math.max(1, Math.floor(hardOres.length * 0.5))
-    );
-
-    if (topHardOres.length > 0) {
-      let closestOre = topHardOres[0];
-      let closestDistance = calculateDistance(
-        miner.position,
-        closestOre.position
-      );
-
-      for (let i = 1; i < topHardOres.length; i++) {
-        const ore = topHardOres[i];
-        const distance = calculateDistance(miner.position, ore.position);
-        if (distance < closestDistance) {
-          closestOre = ore;
-          closestDistance = distance;
-        }
-      }
-
-      return closestOre;
-    }
-  }
-
-  let closestOre = availableOres[0];
-  let closestDistance = calculateDistance(miner.position, closestOre.position);
-
-  for (let i = 1; i < availableOres.length; i++) {
-    const ore = availableOres[i];
-    const distance = calculateDistance(miner.position, ore.position);
-    if (distance < closestDistance) {
-      closestOre = ore;
-      closestDistance = distance;
-    }
-  }
-
-  return closestOre;
-};
-
-export const calculateResourceYield = (
-  miner: Miner,
-  ore: Ore,
-  upgradeLevel: number = 0,
-  mineMultiplier: number = 1
-): number => {
-  let yield_ = ore.baseYield;
-
-  yield_ *= miner.efficiency;
-
-  yield_ *= 1 + upgradeLevel * 0.3;
-
-  if (miner.type === "expert" && miner.specialization === ore.type) {
-    yield_ *= 2.5;
-  }
-
-  if (miner.type === "engineer") {
-    yield_ *= 1.5;
-    yield_ *= 1 + OreData[ore.type].hardness / 10;
-  }
-
-  yield_ *= mineMultiplier;
-
-  yield_ *= 0.85 + Math.random() * 0.3;
-
-  return Math.max(1, Math.round(yield_));
-};
-
-export const isInventoryFull = (miner: Miner): boolean => {
-  const totalItems = Object.values(miner.inventory).reduce(
-    (sum, count) => sum + count,
-    0
-  );
-  return totalItems >= miner.capacity;
-};
 
 export const updateMinerState = (
   miner: Miner,
@@ -565,61 +413,4 @@ export const initializeGameState = (): GameState => {
     mines,
     energy: InitialEnergyState,
   };
-};
-
-export const unlockMine = (state: GameState, mineId: string): GameState => {
-  const mine = state.mines[mineId];
-
-  if (!mine || mine.unlocked) {
-    return state;
-  }
-
-  if (state.money < mine.cost) {
-    return state;
-  }
-
-  return {
-    ...state,
-    money: state.money - mine.cost,
-    mines: {
-      ...state.mines,
-      [mineId]: {
-        ...mine,
-        unlocked: true,
-      },
-    },
-  };
-};
-
-export const setActiveMine = (state: GameState, mineId: string): GameState => {
-  const mine = state.mines[mineId];
-
-  if (!mine || !mine.unlocked) {
-    return state;
-  }
-
-  if (state.activeMine !== mineId) {
-    return {
-      ...state,
-      activeMine: mineId,
-      miners: state.miners.map((miner) => ({
-        ...miner,
-        state: "seeking",
-        targetOreId: undefined,
-        targetPosition: { x: 50, y: 50 },
-      })),
-    };
-  }
-
-  return state;
-};
-
-export const generateOresForMine = (
-  mineId: string,
-  state: GameState
-): Ore[] => {
-  const mine = state.mines[mineId];
-  if (!mine) return [];
-
-  return generateInitialOres(mine.oreCount, 100, 100, mine.rareOreChance);
 };

@@ -1,13 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { createMiner } from "@/lib/miners";
-import { generateInitialOres } from "@/lib/ores";
-import {
-  initializeGameState,
-  updateGameState,
-  unlockMine,
-  setActiveMine,
-  generateOresForMine,
-} from "@/lib/gameLogic";
+import { generateInitialOres, generateOresForMine } from "@/lib/oresLogic";
+import { initializeGameState, updateGameState } from "@/lib/gameLogic";
 import { toast } from "sonner";
 import { GameState } from "@/interfaces/GameType";
 import { CalculateUpgradeCost, Upgrades } from "@/constants/Upgrades";
@@ -17,6 +10,8 @@ import { MineTypes } from "@/constants/Mine";
 import { EnergySource } from "@/interfaces/EnergyTypes";
 import { buildEnergySource, upgradeEnergySource } from "@/lib/energyLogic";
 import { MineMap } from "@/constants/Map";
+import { setActiveMine, unlockMine } from "@/lib/mineLogic";
+import { createMiner } from "@/lib/minersLogic";
 
 export const useGameState = () => {
   const [gameState, setGameState] = useState<GameState>(initializeGameState);
@@ -333,7 +328,10 @@ export const useGameState = () => {
     setGameState((prevState) => {
       const updatedMiners = prevState.miners.map((miner) => {
         // If miner is already mining or moving to this ore, don't change their state
-        if (miner.targetOreId === ore.id && (miner.state === "mining" || miner.state === "moving")) {
+        if (
+          miner.targetOreId === ore.id &&
+          (miner.state === "mining" || miner.state === "moving")
+        ) {
           return miner;
         }
 
@@ -345,7 +343,7 @@ export const useGameState = () => {
         // Convert tile coordinates to percentage-based coordinates
         const targetPosition = {
           x: (ore.position.x / MineMap.width) * 100,
-          y: (ore.position.y / MineMap.height) * 100
+          y: (ore.position.y / MineMap.height) * 100,
         };
 
         // Otherwise, make the miner move to the ore

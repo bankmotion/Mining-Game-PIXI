@@ -83,6 +83,15 @@ export const calculateDistance = (
   return Math.sqrt(dx * dx + dy * dy);
 };
 
+// Check if miner inventory is full
+export const isInventoryFull = (miner: Miner): boolean => {
+  const totalItems = Object.values(miner.inventory).reduce(
+    (sum, count) => sum + count,
+    0
+  );
+  return totalItems >= miner.capacity;
+};
+
 // Move miner towards target position
 export const moveMinerTowards = (
   miner: Miner,
