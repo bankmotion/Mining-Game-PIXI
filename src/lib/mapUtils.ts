@@ -1,67 +1,40 @@
 import * as PIXI from "pixi.js";
-import { MineMap } from "@/constants/Map";
+import { MapTile, MineMap } from "@/constants/Map";
 import { MineTypes } from "@/constants/Mine";
 import { Ore } from "@/interfaces/OreTypes";
-import { generateRandomOreType, createOre } from "@/lib/ores";
-import { createTilesetTexture, textureCache } from "@/utils/spriteLoader";
+import { createTilesetTexture } from "@/utils/spriteLoader";
+import {
+  FloorData,
+  LayerName,
+  MountainData,
+  SpriteName,
+} from "@/constants/Sprites";
+import { getRandomNumber, getRandomTileId } from "@/utils/utils";
+import { findValidOrePositions, generateOresAtPositions } from "./ores";
 
-// Function to find valid positions for ores on the map
-export const findValidOrePositions = (
-  map: typeof MineMap
-): Array<{ x: number; y: number }> => {
-  const validPositions: Array<{ x: number; y: number }> = [];
-  const floorLayer = map.layers.find((l) => l.name === "Floor");
-  const mountainLayer = map.layers.find((l) => l.name === "Mountains");
+export const MapLayerType: LayerName[][] = [];
 
-  if (!floorLayer || !mountainLayer) return validPositions;
+export const updateMapType = (
+  container: PIXI.Container<PIXI.DisplayObject>,
+  x: number,
+  y: number,
+  spriteName: SpriteName,
+  id: number,
+  startX: number,
+  startY: number,
+  mapType: LayerName
+) => {
+  const tileTexture = createTilesetTexture(spriteName, id);
+  const tile = new PIXI.Sprite(tileTexture);
 
-  for (let y = 0; y < map.height; y++) {
-    for (let x = 0; x < map.width; x++) {
-      const index = y * map.width + x;
-      const floorTile = floorLayer.data[index];
-      const mountainTile = mountainLayer.data[index];
+  tile.x = startX;
+  tile.y = startY;
+  container.addChild(tile);
 
-      // Check if the position is valid (has floor and no mountain)
-      if (floorTile !== 0 && mountainTile === 0) {
-        validPositions.push({
-          x: x,
-          y: y,
-        });
-      }
-    }
+  if (!MapLayerType[y]) {
+    MapLayerType[y] = [];
   }
-
-  return validPositions;
-};
-
-// Function to generate ores at valid positions
-const generateOresAtPositions = (
-  positions: Array<{ x: number; y: number }>,
-  count: number,
-  rareOreChance: number = 1
-): Ore[] => {
-  const ores: Ore[] = [];
-  const availablePositions = [...positions];
-
-  // Shuffle positions
-  for (let i = availablePositions.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [availablePositions[i], availablePositions[j]] = [
-      availablePositions[j],
-      availablePositions[i],
-    ];
-  }
-
-  // Take only the number of positions we need
-  const selectedPositions = availablePositions.slice(0, count);
-
-  // Generate ores at selected positions
-  for (const position of selectedPositions) {
-    const type = generateRandomOreType(rareOreChance);
-    ores.push(createOre(type, position));
-  }
-
-  return ores;
+  MapLayerType[y][x] = mapType;
 };
 
 // Function to render map layers
@@ -69,60 +42,130 @@ export const renderMapLayers = async (
   app: PIXI.Application,
   container: PIXI.Container,
   ores: Ore[],
-  activeMine: string
+  activeMine: string,
+  tileCountX: number,
+  tileCountY: number
 ) => {
   try {
     // Create containers for each layer
-    const layerContainers: { [key: string]: PIXI.Container } = {};
-    MineMap.layers.forEach((layer) => {
-      const layerContainer = new PIXI.Container();
-      layerContainer.name = layer.name;
-      container.addChild(layerContainer);
-      layerContainers[layer.name] = layerContainer;
-    });
 
-    // Render each layer
-    for (const layer of MineMap.layers) {
-      const layerContainer = layerContainers[layer.name];
-      if (!layerContainer) continue;
+    // Create floor tiles
+    const floorContainer = new PIXI.Container();
+    floorContainer.name = LayerName.Floor;
+    container.addChild(floorContainer);
 
-      layerContainer.removeChildren();
+    for (let i = 0; i < tileCountX * tileCountY; i++) {
+      const id = getRandomTileId(FloorData);
+      const x = (i % tileCountX) * MapTile.width;
+      const y = Math.floor(i / tileCountX) * MapTile.height;
 
-      if (layer.type === "tilelayer") {
-        for (let i = 0; i < layer.data.length; i++) {
-          const tileId = layer.data[i];
-          if (tileId === 0) continue; // skip empty tiles
+      // Add to MapLayerType
+      updateMapType(
+        floorContainer,
+        i % tileCountX,
+        Math.floor(i / tileCountX),
+        SpriteName.WallsFloors,
+        id,
+        x,
+        y,
+        LayerName.Floor
+      );
+    }
 
-          const x = (i % layer.width) * MineMap.tilewidth;
-          const y = Math.floor(i / layer.width) * MineMap.tileheight;
+    // Create mountain tiles
+    const mountainContainer = new PIXI.Container();
+    mountainContainer.name = LayerName.Mountains;
+    container.addChild(mountainContainer);
 
-          // Find the tileset for this tile
-          const tileset = MineMap.tilesets.find(
-            (ts) =>
-              tileId >= ts.firstgid &&
-              tileId < ts.firstgid + (ts.tilecount || 0)
-          );
+    const minY = getRandomNumber(3, 5);
+    const maxY = getRandomNumber(12, 15);
+    const minX = getRandomNumber(3, 5);
+    const maxX = getRandomNumber(tileCountX - 5, tileCountX - 3);
+    let startY = minY;
 
-          if (tileset && textureCache[tileset.name]) {
-            // Create a texture for this specific tile
-            const tileTexture = createTilesetTexture(
-              textureCache[tileset.name].baseTexture,
-              tileId,
-              tileset
-            );
+    for (let i = minX; i <= maxX; i++) {
+      const x = i * MapTile.width;
+      const y = startY * MapTile.height;
 
-            // Create and position the sprite
-            const tile = new PIXI.Sprite(tileTexture);
-            tile.x = x;
-            tile.y = y;
-            layerContainer.addChild(tile);
+      // Add to MapLayerType
+      updateMapType(
+        mountainContainer,
+        i,
+        startY,
+        SpriteName.WallsFloors,
+        MountainData.BottomEnhance,
+        x,
+        y,
+        LayerName.Mountains
+      );
+
+      // Create wall tiles on the top of the mountain
+      for (let j = 0; j < startY; j++) {
+        const x = i * MapTile.width;
+        const y = j * MapTile.height;
+
+        // Add to MapLayerType
+        updateMapType(
+          mountainContainer,
+          i,
+          j,
+          SpriteName.WallsFloors,
+          MountainData.GeneralWall,
+          x,
+          y,
+          LayerName.Wall
+        );
+      }
+
+      const increaseStatus = getRandomNumber(1, 10);
+      if (increaseStatus <= 2) {
+        if (i < (tileCountX / 3) * 2) {
+          if (startY < maxY) {
+            startY += 1;
           }
+        } else {
+          startY -= 1;
         }
       }
     }
 
+    // Create wall tiles
+    for (let i = minY; i < tileCountY - minY; i++) {
+      const x = (minX - 1) * MapTile.width;
+      const y = i * MapTile.height;
+
+      // Add to MapLayerType
+      updateMapType(
+        mountainContainer,
+        i,
+        startY,
+        SpriteName.WallsFloors,
+        MountainData.RightWall,
+        x,
+        y,
+        LayerName.Wall
+      );
+
+      if (i < startY) continue;
+
+      const rx = (maxX + 1) * MapTile.width;
+      const ry = i * MapTile.height;
+
+      // Add to MapLayerType
+      updateMapType(
+        mountainContainer,
+        maxX + 1,
+        i,
+        SpriteName.WallsFloors,
+        MountainData.LeftWall,
+        rx,
+        ry,
+        LayerName.Wall
+      );
+    }
+
     // Find valid positions for ores
-    const validPositions = findValidOrePositions(MineMap);
+    const validPositions = findValidOrePositions(tileCountX, tileCountY);
 
     // Generate ores at valid positions
     const generatedOres = generateOresAtPositions(

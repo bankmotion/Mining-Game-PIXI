@@ -90,17 +90,17 @@ export const useGameUpdate = ({ appRef, miners, ores }: UseGameStateProps) => {
       if (!minersContainer) return;
 
       minersContainer.children.forEach((child) => {
-        if (!(child instanceof PIXI.Sprite)) return;
+        // if (!(child instanceof PIXI.Sprite)) return;
 
-        const minerId = child.name.replace("miner-", "");
-        const miner = miners.find((m) => m.id === minerId);
-        if (!miner) return;
+        // const minerId = child.name.replace("miner-", "");
+        // const miner = miners.find((m) => m.id === minerId);
+        // if (!miner) return;
 
-        // Update position
-        updateMinerPosition(child, miner);
+        // // Update position
+        // updateMinerPosition(child, miner);
 
-        // Update animation
-        updateMinerAnimation(child as AnimatedSprite, miner, deltaTime);
+        // // Update animation
+        // updateMinerAnimation(child as AnimatedSprite, miner, deltaTime);
       });
     },
     [appRef, miners]

@@ -1,5 +1,7 @@
 import { OreData } from "@/constants/Ore";
 import { Ore, OreType } from "@/interfaces/OreTypes";
+import { MapLayerType } from "./mapUtils";
+import { LayerName } from "@/constants/Sprites";
 
 export const createOre = (
   type: OreType,
@@ -17,6 +19,61 @@ export const createOre = (
     regenerationTime: 0,
     maxRegenerationTime: data.regenerationTime,
   };
+};
+
+// Function to generate ores at valid positions
+export const generateOresAtPositions = (
+  positions: Array<{ x: number; y: number }>,
+  count: number,
+  rareOreChance: number = 1
+): Ore[] => {
+  const ores: Ore[] = [];
+  const availablePositions = [...positions];
+
+  // Shuffle positions
+  for (let i = availablePositions.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [availablePositions[i], availablePositions[j]] = [
+      availablePositions[j],
+      availablePositions[i],
+    ];
+  }
+
+  // Take only the number of positions we need
+  const selectedPositions = availablePositions.slice(0, count);
+
+  // Generate ores at selected positions
+  for (const position of selectedPositions) {
+    const type = generateRandomOreType(rareOreChance);
+    ores.push(createOre(type, position));
+  }
+
+  return ores;
+};
+
+// Function to find valid positions for ores on the map
+export const findValidOrePositions = (
+  tileCountX: number,
+  tileCountY: number
+): Array<{ x: number; y: number }> => {
+  const validPositions: Array<{ x: number; y: number }> = [];
+
+  for (let y = 0; y < tileCountY; y++) {
+    for (let x = 0; x < tileCountX; x++) {
+      // Check if the position is valid (has floor and no mountain)
+      if (
+        MapLayerType[y][x] !== LayerName.Mountains &&
+        MapLayerType[y][x] !== LayerName.Wall
+      ) {
+        validPositions.push({
+          x: x,
+          y: y,
+        });
+      }
+    }
+  }
+
+  return validPositions;
 };
 
 export const generateRandomOreType = (rareOreChance: number = 1): OreType => {

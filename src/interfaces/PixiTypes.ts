@@ -1,5 +1,6 @@
 import * as PIXI from "pixi.js";
 import { Tileset } from "./MapTypes";
+import { AnimationType, SpriteName } from "@/constants/Sprites";
 
 export interface AnimatedSprite extends PIXI.Sprite {
   userData: {
@@ -26,4 +27,20 @@ export interface BaseSpriteConfig {
   glowColor: number;
   glowAlpha: number;
   glowRadius: number;
+}
+
+export interface SpriteType {
+  name: SpriteName;
+  path: string;
+  width: number;
+  height: number;
+  tileWidth: number;
+  tileHeight: number;
+  tileCount: number;
+  animations?: {
+    [key: string]: {
+      frames: number[];
+      speed: number;
+    };
+  };
 }

@@ -1,5 +1,10 @@
 import { Map } from "@/interfaces/MapTypes";
 
+export const MapTile = {
+  width: 16,
+  height: 16,
+};
+
 export const MineMap: Map = {
   compressionlevel: -1,
   height: 20,

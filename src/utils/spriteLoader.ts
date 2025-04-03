@@ -1,5 +1,7 @@
 import * as PIXI from "pixi.js";
 import { Map, Tileset } from "@/interfaces/MapTypes";
+import { SpriteName, Sprites } from "@/constants/Sprites";
+import { SpriteType } from "@/interfaces/PixiTypes";
 
 // Cache for loaded textures
 export const textureCache: { [key: string]: PIXI.Texture } = {};
@@ -40,19 +42,16 @@ export const loadSprite = async (
 
 // Preload common sprites
 export const preloadSprites = async (
-  map: Map,
   onProgress?: (progress: number) => void
 ) => {
   const spritesToLoad: { path: string; name: string }[] = [];
 
   // Add tileset sprites
-  map.tilesets.forEach((tileset: Tileset) => {
-    if (tileset.image) {
-      spritesToLoad.push({
-        path: tileset.image,
-        name: tileset.name,
-      });
-    }
+  Sprites.forEach((sprite: SpriteType) => {
+    spritesToLoad.push({
+      path: sprite.path,
+      name: sprite.name,
+    });
   });
   console.log(spritesToLoad.map((sprite) => sprite.name));
 
@@ -71,24 +70,21 @@ export const preloadSprites = async (
 
 // Create a texture from a tileset
 export const createTilesetTexture = (
-  baseTexture: PIXI.BaseTexture,
-  tileId: number,
-  tileset: Tileset
+  spriteName: SpriteName,
+  tileId: number
 ): PIXI.Texture => {
-  const localTileId = tileId - tileset.firstgid;
-  const columns =
-    tileset.columns ||
-    Math.floor((tileset.imagewidth || 0) / (tileset.tilewidth || 16));
-  const tilesetRow = Math.floor(localTileId / columns);
-  const tilesetCol = localTileId % columns;
+  const sprite = Sprites.find((sprite) => sprite.name === spriteName);
+  const columns = sprite.width / sprite.tileWidth;
+  const tilesetRow = Math.floor(tileId / columns);
+  const tilesetCol = tileId % columns;
 
   return new PIXI.Texture(
-    baseTexture,
+    textureCache[spriteName].baseTexture,
     new PIXI.Rectangle(
-      tilesetCol * (tileset.tilewidth || 16),
-      tilesetRow * (tileset.tileheight || 16),
-      tileset.tilewidth || 16,
-      tileset.tileheight || 16
+      (tilesetCol - 1) * sprite.tileWidth,
+      tilesetRow * sprite.tileHeight,
+      sprite.tileWidth,
+      sprite.tileHeight
     )
   );
 };

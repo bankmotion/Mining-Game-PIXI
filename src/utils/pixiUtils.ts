@@ -10,6 +10,7 @@ import { Ore } from "@/interfaces/OreTypes";
 import { OreData } from "@/constants/Ore";
 import { Miner } from "@/interfaces/MinerTypes";
 import { MinerAnimations, MinerAnimationType } from "@/constants/Miners";
+import { SpriteName } from "@/constants/Sprites";
 
 // Cache for base sprite configurations
 const baseSpriteCache = new Map<string, PIXI.Container>();
@@ -136,11 +137,8 @@ export const createOreSprite = (
   }
 
   const tileTexture = createTilesetTexture(
-    textureCache["mining_ores"].baseTexture,
-    oreTileset.firstgid +
-      24 +
-      Object.keys(OreData).findIndex((or) => or === ore.type),
-    oreTileset
+    SpriteName.MiningOres,
+    24 + Object.keys(OreData).findIndex((or) => or === ore.type)
   );
 
   const oreSprite = new PIXI.Sprite(tileTexture);
@@ -172,56 +170,56 @@ export const createOreSprite = (
 
 export const createMinerSprite = (miner: Miner): PIXI.Sprite => {
   // Check cache first
-  if (minerSpriteCache.has(miner.id)) {
-    const cachedSprite = minerSpriteCache.get(miner.id)!;
-    const tileX = (miner.position.x / 100) * MineMap.width;
-    const tileY = (miner.position.y / 100) * MineMap.height;
-    cachedSprite.x = tileX * MineMap.tilewidth;
-    cachedSprite.y = tileY * MineMap.tileheight;
-    return cachedSprite;
-  }
+  // if (minerSpriteCache.has(miner.id)) {
+  //   const cachedSprite = minerSpriteCache.get(miner.id)!;
+  //   const tileX = (miner.position.x / 100) * MineMap.width;
+  //   const tileY = (miner.position.y / 100) * MineMap.height;
+  //   cachedSprite.x = tileX * MineMap.tilewidth;
+  //   cachedSprite.y = tileY * MineMap.tileheight;
+  //   return cachedSprite;
+  // }
 
-  const characterTileset = MineMap.tilesets.find(
-    (ts) => ts.name === "character_push_body_green"
-  );
+  // const characterTileset = MineMap.tilesets.find(
+  //   (ts) => ts.name === "character_push_body_green"
+  // );
 
-  if (!characterTileset) {
-    throw new Error("Character tileset not found");
-  }
+  // if (!characterTileset) {
+  //   throw new Error("Character tileset not found");
+  // }
 
-  const tileTexture = createMinerTilesetTexture(
-    textureCache["character_push_body_green"].baseTexture,
-    characterTileset.firstgid + characterTileset.columns + 1,
-    characterTileset
-  );
+  // const tileTexture = createMinerTilesetTexture(
+  //   textureCache["character_push_body_green"].baseTexture,
+  //   characterTileset.firstgid + characterTileset.columns + 1,
+  //   characterTileset
+  // );
 
-  const minerSprite = new PIXI.Sprite(tileTexture);
-  minerSprite.name = `miner-${miner.id}`;
+  const minerSprite = new PIXI.Sprite();
+  // minerSprite.name = `miner-${miner.id}`;
 
-  const tileX = (miner.position.x / 100) * MineMap.width;
-  const tileY = (miner.position.y / 100) * MineMap.height;
-  minerSprite.x = tileX * MineMap.tilewidth;
-  minerSprite.y = tileY * MineMap.tileheight;
-  minerSprite.width = MineMap.tilewidth;
-  minerSprite.height = MineMap.tileheight;
+  // const tileX = (miner.position.x / 100) * MineMap.width;
+  // const tileY = (miner.position.y / 100) * MineMap.height;
+  // minerSprite.x = tileX * MineMap.tilewidth;
+  // minerSprite.y = tileY * MineMap.tileheight;
+  // minerSprite.width = MineMap.tilewidth;
+  // minerSprite.height = MineMap.tileheight;
 
-  // Add animation data with optimized settings
-  const animationData = characterTileset.tiles?.find(
-    (t) => t.id === MinerAnimations[MinerAnimationType.Standing].animationId
-  )?.animation;
-  if (animationData) {
-    (minerSprite as AnimatedSprite).userData = {
-      frame: 0,
-      animationSpeed: 0.3,
-      time: 0,
-      tileset: characterTileset,
-      baseTexture: textureCache["character_push_body_green"].baseTexture,
-      animation: animationData,
-    };
-  }
+  // // Add animation data with optimized settings
+  // const animationData = characterTileset.tiles?.find(
+  //   (t) => t.id === MinerAnimations[MinerAnimationType.Standing].animationId
+  // )?.animation;
+  // if (animationData) {
+  //   (minerSprite as AnimatedSprite).userData = {
+  //     frame: 0,
+  //     animationSpeed: 0.3,
+  //     time: 0,
+  //     tileset: characterTileset,
+  //     baseTexture: textureCache["character_push_body_green"].baseTexture,
+  //     animation: animationData,
+  //   };
+  // }
 
-  // Cache the sprite
-  minerSpriteCache.set(miner.id, minerSprite);
+  // // Cache the sprite
+  // minerSpriteCache.set(miner.id, minerSprite);
 
   return minerSprite;
 };
