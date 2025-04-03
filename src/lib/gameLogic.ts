@@ -11,13 +11,12 @@ import {
   calculateInventoryValue,
   isInventoryFull,
   moveMinerTowards,
-} from "./miners";
+} from "./minersLogic";
 import {
   calculateResourceYield,
   depleteOreVein,
-  generateInitialOres,
-  updateOreRegeneration,
-} from "./ores";
+  updateOreRegeneration
+} from "./oresLogic";
 
 export const updateMinerState = (
   miner: Miner,

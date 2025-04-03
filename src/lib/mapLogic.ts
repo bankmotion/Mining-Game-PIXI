@@ -1,16 +1,16 @@
-import * as PIXI from "pixi.js";
-import { MapTile, MineMap } from "@/constants/Map";
+import { MapTile } from "@/constants/Map";
 import { MineTypes } from "@/constants/Mine";
-import { Ore } from "@/interfaces/OreTypes";
-import { createTilesetTexture } from "@/utils/spriteLoader";
 import {
   FloorData,
   LayerName,
   MountainData,
   SpriteName,
 } from "@/constants/Sprites";
-import { getRandomNumber, getRandomTileId } from "@/utils/utils";
-import { findValidOrePositions, generateOresAtPositions } from "./ores";
+import { Ore } from "@/interfaces/OreTypes";
+import { createTilesetTexture } from "@/utils/spriteLoader";
+import { getRandomTileId } from "@/utils/utils";
+import * as PIXI from "pixi.js";
+import { findValidOrePositions, generateOresAtPositions } from "./oresLogic";
 
 export const MapLayerType: LayerName[][] = [];
 
