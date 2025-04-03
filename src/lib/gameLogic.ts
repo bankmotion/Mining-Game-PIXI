@@ -15,7 +15,7 @@ import {
 import {
   calculateResourceYield,
   depleteOreVein,
-  updateOreRegeneration
+  updateOreRegeneration,
 } from "./oresLogic";
 
 export const updateMinerState = (

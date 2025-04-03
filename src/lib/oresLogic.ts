@@ -6,6 +6,7 @@ import { MineTypes } from "@/constants/Mine";
 import { calculateDistance } from "./minersLogic";
 import { Miner } from "@/interfaces/MinerTypes";
 import { GameState } from "@/interfaces/GameType";
+import { MapPosition } from "@/interfaces/MapTypes";
 
 // Create a new ore
 export const createOre = (
@@ -70,44 +71,33 @@ export const generateOresAtPositions = (
 // Function to find valid positions for ores on the map
 export const findValidOrePositions = (
   tileCountX: number,
-  tileCountY: number,
-  activeMine: string
+  tileCountY: number
 ): Array<{ x: number; y: number }> => {
   const validPositions: Array<{ x: number; y: number }> = [];
 
-  // Get the active mine
-  const mine = MineTypes.find((m) => m.id === activeMine);
-  if (!mine) {
-    console.error("Active mine not found");
-    return validPositions;
-  }
-
-  // Get the available area dimensions
-  const availableWidth = mine.availableArea.width;
-  const availableHeight = mine.availableArea.height;
-
-  // Calculate the center position of the map
-  const centerX = Math.floor(tileCountX / 2);
-  const centerY = Math.floor(tileCountY / 2);
-
-  // Calculate the starting position of the available area (centered)
-  const startX = centerX - Math.floor(availableWidth / 2);
-  const startY = centerY - Math.floor(availableHeight / 2);
-
   // Find valid positions within the available area
-  for (let y = startY; y < startY + availableHeight; y++) {
-    for (let x = startX; x < startX + availableWidth; x++) {
+  for (let y = 0; y < tileCountY; y++) {
+    for (let x = 0; x < tileCountX; x++) {
       // Skip if out of bounds
       if (x < 0 || x >= tileCountX || y < 0 || y >= tileCountY) continue;
 
       // Check if the position is valid (has floor and no wall)
       if (MapLayerType[y] && MapLayerType[y][x] === LayerName.Floor) {
         validPositions.push({
-          x: x,
-          y: y,
+          x,
+          y,
         });
       }
     }
+  }
+
+  // shuffle the generatedOres
+  for (let i = validPositions.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [validPositions[i], validPositions[j]] = [
+      validPositions[j],
+      validPositions[i],
+    ];
   }
 
   return validPositions;
@@ -163,6 +153,27 @@ export const generateInitialOres = (
   }
 
   return ores;
+};
+
+export const updateOrePositions = (
+  ores: Ore[],
+  validPositions: MapPosition[],
+  rareOreChance: number
+): void => {
+  const generatedOres = generateOresAtPositions(
+    validPositions,
+    ores.length,
+    rareOreChance
+  );
+
+  ores.forEach((ore, index) => {
+    if (generatedOres[index]) {
+      ore.position = {
+        x: validPositions[index].x,
+        y: validPositions[index].y,
+      };
+    }
+  });
 };
 
 export const depleteOreVein = (ore: Ore): Ore => {

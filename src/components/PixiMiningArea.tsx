@@ -2,7 +2,6 @@ import { Progress } from "@/components/ui/progress";
 import { MapTile, MineMap } from "@/constants/Map";
 import { MineTypes } from "@/constants/Mine";
 import { useGameUpdate } from "@/hooks/useGameUpdate";
-import { useInteractivity } from "@/hooks/useInteractivity";
 import { Miner } from "@/interfaces/MinerTypes";
 import { Ore } from "@/interfaces/OreTypes";
 import { renderMapLayers } from "@/lib/mapLogic";
@@ -14,7 +13,7 @@ interface PixiMiningAreaProps {
   miners: Miner[];
   ores: Ore[];
   activeMine?: string;
-  onOreClick?: (ore: Ore) => void;
+  onOreClick?: (ore: Ore, tileCountX: number, tileCountY: number) => void;
   onBaseClick?: () => void;
   isBlackout?: boolean;
 }
@@ -32,34 +31,20 @@ export const PixiMiningArea = ({
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(5);
   const [loadingError, setLoadingError] = useState<string | null>(null);
+  const [tileCounts, setTileCounts] = useState({ x: 0, y: 0 });
 
   // Flag to track if initialization has been attempted and completed
   const initAttemptedRef = useRef(false);
   const initCompletedRef = useRef(false);
-
-  // Memoize setupInteractivity to prevent unnecessary re-renders
-  const { setupInteractivity } = useInteractivity({
-    appRef,
-    ores,
-    miners,
-    activeMine,
-    onOreClick,
-    onBaseClick,
-    isBlackout,
-  });
 
   // Memoize game status hook
   useGameUpdate({
     appRef,
     miners,
     ores,
+    tileCountX: tileCounts.x,
+    tileCountY: tileCounts.y,
   });
-
-  // Memoize base position calculation
-  const getBasePosition = useCallback(() => {
-    const mine = MineTypes.find((m) => m.id === activeMine);
-    return mine ? mine.basePosition : { x: 0, y: 0 };
-  }, [activeMine]);
 
   // Optimize loading progress simulation
   useEffect(() => {
@@ -99,11 +84,11 @@ export const PixiMiningArea = ({
         return;
       }
 
-    initAttemptedRef.current = true;
+      initAttemptedRef.current = true;
       console.log("Starting PixiJS initialization...");
 
       // Create PixiJS application with optimized settings
-        const app = new PIXI.Application({
+      const app = new PIXI.Application({
         width: pixiContainerRef.current.clientWidth,
         height: pixiContainerRef.current.clientHeight,
         backgroundColor: 0x1a1a1a,
@@ -111,7 +96,7 @@ export const PixiMiningArea = ({
         autoDensity: true,
         resizeTo: pixiContainerRef.current,
         powerPreference: "high-performance",
-          antialias: false,
+        antialias: false,
         hello: true,
       });
 
@@ -119,10 +104,11 @@ export const PixiMiningArea = ({
       pixiContainerRef.current.appendChild(app.view as HTMLCanvasElement);
 
       // Store the application reference
-          appRef.current = app;
+      appRef.current = app;
 
       const tileCountX = Math.floor(app.screen.width / MapTile.width);
       const tileCountY = Math.floor(app.screen.height / MapTile.height);
+      setTileCounts({ x: tileCountX, y: tileCountY });
       console.log({ tileCountX, tileCountY });
 
       // Create game container with optimized scaling
@@ -145,21 +131,20 @@ export const PixiMiningArea = ({
           await renderMapLayers(
             app,
             gameContainer,
+            miners,
             ores,
             activeMine,
             tileCountX,
-            tileCountY
+            tileCountY,
+            onOreClick,
+            isBlackout
           );
-
-          // Add interactive elements
-          console.log("Setting up interactivity...");
-          setupInteractivity(app, gameContainer);
 
           // Mark initialization as complete
           console.log("Initialization complete!");
-              initCompletedRef.current = true;
-      setLoadingProgress(100);
-      setTimeout(() => setLoading(false), 500);
+          initCompletedRef.current = true;
+          setLoadingProgress(100);
+          setTimeout(() => setLoading(false), 500);
         } catch (error) {
           console.error("Failed to initialize game:", error);
           setLoadingError(
@@ -193,7 +178,7 @@ export const PixiMiningArea = ({
     return () => {
       cancelAnimationFrame(frameId);
     };
-  }, [setupInteractivity, loadingProgress, activeMine, ores]);
+  }, [loadingProgress, activeMine, ores, isBlackout, miners, onOreClick]);
 
   // Memoize loading screen render
   const renderLoadingScreen = useCallback(() => {

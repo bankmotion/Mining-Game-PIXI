@@ -324,7 +324,7 @@ export const useGameState = () => {
   };
 
   // Handle ore click - make miners target the clicked ore
-  const handleOreClick = (ore: Ore) => {
+  const handleOreClick = (ore: Ore, tileCountX: number, tileCountY: number) => {
     setGameState((prevState) => {
       const updatedMiners = prevState.miners.map((miner) => {
         // If miner is already mining or moving to this ore, don't change their state
@@ -342,8 +342,8 @@ export const useGameState = () => {
 
         // Convert tile coordinates to percentage-based coordinates
         const targetPosition = {
-          x: (ore.position.x / MineMap.width) * 100,
-          y: (ore.position.y / MineMap.height) * 100,
+          x: (ore.position.x / tileCountX) * 100,
+          y: (ore.position.y / tileCountY) * 100,
         };
 
         // Otherwise, make the miner move to the ore

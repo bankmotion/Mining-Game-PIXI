@@ -7,6 +7,11 @@ export enum AnimationType {
   PushLeft = "push_left",
   PushUp = "push_up",
   PushDown = "push_down",
+  DrillingRight = "drilling_right",
+  DrillingLeft = "drilling_left",
+  DrillingUp = "drilling_up",
+  DrillingDown = "drilling_down",
+  Standing = "standing",
 }
 
 export enum SpriteName {
@@ -34,6 +39,8 @@ export enum LayerName {
   Floor = "Floor",
   Mountains = "Mountains",
   Wall = "Wall",
+  Miners = "Miners",
+  Ore = "Ore",
 }
 
 export const FloorData = [
@@ -242,19 +249,19 @@ export const Sprites: SpriteType[] = [
     tileHeight: 16,
     tileCount: 192,
     animations: {
-      [AnimationType.PushRight]: {
+      [AnimationType.DrillingRight]: {
         frames: [60, 64, 68],
         speed: 0.1,
       },
-      [AnimationType.PushLeft]: {
+      [AnimationType.DrillingLeft]: {
         frames: [61, 65, 69],
         speed: 0.1,
       },
-      [AnimationType.PushUp]: {
+      [AnimationType.DrillingUp]: {
         frames: [62, 66, 70],
         speed: 0.1,
       },
-      [AnimationType.PushDown]: {
+      [AnimationType.DrillingDown]: {
         frames: [63, 67, 71],
         speed: 0.1,
       },
@@ -263,12 +270,16 @@ export const Sprites: SpriteType[] = [
   {
     name: SpriteName.CharacterPushBodyGreen,
     path: "/assets/character/push/character_body/character_push_body_green.png",
-    width: 16,
-    height: 16,
+    width: 384,
+    height: 256,
     tileWidth: 16,
     tileHeight: 16,
     tileCount: 384,
     animations: {
+      [AnimationType.Standing]: {
+        frames: [24],
+        speed: 0.1,
+      },
       [AnimationType.PushRight]: {
         frames: [24, 28, 32, 36, 40, 44],
         speed: 0.1,
@@ -296,6 +307,10 @@ export const Sprites: SpriteType[] = [
     tileHeight: 16,
     tileCount: 384,
     animations: {
+      [AnimationType.Standing]: {
+        frames: [24],
+        speed: 0.3,
+      },
       [AnimationType.PushRight]: {
         frames: [24, 28, 32, 36, 40, 44],
         speed: 0.3,

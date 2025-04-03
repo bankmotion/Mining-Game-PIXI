@@ -115,8 +115,10 @@ export const createBaseSprite = (
 
 export const createOreSprite = (
   ore: Ore,
-  onOreClick: (ore: Ore) => void,
-  isBlackout: boolean
+  onOreClick: (ore: Ore, tileCountX: number, tileCountY: number) => void,
+  isBlackout: boolean,
+  tileCountX: number,
+  tileCountY: number
 ): PIXI.Sprite => {
   // Check cache first
   if (oreSpriteCache.has(ore.id)) {
@@ -126,7 +128,9 @@ export const createOreSprite = (
       cachedSprite.eventMode = "static";
       cachedSprite.cursor = "pointer";
       cachedSprite.removeAllListeners();
-      cachedSprite.on("pointerdown", () => onOreClick(ore));
+      cachedSprite.on("pointerdown", () =>
+        onOreClick(ore, tileCountX, tileCountY)
+      );
     }
     return cachedSprite;
   }
@@ -152,7 +156,7 @@ export const createOreSprite = (
   oreSprite.alpha = ore.depleted ? 0.4 : 1;
 
   if (!isBlackout && onOreClick) {
-    oreSprite.on("pointerdown", () => onOreClick(ore));
+    oreSprite.on("pointerdown", () => onOreClick(ore, tileCountX, tileCountY));
   }
 
   // Add regeneration timer text with cached style

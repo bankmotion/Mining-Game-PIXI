@@ -91,24 +91,21 @@ export const createTilesetTexture = (
 
 // Create a texture from a tileset
 export const createMinerTilesetTexture = (
-  baseTexture: PIXI.BaseTexture,
-  tileId: number,
-  tileset: Tileset
+  spriteName: SpriteName,
+  tileId: number
 ): PIXI.Texture => {
-  const localTileId = tileId - tileset.firstgid;
-  const columns =
-    tileset.columns ||
-    Math.floor((tileset.imagewidth || 0) / (tileset.tilewidth || 16));
-  const tilesetRow = Math.floor(localTileId / columns);
-  const tilesetCol = localTileId % columns;
+  const sprite = Sprites.find((sprite) => sprite.name === spriteName);
+  const columns = sprite.width / sprite.tileWidth;
+  const tilesetRow = Math.floor(tileId / columns);
+  const tilesetCol = tileId % columns;
 
   return new PIXI.Texture(
-    baseTexture,
+    textureCache[spriteName].baseTexture,
     new PIXI.Rectangle(
-      tilesetCol * (tileset.tilewidth || 16) + tileset.tilewidth / 2,
-      tilesetRow * (tileset.tileheight || 16) + tileset.tileheight / 2,
-      tileset.tilewidth || 16,
-      tileset.tileheight || 16
+      (tilesetCol + 1) * sprite.tileWidth + sprite.tileWidth / 2,
+      tilesetRow * sprite.tileHeight + sprite.tileHeight / 2,
+      sprite.tileWidth,
+      sprite.tileHeight
     )
   );
 };
