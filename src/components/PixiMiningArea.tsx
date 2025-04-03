@@ -1,6 +1,6 @@
 import { Progress } from "@/components/ui/progress";
-import { MapTile, MineMap } from "@/constants/Map";
 import { MineTypes } from "@/constants/Mine";
+import { InitialTileWidth } from "@/constants/Sprites";
 import { useGameUpdate } from "@/hooks/useGameUpdate";
 import { Miner } from "@/interfaces/MinerTypes";
 import { Ore } from "@/interfaces/OreTypes";
@@ -106,15 +106,15 @@ export const PixiMiningArea = ({
       // Store the application reference
       appRef.current = app;
 
-      const tileCountX = Math.floor(app.screen.width / MapTile.width);
-      const tileCountY = Math.floor(app.screen.height / MapTile.height);
+      const tileCountX = Math.floor(app.screen.width / InitialTileWidth);
+      const tileCountY = Math.floor(app.screen.height / InitialTileWidth);
       setTileCounts({ x: tileCountX, y: tileCountY });
       console.log({ tileCountX, tileCountY });
 
       // Create game container with optimized scaling
       const gameContainer = new PIXI.Container();
-      gameContainer.x = (app.screen.width - tileCountX * MapTile.width) / 2;
-      gameContainer.y = (app.screen.height - tileCountY * MapTile.height) / 2;
+      gameContainer.x = (app.screen.width - tileCountX * InitialTileWidth) / 2;
+      gameContainer.y = (app.screen.height - tileCountY * InitialTileWidth) / 2;
       app.stage.addChild(gameContainer);
 
       // Optimize sprite loading and game initialization

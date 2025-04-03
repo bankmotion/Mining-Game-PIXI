@@ -9,7 +9,6 @@ import { Ore } from "@/interfaces/OreTypes";
 import { MineTypes } from "@/constants/Mine";
 import { EnergySource } from "@/interfaces/EnergyTypes";
 import { buildEnergySource, upgradeEnergySource } from "@/lib/energyLogic";
-import { MineMap } from "@/constants/Map";
 import { setActiveMine, unlockMine } from "@/lib/mineLogic";
 import { createMiner } from "@/lib/minersLogic";
 
@@ -179,11 +178,12 @@ export const useGameState = () => {
       }
 
       // Find a random position that's not too close to existing miners
-      let randomX, randomY;
+      let randomX = 0,
+        randomY = 0;
       let attempts = 0;
       const minDistance = 15; // Increased minimum distance between miners
 
-      do {
+      while (attempts <= 50) {
         // Generate random position within the mining area (20-80% range)
         randomX = Math.floor(20 + Math.random() * 60);
         randomY = Math.floor(20 + Math.random() * 60);
@@ -196,9 +196,9 @@ export const useGameState = () => {
           return distance > minDistance;
         });
 
-        if (isFarEnough || attempts > 50) break; // Either found a good spot or tried too many times
+        if (isFarEnough) break;
         attempts++;
-      } while (true);
+      }
 
       // Create specialized expert miners
       let newMiner;
@@ -210,14 +210,10 @@ export const useGameState = () => {
           "legendary",
           "platinum",
           "uranium",
-        ];
+        ] as const;
         const randomOreType =
           oreTypes[Math.floor(Math.random() * oreTypes.length)];
-        newMiner = createMiner(
-          type,
-          { x: randomX, y: randomY },
-          randomOreType as any
-        );
+        newMiner = createMiner(type, { x: randomX, y: randomY }, randomOreType);
         toast.success(
           `Hired a new expert miner specialized in ${randomOreType}: ${newMiner.name}`
         );

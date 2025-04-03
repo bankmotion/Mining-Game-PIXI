@@ -1,6 +1,5 @@
+import { SpriteName } from "@/constants/Sprites";
 import * as PIXI from "pixi.js";
-import { Tileset } from "./MapTypes";
-import { AnimationType, SpriteName } from "@/constants/Sprites";
 
 export interface AnimatedSprite extends PIXI.Sprite {
   userData: {

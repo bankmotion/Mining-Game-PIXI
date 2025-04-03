@@ -1,5 +1,4 @@
 import * as PIXI from "pixi.js";
-import { Map, Tileset } from "@/interfaces/MapTypes";
 import { SpriteName, Sprites } from "@/constants/Sprites";
 import { SpriteType } from "@/interfaces/PixiTypes";
 

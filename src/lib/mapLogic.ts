@@ -1,4 +1,3 @@
-import { MapTile } from "@/constants/Map";
 import { MineTypes } from "@/constants/Mine";
 import {
   FloorData,
@@ -16,7 +15,6 @@ import {
 } from "@/interfaces/MapTypes";
 import { Miner } from "@/interfaces/MinerTypes";
 import { Ore } from "@/interfaces/OreTypes";
-import { createOreSprite } from "@/utils/pixiUtils";
 import {
   createMinerTilesetTexture,
   createTilesetTexture,
@@ -30,10 +28,28 @@ import {
   updateMinerPositions,
 } from "./minersLogic";
 import { findValidOrePositions, updateOrePositions } from "./oresLogic";
+import { OreData } from "@/constants/Ore";
 
 // Constants
 export const MapLayerType: LayerName[][] = [];
 export const minerSprites = new Map<string, MinerSpriteData>();
+export const oreSpriteCache = new Map<string, PIXI.Sprite>();
+
+// Cache for text styles
+const textStyles = {
+  base: new PIXI.TextStyle({
+    fontFamily: "Arial",
+    fontSize: 14,
+    fill: 0xffffff,
+    align: "left",
+    fontWeight: "bold",
+  }),
+  timer: new PIXI.TextStyle({
+    fontSize: 12,
+    fill: 0xffffff,
+    align: "center",
+  }),
+};
 
 // Helper Functions
 const createMapContainer = (container: PIXI.Container): MapContainer => {
@@ -184,8 +200,8 @@ export const updateMapType = (
   const tileTexture = createTilesetTexture(spriteName, id);
   const tile = new PIXI.Sprite(tileTexture);
 
-  tile.x = position.x * MapTile.width;
-  tile.y = position.y * MapTile.height;
+  tile.x = position.x * InitialTileWidth;
+  tile.y = position.y * InitialTileWidth;
   container.addChild(tile);
 
   if (!MapLayerType[position.y]) {
@@ -220,6 +236,65 @@ const createFloorTiles = (
       }
     }
   }
+};
+
+export const createOreSprite = (
+  ore: Ore,
+  onOreClick: (ore: Ore, tileCountX: number, tileCountY: number) => void,
+  isBlackout: boolean,
+  tileCountX: number,
+  tileCountY: number
+): PIXI.Sprite => {
+  // Check cache first
+  if (oreSpriteCache.has(ore.id)) {
+    const cachedSprite = oreSpriteCache.get(ore.id)!;
+    cachedSprite.alpha = ore.depleted ? 0.4 : 1;
+    if (!isBlackout && onOreClick) {
+      cachedSprite.eventMode = "static";
+      cachedSprite.cursor = "pointer";
+      cachedSprite.removeAllListeners();
+      cachedSprite.on("pointerdown", () =>
+        onOreClick(ore, tileCountX, tileCountY)
+      );
+    }
+    return cachedSprite;
+  }
+
+  const oreTileset = Sprites.find((ts) => ts.name === SpriteName.MiningOres);
+  if (!oreTileset) {
+    throw new Error("Ore tileset not found");
+  }
+
+  const tileTexture = createTilesetTexture(
+    SpriteName.MiningOres,
+    24 + Object.keys(OreData).findIndex((or) => or === ore.type)
+  );
+
+  const oreSprite = new PIXI.Sprite(tileTexture);
+  oreSprite.name = `ore-${ore.id}`;
+  oreSprite.x = ore.position.x * InitialTileWidth;
+  oreSprite.y = ore.position.y * InitialTileWidth;
+  oreSprite.width = InitialTileWidth;
+  oreSprite.height = InitialTileWidth;
+  oreSprite.eventMode = "static";
+  oreSprite.cursor = "pointer";
+  oreSprite.alpha = ore.depleted ? 0.4 : 1;
+
+  if (!isBlackout && onOreClick) {
+    oreSprite.on("pointerdown", () => onOreClick(ore, tileCountX, tileCountY));
+  }
+
+  // Add regeneration timer text with cached style
+  const timerText = new PIXI.Text("", textStyles.timer);
+  timerText.name = "timer-text";
+  timerText.anchor.set(0.5, -1);
+  timerText.y = -10;
+  oreSprite.addChild(timerText);
+
+  // Cache the sprite
+  oreSpriteCache.set(ore.id, oreSprite);
+
+  return oreSprite;
 };
 
 const createWallTiles = (

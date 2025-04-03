@@ -1,4 +1,3 @@
-import { MineMap } from "@/constants/Map";
 import { OreData } from "@/constants/Ore";
 import {
   InitialTileWidth,
@@ -69,15 +68,15 @@ export const useGameUpdate = ({
 
           // Draw background (green bar)
           progressBar.beginFill(0x10b981, 0.3); // Emerald color with transparency
-          progressBar.drawRect(0, MineMap.tileheight / 2, MineMap.tilewidth, 2);
+          progressBar.drawRect(0, InitialTileWidth / 2, InitialTileWidth, 2);
           progressBar.endFill();
 
           // Draw progress (yellow bar) from right to left
           progressBar.beginFill(0xf39c12, 0.8); // Amber color with transparency
           progressBar.drawRect(
             0,
-            MineMap.tileheight / 2,
-            MineMap.tilewidth * progress,
+            InitialTileWidth / 2,
+            InitialTileWidth * progress,
             2
           );
           progressBar.endFill();
@@ -130,8 +129,8 @@ export const useGameUpdate = ({
   ) => {
     const tileX = (miner.position.x / 100) * tileCountX * InitialTileWidth;
     const tileY = (miner.position.y / 100) * tileCountY * InitialTileWidth;
-    sprite.x = tileX * MineMap.tilewidth;
-    sprite.y = tileY * MineMap.tileheight;
+    sprite.x = tileX * InitialTileWidth;
+    sprite.y = tileY * InitialTileWidth;
   };
 
   // Helper function to update miner animation
