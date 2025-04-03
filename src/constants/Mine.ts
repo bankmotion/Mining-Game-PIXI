@@ -11,7 +11,14 @@ export const MineTypes: MineType[] = [
     resourceMultiplier: 1,
     rareOreChance: 1,
     oreCount: 20,
-    basePosition: { x: 19 * 100 / MineMap.width, y: 2 * 100 / MineMap.height },
+    basePosition: {
+      x: (19 * 100) / MineMap.width,
+      y: (2 * 100) / MineMap.height,
+    },
+    availableArea: {
+      width: 30,
+      height: 15,
+    },
   },
   {
     id: "advanced",
@@ -23,6 +30,10 @@ export const MineTypes: MineType[] = [
     rareOreChance: 1.5,
     oreCount: 25,
     basePosition: { x: 85, y: 15 },
+    availableArea: {
+      width: 35,
+      height: 20,
+    },
   },
   {
     id: "premium",
@@ -34,6 +45,10 @@ export const MineTypes: MineType[] = [
     rareOreChance: 2,
     oreCount: 30,
     basePosition: { x: 15, y: 85 },
+    availableArea: {
+      width: 40,
+      height: 25,
+    },
   },
   {
     id: "legendary",
@@ -46,5 +61,9 @@ export const MineTypes: MineType[] = [
     rareOreChance: 3,
     oreCount: 35,
     basePosition: { x: 85, y: 85 },
+    availableArea: {
+      width: 50,
+      height: 40,
+    },
   },
 ];

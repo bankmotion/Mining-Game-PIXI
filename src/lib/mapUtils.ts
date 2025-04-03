@@ -47,131 +47,100 @@ export const renderMapLayers = async (
   tileCountY: number
 ) => {
   try {
-    // Create containers for each layer
+    // Get the active mine
+    const mine = MineTypes.find((m) => m.id === activeMine);
+    if (!mine) {
+      console.error("Active mine not found");
+      return;
+    }
 
-    // Create floor tiles
+    // Get the available area dimensions
+    const availableWidth = mine.availableArea.width;
+    const availableHeight = mine.availableArea.height;
+
+    // Calculate the center position of the map
+    const centerX = Math.floor(tileCountX / 2);
+    const centerY = Math.floor(tileCountY / 2);
+
+    // Calculate the starting position of the available area (centered)
+    const startX = centerX - Math.floor(availableWidth / 2);
+    const startY = centerY - Math.floor(availableHeight / 2);
+
+    // Create containers for each layer
     const floorContainer = new PIXI.Container();
     floorContainer.name = LayerName.Floor;
     container.addChild(floorContainer);
 
-    for (let i = 0; i < tileCountX * tileCountY; i++) {
-      const id = getRandomTileId(FloorData);
-      const x = (i % tileCountX) * MapTile.width;
-      const y = Math.floor(i / tileCountX) * MapTile.height;
+    const wallContainer = new PIXI.Container();
+    wallContainer.name = LayerName.Wall;
+    container.addChild(wallContainer);
 
-      // Add to MapLayerType
-      updateMapType(
-        floorContainer,
-        i % tileCountX,
-        Math.floor(i / tileCountX),
-        SpriteName.WallsFloors,
-        id,
-        x,
-        y,
-        LayerName.Floor
-      );
-    }
+    // Create floor tiles in the available area
+    for (let y = startY; y < startY + availableHeight; y++) {
+      for (let x = startX; x < startX + availableWidth; x++) {
+        // Skip if out of bounds
+        if (x < 0 || x >= tileCountX || y < 0 || y >= tileCountY) continue;
 
-    // Create mountain tiles
-    const mountainContainer = new PIXI.Container();
-    mountainContainer.name = LayerName.Mountains;
-    container.addChild(mountainContainer);
+        const id = getRandomTileId(FloorData);
+        const posX = x * MapTile.width;
+        const posY = y * MapTile.height;
 
-    const minY = getRandomNumber(3, 5);
-    const maxY = getRandomNumber(12, 15);
-    const minX = getRandomNumber(3, 5);
-    const maxX = getRandomNumber(tileCountX - 5, tileCountX - 3);
-    let startY = minY;
-
-    for (let i = minX; i <= maxX; i++) {
-      const x = i * MapTile.width;
-      const y = startY * MapTile.height;
-
-      // Add to MapLayerType
-      updateMapType(
-        mountainContainer,
-        i,
-        startY,
-        SpriteName.WallsFloors,
-        MountainData.BottomEnhance,
-        x,
-        y,
-        LayerName.Mountains
-      );
-
-      // Create wall tiles on the top of the mountain
-      for (let j = 0; j < startY; j++) {
-        const x = i * MapTile.width;
-        const y = j * MapTile.height;
-
-        // Add to MapLayerType
+        // Add floor tile
         updateMapType(
-          mountainContainer,
-          i,
-          j,
-          SpriteName.WallsFloors,
-          MountainData.GeneralWall,
+          floorContainer,
           x,
           y,
+          SpriteName.WallsFloors,
+          id,
+          posX,
+          posY,
+          LayerName.Floor
+        );
+      }
+    }
+
+    // Create wall tiles around the available area
+    for (let y = 0; y < tileCountY; y++) {
+      for (let x = 0; x < tileCountX; x++) {
+        // Skip if in the available area
+        if (
+          x >= startX &&
+          x < startX + availableWidth &&
+          y >= startY &&
+          y < startY + availableHeight
+        ) {
+          continue;
+        }
+
+        const posX = x * MapTile.width;
+        const posY = y * MapTile.height;
+
+        // Add wall tile
+        updateMapType(
+          wallContainer,
+          x,
+          y,
+          SpriteName.WallsFloors,
+          MountainData.GeneralWall,
+          posX,
+          posY,
           LayerName.Wall
         );
       }
-
-      const increaseStatus = getRandomNumber(1, 10);
-      if (increaseStatus <= 2) {
-        if (i < (tileCountX / 3) * 2) {
-          if (startY < maxY) {
-            startY += 1;
-          }
-        } else {
-          startY -= 1;
-        }
-      }
     }
 
-    // Create wall tiles
-    for (let i = minY; i < tileCountY - minY; i++) {
-      const x = (minX - 1) * MapTile.width;
-      const y = i * MapTile.height;
-
-      // Add to MapLayerType
-      updateMapType(
-        mountainContainer,
-        i,
-        startY,
-        SpriteName.WallsFloors,
-        MountainData.RightWall,
-        x,
-        y,
-        LayerName.Wall
-      );
-
-      if (i < startY) continue;
-
-      const rx = (maxX + 1) * MapTile.width;
-      const ry = i * MapTile.height;
-
-      // Add to MapLayerType
-      updateMapType(
-        mountainContainer,
-        maxX + 1,
-        i,
-        SpriteName.WallsFloors,
-        MountainData.LeftWall,
-        rx,
-        ry,
-        LayerName.Wall
-      );
-    }
-
-    // Find valid positions for ores
-    const validPositions = findValidOrePositions(tileCountX, tileCountY);
+    // Find valid positions for ores (only within the available area)
+    const validPositions = findValidOrePositions(
+      tileCountX,
+      tileCountY,
+      activeMine
+    );
 
     // Generate ores at valid positions
     const generatedOres = generateOresAtPositions(
       validPositions,
       ores.length,
-      MineTypes.find((m) => m.id === activeMine)?.rareOreChance || 1
+      mine.rareOreChance || 1
     );
 
     // Update ore positions with generated positions

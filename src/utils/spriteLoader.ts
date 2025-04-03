@@ -31,7 +31,7 @@ export const loadSprite = async (
     }
 
     // Load the texture
-    const texture = await PIXI.Texture.from(path);
+    const texture = PIXI.Texture.from(path);
     textureCache[name] = texture;
     return texture;
   } catch (error) {

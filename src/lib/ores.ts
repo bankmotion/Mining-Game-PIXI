@@ -2,6 +2,7 @@ import { OreData } from "@/constants/Ore";
 import { Ore, OreType } from "@/interfaces/OreTypes";
 import { MapLayerType } from "./mapUtils";
 import { LayerName } from "@/constants/Sprites";
+import { MineTypes } from "@/constants/Mine";
 
 export const createOre = (
   type: OreType,
@@ -54,16 +55,40 @@ export const generateOresAtPositions = (
 // Function to find valid positions for ores on the map
 export const findValidOrePositions = (
   tileCountX: number,
-  tileCountY: number
+  tileCountY: number,
+  activeMine: string
 ): Array<{ x: number; y: number }> => {
   const validPositions: Array<{ x: number; y: number }> = [];
+  
+  // Get the active mine
+  const mine = MineTypes.find((m) => m.id === activeMine);
+  if (!mine) {
+    console.error("Active mine not found");
+    return validPositions;
+  }
 
-  for (let y = 0; y < tileCountY; y++) {
-    for (let x = 0; x < tileCountX; x++) {
-      // Check if the position is valid (has floor and no mountain)
+  // Get the available area dimensions
+  const availableWidth = mine.availableArea.width;
+  const availableHeight = mine.availableArea.height;
+
+  // Calculate the center position of the map
+  const centerX = Math.floor(tileCountX / 2);
+  const centerY = Math.floor(tileCountY / 2);
+
+  // Calculate the starting position of the available area (centered)
+  const startX = centerX - Math.floor(availableWidth / 2);
+  const startY = centerY - Math.floor(availableHeight / 2);
+
+  // Find valid positions within the available area
+  for (let y = startY; y < startY + availableHeight; y++) {
+    for (let x = startX; x < startX + availableWidth; x++) {
+      // Skip if out of bounds
+      if (x < 0 || x >= tileCountX || y < 0 || y >= tileCountY) continue;
+      
+      // Check if the position is valid (has floor and no wall)
       if (
-        MapLayerType[y][x] !== LayerName.Mountains &&
-        MapLayerType[y][x] !== LayerName.Wall
+        MapLayerType[y] &&
+        MapLayerType[y][x] === LayerName.Floor
       ) {
         validPositions.push({
           x: x,
