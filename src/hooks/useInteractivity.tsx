@@ -4,11 +4,8 @@ import { MineMap } from "@/constants/Map";
 import { MineTypes } from "@/constants/Mine";
 import { Ore } from "@/interfaces/OreTypes";
 import { Miner } from "@/interfaces/MinerTypes";
-import {
-  createBaseSprite,
-  createOreSprite,
-  createMinerSprite,
-} from "@/utils/pixiUtils";
+import { createBaseSprite, createOreSprite } from "@/utils/pixiUtils";
+import { createMinerSprite } from "@/lib/mapLogic";
 
 interface UseInteractivityProps {
   appRef: React.RefObject<PIXI.Application>;
