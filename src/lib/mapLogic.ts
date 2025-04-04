@@ -95,7 +95,7 @@ const calculateMapCenter = (dimensions: MapDimensions): MapPosition => ({
 const generateCaveShape = (
   width: number,
   height: number,
-  roughness: number = 0.3
+  roughness: number
 ): boolean[][] => {
   const shape: boolean[][] = Array(height)
     .fill(0)
@@ -129,16 +129,25 @@ const generateCaveShape = (
   // Smooth the edges
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) {
-      if (shape[y][x]) {
-        // Count adjacent floor tiles
+      if (!shape[y][x]) {
         let floorCount = 0;
-        for (let dy = -1; dy <= 1; dy++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            if (shape[y + dy][x + dx]) floorCount++;
-          }
-        }
-        // If too isolated, convert to wall
-        if (floorCount < 4) shape[y][x] = false;
+        if (shape[y - 1][x]) floorCount++;
+        if (shape[y + 1][x]) floorCount++;
+        if (shape[y][x - 1]) floorCount++;
+        if (shape[y][x + 1]) floorCount++;
+        if (floorCount >= 3) shape[y][x] = true;
+      }
+    }
+  }
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      if (shape[y][x]) {
+        let floorCount = 0;
+        if (!shape[y - 1][x]) floorCount++;
+        if (!shape[y + 1][x]) floorCount++;
+        if (!shape[y][x - 1]) floorCount++;
+        if (!shape[y][x + 1]) floorCount++;
+        if (floorCount >= 3) shape[y][x] = false;
       }
     }
   }
@@ -162,7 +171,7 @@ const calculateAvailableAreaBounds = (
   const shape = generateCaveShape(
     availableArea.width,
     availableArea.height,
-    0.2
+    0.1
   );
 
   return {

@@ -3,6 +3,7 @@ import { Rail } from "@/interfaces/RailType";
 import { MapLayerType } from "./mapLogic";
 import { LayerName, MineCartsData } from "@/constants/Sprites";
 import { MineType } from "@/interfaces/MineType";
+import { getRandomNumber } from "@/utils/utils";
 
 // Helper function to check if a position is valid for rail placement
 const isValidRailPosition = (
@@ -165,14 +166,21 @@ export const updateRailPositions = (
   }
 
   // Select a random point on the horizontal rail to extend downward
-  const branchPointIndex = Math.floor(Math.random() * horizontalRails.length);
+  const branchPointIndex =
+    Math.floor(horizontalRails.length / 2) - 2 + getRandomNumber(0, 4);
   const branchPoint = horizontalRails[branchPointIndex];
-  
+
   // Create the additional vertical rail extending downward
-  const additionalVerticalLength = Math.floor(activeMine.availableArea.height / 3); // 1/3 of the available height
+  const additionalVerticalLength = Math.floor(
+    activeMine.availableArea.height / 3
+  ); // 1/3 of the available height
   const additionalVerticalRails: MapPosition[] = [];
-  
-  for (let y = horizontalY + 1; y < horizontalY + 1 + additionalVerticalLength; y++) {
+
+  for (
+    let y = horizontalY + 1;
+    y < horizontalY + 1 + additionalVerticalLength;
+    y++
+  ) {
     additionalVerticalRails.push({ x: branchPoint.x, y });
   }
 
@@ -204,7 +212,11 @@ export const updateRailPositions = (
     railObjects.push({
       id: `rail-horizontal-${i}`,
       position: pos,
-      type: isEnd ? MineCartsData.End : (isBranchPoint ? MineCartsData.T_Right : MineCartsData.Horizontal),
+      type: isEnd
+        ? MineCartsData.End
+        : isBranchPoint
+        ? MineCartsData.T_Right
+        : MineCartsData.Horizontal,
     });
   }
 

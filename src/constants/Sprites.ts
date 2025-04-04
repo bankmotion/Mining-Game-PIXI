@@ -124,6 +124,17 @@ export const FloorData = [
   },
 ];
 
+export enum WallData {
+  WallToLeft = 127,
+  WallToRight = 132,
+  WallToUp = 46,
+  WallToDown = 14,
+  WallToLeftUp = 45,
+  WallToRightUp = 48,
+  WallToLeftDown = 295,
+  WallToRightDown = 300,
+}
+
 export enum MountainData {
   BottomEnhance = 254,
   LeftWall = 212,
