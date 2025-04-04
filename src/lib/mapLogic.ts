@@ -3,6 +3,7 @@ import {
   FloorData,
   InitialTileWidth,
   LayerName,
+  MineCartsData,
   MountainData,
   SpriteName,
   Sprites,
@@ -15,6 +16,7 @@ import {
 } from "@/interfaces/MapTypes";
 import { Miner } from "@/interfaces/MinerTypes";
 import { Ore } from "@/interfaces/OreTypes";
+import { Rail } from "@/interfaces/RailType";
 import {
   createMinerTilesetTexture,
   createTilesetTexture,
@@ -30,6 +32,7 @@ import {
 import { findValidOrePositions, updateOrePositions } from "./oresLogic";
 import { OreData } from "@/constants/Ore";
 import { GameState } from "@/interfaces/GameType";
+import { findValidRailPositions, updateRailPositions } from "./railLogic";
 
 // Constants
 export const MapLayerType: LayerName[][] = [];
@@ -62,6 +65,10 @@ const createMapContainer = (container: PIXI.Container): MapContainer => {
   wallContainer.name = LayerName.Wall;
   container.addChild(wallContainer);
 
+  const railContainer = new PIXI.Container();
+  railContainer.name = LayerName.Rails;
+  container.addChild(railContainer);
+
   const minerContainer = new PIXI.Container();
   minerContainer.name = LayerName.Miners;
   container.addChild(minerContainer);
@@ -75,6 +82,7 @@ const createMapContainer = (container: PIXI.Container): MapContainer => {
     wall: wallContainer,
     miner: minerContainer,
     ore: oreContainer,
+    rail: railContainer,
   };
 };
 
@@ -222,7 +230,7 @@ const createFloorTiles = (
   dimensions: MapDimensions,
   onBaseClick: () => void,
   updateGameState: (gameState: GameState) => void
-): void => {
+): MapPosition => {
   // First, find the top center position for the door
   const doorX = Math.floor((bounds.start.x + bounds.end.x) / 2);
   const doorY = bounds.start.y;
@@ -235,7 +243,7 @@ const createFloorTiles = (
       doorPosition,
       SpriteName.MineDoors,
       11,
-      LayerName.Floor
+      LayerName.Doors
     );
 
     // Set the base position
@@ -283,6 +291,7 @@ const createFloorTiles = (
       }
     }
   }
+  return doorPosition;
 };
 
 export const createOreSprite = (
@@ -395,6 +404,20 @@ export const createMinerSprite = (miner: Miner): PIXI.Sprite => {
   return sprite;
 };
 
+export const createRailSprite = (rail: Rail): PIXI.Sprite => {
+  // Create a rail sprite based on the rail type
+  const railTexture = createTilesetTexture(SpriteName.MineCarts, rail.type);
+  const railSprite = new PIXI.Sprite(railTexture);
+
+  railSprite.name = `rail-${rail.id}`;
+  railSprite.x = rail.position.x * InitialTileWidth;
+  railSprite.y = rail.position.y * InitialTileWidth;
+  railSprite.width = InitialTileWidth;
+  railSprite.height = InitialTileWidth;
+
+  return railSprite;
+};
+
 // Main Function
 export const renderMapLayers = async (
   app: PIXI.Application,
@@ -417,7 +440,8 @@ export const renderMapLayers = async (
     const bounds = calculateAvailableAreaBounds(center, mine.availableArea);
     const containers = createMapContainer(container);
 
-    createFloorTiles(
+    // Create floor and door tiles
+    const door = createFloorTiles(
       containers,
       bounds,
       dimensions,
@@ -426,6 +450,27 @@ export const renderMapLayers = async (
     );
     createWallTiles(containers, bounds, dimensions);
 
+    // Create rail tiles
+    const activeMine = gameState.mines[gameState.activeMine];
+    if (!activeMine) {
+      throw new Error("Active mine not found");
+    }
+
+    const rails = updateRailPositions(activeMine, door);
+    console.log(rails);
+
+    // Update game state with the new rails
+    updateGameState({
+      rails: rails,
+    } as GameState);
+
+    // Render rail sprites
+    rails.forEach((rail) => {
+      const railSprite = createRailSprite(rail);
+      containers.rail.addChild(railSprite);
+    });
+
+    // Create ore tiles
     const validOrePositions = findValidOrePositions(
       dimensions.width,
       dimensions.height
@@ -440,6 +485,7 @@ export const renderMapLayers = async (
       containers.miner.addChild(oreSprite);
     });
 
+    // Create miner tiles
     const validMinerPositions = findValidMinerPositions(
       dimensions.width,
       dimensions.height
@@ -450,6 +496,7 @@ export const renderMapLayers = async (
       gameState.activeMine
     );
 
+    // Create miner sprites
     gameState.miners.forEach((miner) => {
       const minerSprite = createMinerSprite(miner);
       containers.miner.addChild(minerSprite);

@@ -6,6 +6,7 @@ import { Ore, OreType } from "./OreTypes";
 
 export interface GameState {
   miners: Miner[]; // Array of miners
+  rails: Rail[]; // Array of rails
   ores: Ore[]; // Array of ores
   resources: Record<OreType, number>; // Record of resources
   resourceRate: Record<OreType, number>; // Record of resource rates

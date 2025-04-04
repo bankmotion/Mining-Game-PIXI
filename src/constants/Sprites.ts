@@ -37,10 +37,24 @@ export enum SpriteName {
 
 export enum LayerName {
   Floor = "Floor",
+  Rails = "Rails",
   Mountains = "Mountains",
   Wall = "Wall",
   Miners = "Miners",
   Ore = "Ore",
+  Doors = "Doors",
+}
+
+export enum MineCartsData {
+  Horizontal = 19,
+  Vertical = 36,
+  Corner = 3,
+  T_Top = 20,
+  T_Bottom = 84,
+  T_Left = 50,
+  T_Right = 54,
+  Cross = 52,
+  End = 9,
 }
 
 export const FloorData = [

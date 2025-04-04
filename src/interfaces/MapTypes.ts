@@ -17,6 +17,7 @@ export interface MapContainer {
   wall: PIXI.Container;
   miner: PIXI.Container;
   ore: PIXI.Container;
+  rail: PIXI.Container;
 }
 
 export interface MinerSpriteData {

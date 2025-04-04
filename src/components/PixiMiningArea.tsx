@@ -80,11 +80,11 @@ export const PixiMiningArea = ({
         return;
       }
 
-      initAttemptedRef.current = true;
+    initAttemptedRef.current = true;
       console.log("Starting PixiJS initialization...");
 
       // Create PixiJS application with optimized settings
-      const app = new PIXI.Application({
+        const app = new PIXI.Application({
         width: pixiContainerRef.current.clientWidth,
         height: pixiContainerRef.current.clientHeight,
         backgroundColor: 0x1a1a1a,
@@ -92,7 +92,7 @@ export const PixiMiningArea = ({
         autoDensity: true,
         resizeTo: pixiContainerRef.current,
         powerPreference: "high-performance",
-        antialias: false,
+          antialias: false,
         hello: true,
       });
 
@@ -100,7 +100,7 @@ export const PixiMiningArea = ({
       pixiContainerRef.current.appendChild(app.view as HTMLCanvasElement);
 
       // Store the application reference
-      appRef.current = app;
+          appRef.current = app;
 
       const tileCountX = Math.floor(
         pixiContainerRef.current.clientWidth / InitialTileWidth
