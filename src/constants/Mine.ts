@@ -12,8 +12,8 @@ export const MineTypes: MineType[] = [
     rareOreChance: 1,
     oreCount: 20,
     availableArea: {
-      width: 40,
-      height: 25,
+      width: 30,
+      height: 15,
     },
   },
   {

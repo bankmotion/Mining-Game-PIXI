@@ -7,6 +7,7 @@ import {
   MountainData,
   SpriteName,
   Sprites,
+  WallData,
 } from "@/constants/Sprites";
 import { GameState } from "@/interfaces/GameType";
 import {
@@ -125,26 +126,26 @@ const generateCaveShape = (
   }
 
   // Smooth the edges
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
       if (!shape[y][x]) {
         let floorCount = 0;
-        if (shape[y - 1][x]) floorCount++;
-        if (shape[y + 1][x]) floorCount++;
-        if (shape[y][x - 1]) floorCount++;
-        if (shape[y][x + 1]) floorCount++;
+        if (y === 0 || shape[y - 1][x]) floorCount++;
+        if (y === height - 1 || shape[y + 1][x]) floorCount++;
+        if (x === 0 || shape[y][x - 1]) floorCount++;
+        if (x === width - 1 || shape[y][x + 1]) floorCount++;
         if (floorCount >= 3) shape[y][x] = true;
       }
     }
   }
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
       if (shape[y][x]) {
         let floorCount = 0;
-        if (!shape[y - 1][x]) floorCount++;
-        if (!shape[y + 1][x]) floorCount++;
-        if (!shape[y][x - 1]) floorCount++;
-        if (!shape[y][x + 1]) floorCount++;
+        if (y === 0 || !shape[y - 1][x]) floorCount++;
+        if (y === height - 1 || !shape[y + 1][x]) floorCount++;
+        if (x === 0 || !shape[y][x - 1]) floorCount++;
+        if (x === width - 1 || !shape[y][x + 1]) floorCount++;
         if (floorCount >= 3) shape[y][x] = false;
       }
     }
@@ -237,7 +238,7 @@ const createFloorTiles = (
   dimensions: MapDimensions,
   onBaseClick: () => void,
   updateGameState: (gameState: GameState) => void
-): MapPosition => {
+): { doorPosition: MapPosition } => {
   // First, find the top center position for the door
   const doorX = Math.floor((bounds.start.x + bounds.end.x) / 2);
   const doorY = bounds.start.y;
@@ -298,7 +299,7 @@ const createFloorTiles = (
       }
     }
   }
-  return doorPosition;
+  return { doorPosition };
 };
 
 export const createOreSprite = (
@@ -356,25 +357,154 @@ export const createOreSprite = (
   return oreSprite;
 };
 
+const isConnectWithWallTile = (position: MapPosition) => {
+  const { x, y } = position;
+  const adjacent = {
+    top:
+      !MapLayerType[y - 1]?.[x] ||
+      MapLayerType[y - 1]?.[x] === LayerName.Wall ||
+      MapLayerType[y - 1]?.[x] === LayerName.Mountains,
+    bottom:
+      !MapLayerType[y + 1]?.[x] ||
+      MapLayerType[y + 1]?.[x] === LayerName.Wall ||
+      MapLayerType[y + 1]?.[x] === LayerName.Mountains,
+    left:
+      !MapLayerType[y]?.[x - 1] ||
+      MapLayerType[y]?.[x - 1] === LayerName.Wall ||
+      MapLayerType[y]?.[x - 1] === LayerName.Mountains,
+    right:
+      !MapLayerType[y]?.[x + 1] ||
+      MapLayerType[y]?.[x + 1] === LayerName.Wall ||
+      MapLayerType[y]?.[x + 1] === LayerName.Mountains,
+  };
+
+  // Determine wall type based on adjacent walls
+  const { top, bottom, left, right } = adjacent;
+  let tileType = "GeneralWall";
+
+  if (!bottom || !left || !right || !top) {
+    tileType = "MountainToDown";
+  }
+
+  return { tileType };
+};
+
+const isConnectWithMountainTile = (position: MapPosition) => {
+  const { x, y } = position;
+  let tileType = "GeneralWall";
+
+  const adjacent = {
+    top: MapLayerType[y - 1]?.[x] === LayerName.Mountains,
+    bottom: MapLayerType[y + 1]?.[x] === LayerName.Mountains,
+    left: MapLayerType[y]?.[x - 1] === LayerName.Mountains,
+    right: MapLayerType[y]?.[x + 1] === LayerName.Mountains,
+  };
+
+  const { top, bottom, left, right } = adjacent;
+
+  if (!bottom || !left || !right || !top) {
+    if (top && left) {
+      tileType = "WallToLeftUp";
+    } else if (top && right) {
+      tileType = "WallToRightUp";
+    } else if (bottom && left) {
+      tileType = "WallToLeftDown";
+    } else if (bottom && right) {
+      tileType = "WallToRightDown";
+    } else if (top) {
+      tileType = "WallToUp";
+    } else if (bottom) {
+      tileType = "WallToDown";
+    } else if (left) {
+      tileType = "WallToLeft";
+    } else if (right) {
+      tileType = "WallToRight";
+    }
+  }
+
+  return { tileType };
+};
+
+const isBellowMountain = (position: MapPosition) => {
+  const { x, y } = position;
+  let tileType = "";
+
+  if (MapLayerType[y - 1]?.[x] === LayerName.Mountains) {
+    tileType = "MountainShadow";
+  }
+
+  return { tileType };
+};
+
 const createWallTiles = (
   containers: MapContainer,
   bounds: { start: MapPosition; end: MapPosition; shape: boolean[][] },
   dimensions: MapDimensions
 ): void => {
+  // add normal wall
   for (let y = 0; y < dimensions.height; y++) {
     for (let x = 0; x < dimensions.width; x++) {
       const position = { x, y };
       if (isPositionInAvailableArea(position, bounds)) continue;
 
+      const { tileType } = isConnectWithWallTile(position);
       updateMapType(
         containers.wall,
         position,
         SpriteName.WallsFloors,
-        MountainData.GeneralWall,
+        WallData[tileType],
+        tileType === "MountainToDown" ||
+          tileType === "MountainToLeftDown" ||
+          tileType === "MountainToRightDown"
+          ? LayerName.Mountains
+          : LayerName.Wall
+      );
+    }
+  }
+
+  // add mountain tiles
+  for (let y = 0; y < dimensions.height; y++) {
+    for (let x = 0; x < dimensions.width; x++) {
+      const position = { x, y };
+      if (isPositionInAvailableArea(position, bounds)) continue;
+      if (MapLayerType[y]?.[x] === LayerName.Mountains) continue;
+
+      const { tileType } = isConnectWithMountainTile(position);
+      updateMapType(
+        containers.wall,
+        position,
+        SpriteName.WallsFloors,
+        WallData[tileType],
         LayerName.Wall
       );
     }
   }
+
+  // add wall to mountain
+  for (let y = 0; y < dimensions.height; y++) {
+    for (let x = 0; x < dimensions.width; x++) {
+      const position = { x, y };
+      if (
+        MapLayerType[y]?.[x] === LayerName.Mountains ||
+        MapLayerType[y]?.[x] === LayerName.Wall
+      )
+        continue;
+
+      const { tileType } = isBellowMountain(position);
+      if (tileType) {
+        console.log("hi");
+        updateMapType(
+          containers.wall,
+          position,
+          SpriteName.WallsFloors,
+          WallData[tileType],
+          LayerName.Wall
+        );
+      }
+    }
+  }
+
+  console.log(MapLayerType);
 };
 
 export const createMinerSprite = (miner: Miner): PIXI.Sprite => {
@@ -437,7 +567,6 @@ export const renderMapLayers = async (
   onBaseClick?: () => void
 ): Promise<void> => {
   try {
-    console.log(gameState, dimensions);
     const mine = MineTypes.find((m) => m.id === gameState.activeMine);
     if (!mine) {
       throw new Error("Active mine not found");
@@ -448,7 +577,7 @@ export const renderMapLayers = async (
     const containers = createMapContainer(container);
 
     // Create floor and door tiles
-    const door = createFloorTiles(
+    const { doorPosition } = createFloorTiles(
       containers,
       bounds,
       dimensions,
@@ -463,8 +592,7 @@ export const renderMapLayers = async (
       throw new Error("Active mine not found");
     }
 
-    const rails = updateRailPositions(activeMine, door);
-    console.log(rails);
+    const rails = updateRailPositions(activeMine, doorPosition);
 
     // Update game state with the new rails
     updateGameState({

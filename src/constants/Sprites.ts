@@ -125,14 +125,28 @@ export const FloorData = [
 ];
 
 export enum WallData {
-  WallToLeft = 127,
-  WallToRight = 132,
+  WallToLeft = 128,
+  WallToRight = 133,
   WallToUp = 46,
-  WallToDown = 14,
+  WallToDown = 256,
   WallToLeftUp = 45,
   WallToRightUp = 48,
-  WallToLeftDown = 295,
-  WallToRightDown = 300,
+  WallToLeftDown = 212,
+  WallToRightDown = 258,
+  WallToLeftRightUp = 51,
+  WallToLeftRightDown = 93,
+  WallToLeftUpDown = 385,
+  WallToRightUpDown = 388,
+  WallToUpDown = 386,
+  WallToLeftRight = 429,
+
+  MountainToDown = 297,
+  MountainToLeftDown = 298,
+  MountainToRightDown = 300,
+
+  GeneralWall = 213,
+
+  MountainShadow = 340,
 }
 
 export enum MountainData {
