@@ -73,6 +73,7 @@ export const createTilesetTexture = (
   tileId: number
 ): PIXI.Texture => {
   const sprite = Sprites.find((sprite) => sprite.name === spriteName);
+
   const columns = sprite.width / sprite.tileWidth;
   const tilesetRow = Math.floor(tileId / columns);
   const tilesetCol = tileId % columns;

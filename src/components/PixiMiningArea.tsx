@@ -106,15 +106,29 @@ export const PixiMiningArea = ({
       // Store the application reference
       appRef.current = app;
 
-      const tileCountX = Math.floor(app.screen.width / InitialTileWidth);
-      const tileCountY = Math.floor(app.screen.height / InitialTileWidth);
+      const tileCountX = Math.floor(
+        pixiContainerRef.current.clientWidth / InitialTileWidth
+      );
+      const tileCountY = Math.floor(
+        pixiContainerRef.current.clientHeight / InitialTileWidth
+      );
       setTileCounts({ x: tileCountX, y: tileCountY });
-      console.log({ tileCountX, tileCountY });
+      console.log({
+        tileCountX,
+        tileCountY,
+        width: pixiContainerRef.current.clientWidth,
+        height: pixiContainerRef.current.clientHeight,
+      });
 
       // Create game container with optimized scaling
       const gameContainer = new PIXI.Container();
-      gameContainer.x = (app.screen.width - tileCountX * InitialTileWidth) / 2;
-      gameContainer.y = (app.screen.height - tileCountY * InitialTileWidth) / 2;
+      gameContainer.x =
+        (pixiContainerRef.current.clientWidth - tileCountX * InitialTileWidth) /
+        2;
+      gameContainer.y =
+        (pixiContainerRef.current.clientHeight -
+          tileCountY * InitialTileWidth) /
+        2;
       app.stage.addChild(gameContainer);
 
       // Optimize sprite loading and game initialization

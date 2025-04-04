@@ -16,8 +16,8 @@ export const MineTypes: MineType[] = [
       y: (2 * 100) / InitialTileWidth,
     },
     availableArea: {
-      width: 30,
-      height: 15,
+      width: 40,
+      height: 25,
     },
   },
   {
@@ -31,8 +31,8 @@ export const MineTypes: MineType[] = [
     oreCount: 25,
     basePosition: { x: 85, y: 15 },
     availableArea: {
-      width: 35,
-      height: 20,
+      width: 50,
+      height: 30,
     },
   },
   {
@@ -46,8 +46,8 @@ export const MineTypes: MineType[] = [
     oreCount: 30,
     basePosition: { x: 15, y: 85 },
     availableArea: {
-      width: 40,
-      height: 25,
+      width: 60,
+      height: 35,
     },
   },
   {
@@ -62,7 +62,7 @@ export const MineTypes: MineType[] = [
     oreCount: 35,
     basePosition: { x: 85, y: 85 },
     availableArea: {
-      width: 50,
+      width: 80,
       height: 40,
     },
   },
