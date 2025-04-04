@@ -1,3 +1,5 @@
+export const MapScale = 1.7;
+
 // import { Map } from "@/interfaces/MapTypes";
 
 // export const MapTile = {

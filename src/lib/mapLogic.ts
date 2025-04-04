@@ -1,13 +1,14 @@
 import { MineTypes } from "@/constants/Mine";
+import { OreData } from "@/constants/Ore";
 import {
   FloorData,
   InitialTileWidth,
   LayerName,
-  MineCartsData,
   MountainData,
   SpriteName,
   Sprites,
 } from "@/constants/Sprites";
+import { GameState } from "@/interfaces/GameType";
 import {
   MapContainer,
   MapDimensions,
@@ -24,15 +25,12 @@ import {
 import { getRandomTileId } from "@/utils/utils";
 import * as PIXI from "pixi.js";
 import {
-  createMinerAtPositions,
   findValidMinerPositions,
   getMinerAnimationType,
   updateMinerPositions,
 } from "./minersLogic";
 import { findValidOrePositions, updateOrePositions } from "./oresLogic";
-import { OreData } from "@/constants/Ore";
-import { GameState } from "@/interfaces/GameType";
-import { findValidRailPositions, updateRailPositions } from "./railLogic";
+import { updateRailPositions } from "./railLogic";
 
 // Constants
 export const MapLayerType: LayerName[][] = [];
