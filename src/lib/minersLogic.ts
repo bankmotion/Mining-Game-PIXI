@@ -111,8 +111,7 @@ export const updateMinerPositions = (
   // Generate new positions for miners
   const generatedPositions = generateMinerPositions(
     validPositions,
-    miners.length,
-    mine.basePosition
+    miners.length
   );
 
   // Update each miner's position
@@ -126,8 +125,7 @@ export const updateMinerPositions = (
 // Helper function to generate miner positions
 const generateMinerPositions = (
   validPositions: Position[],
-  count: number,
-  basePosition: Position
+  count: number
 ): Position[] => {
   const availablePositions = [...validPositions];
 
@@ -142,13 +140,6 @@ const generateMinerPositions = (
 
   // Take only the number of positions we need
   const selectedPositions = availablePositions.slice(0, count);
-
-  // Sort positions by distance to base
-  selectedPositions.sort((a, b) => {
-    const distA = calculateDistance(a, basePosition);
-    const distB = calculateDistance(b, basePosition);
-    return distA - distB;
-  });
 
   return selectedPositions;
 };

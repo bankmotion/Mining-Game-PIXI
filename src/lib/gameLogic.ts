@@ -17,6 +17,7 @@ import {
   depleteOreVein,
   updateOreRegeneration,
 } from "./oresLogic";
+import { MapPosition } from "@/interfaces/MapTypes";
 
 export const updateMinerState = (
   miner: Miner,
@@ -25,7 +26,7 @@ export const updateMinerState = (
   deltaTime: number,
   upgrades: Record<string, number>,
   mineMultiplier: number = 1,
-  basePosition: { x: number; y: number } = { x: 15, y: 15 },
+  basePosition: MapPosition,
   energyState: EnergyState
 ): {
   updatedMiner: Miner;
@@ -259,7 +260,7 @@ export const updateMinerState = (
   return { updatedMiner, updatedOre, collectedResources };
 };
 
-export const updateGameState = (
+export const updateGameStateWithDeltaTime = (
   state: GameState,
   deltaTime: number
 ): GameState => {
@@ -275,7 +276,6 @@ export const updateGameState = (
 
   const activeMine = state.mines[state.activeMine];
   const mineMultiplier = activeMine ? activeMine.resourceMultiplier : 1;
-  const basePosition = activeMine ? activeMine.basePosition : { x: 15, y: 15 };
 
   for (const miner of state.miners) {
     const { updatedMiner, updatedOre, collectedResources } = updateMinerState(
@@ -285,7 +285,7 @@ export const updateGameState = (
       deltaTime,
       state.upgrades,
       mineMultiplier,
-      basePosition,
+      state.basePosition,
       newState.energy
     );
 
@@ -410,6 +410,8 @@ export const initializeGameState = (): GameState => {
     lastUpdateTime: Date.now(),
     activeMine: "starter",
     mines,
+    basePosition: { x: 0, y: 0 },
+    mapDimensions: { width: 0, height: 0 },
     energy: InitialEnergyState,
   };
 };

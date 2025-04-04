@@ -5,6 +5,8 @@ import {
   SpriteName,
   Sprites,
 } from "@/constants/Sprites";
+import { GameState } from "@/interfaces/GameType";
+import { MapDimensions } from "@/interfaces/MapTypes";
 import { Miner } from "@/interfaces/MinerTypes";
 import { Ore } from "@/interfaces/OreTypes";
 import { AnimatedSprite } from "@/interfaces/PixiTypes";
@@ -16,19 +18,10 @@ import { useCallback, useEffect } from "react";
 
 interface UseGameStateProps {
   appRef: React.RefObject<PIXI.Application>;
-  miners: Miner[];
-  ores: Ore[];
-  tileCountX: number;
-  tileCountY: number;
+  gameState: GameState;
 }
 
-export const useGameUpdate = ({
-  appRef,
-  miners,
-  ores,
-  tileCountX,
-  tileCountY,
-}: UseGameStateProps) => {
+export const useGameUpdate = ({ appRef, gameState }: UseGameStateProps) => {
   // Update ore states
   const updateOreStates = useCallback(
     (deltaTime: number) => {
@@ -37,7 +30,7 @@ export const useGameUpdate = ({
       const gameContainer = app.stage.getChildAt(0) as PIXI.Container;
       if (!gameContainer) return;
 
-      ores.forEach((ore) => {
+      gameState.ores.forEach((ore) => {
         const oreSprite = gameContainer.getChildByName(
           `ore-${ore.id}`
         ) as PIXI.Sprite;
@@ -89,7 +82,7 @@ export const useGameUpdate = ({
         }
       });
     },
-    [appRef, ores]
+    [appRef, gameState.ores]
   );
 
   // Update miner animations
@@ -107,28 +100,29 @@ export const useGameUpdate = ({
         if (!(child instanceof PIXI.Sprite)) return;
 
         const minerId = child.name.replace("miner-", "");
-        const miner = miners.find((m) => m.id === minerId);
+        const miner = gameState.miners.find((m) => m.id === minerId);
         if (!miner) return;
 
         // Update position
-        updateMinerPosition(child, miner, tileCountX, tileCountY);
+        updateMinerPosition(child, miner, gameState.mapDimensions);
 
         // Update animation
         updateMinerAnimation(child as AnimatedSprite, miner, deltaTime);
       });
     },
-    [appRef, miners]
+    [appRef, gameState.miners, gameState.mapDimensions]
   );
 
   // Helper function to update miner position
   const updateMinerPosition = (
     sprite: PIXI.Sprite,
     miner: Miner,
-    tileCountX: number,
-    tileCountY: number
+    dimensions: MapDimensions
   ) => {
-    const tileX = (miner.position.x / 100) * tileCountX * InitialTileWidth;
-    const tileY = (miner.position.y / 100) * tileCountY * InitialTileWidth;
+    const tileX =
+      (miner.position.x / 100) * dimensions.width * InitialTileWidth;
+    const tileY =
+      (miner.position.y / 100) * dimensions.height * InitialTileWidth;
     sprite.x = tileX * InitialTileWidth;
     sprite.y = tileY * InitialTileWidth;
   };
@@ -164,9 +158,14 @@ export const useGameUpdate = ({
     }
 
     // Update position
-    sprite.x = (miner.position.x / 100) * tileCountX * InitialTileWidth;
-    sprite.y = (miner.position.y / 100) * tileCountY * InitialTileWidth;
-    console.log(sprite.x, sprite.y, miner.position.x, miner.position.y);
+    sprite.x =
+      (miner.position.x / 100) *
+      gameState.mapDimensions.width *
+      InitialTileWidth;
+    sprite.y =
+      (miner.position.y / 100) *
+      gameState.mapDimensions.height *
+      InitialTileWidth;
 
     // Update animation if type changed
     if (minerSpriteData.animationType !== animationType) {

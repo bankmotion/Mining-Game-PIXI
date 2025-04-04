@@ -29,6 +29,7 @@ import {
 } from "./minersLogic";
 import { findValidOrePositions, updateOrePositions } from "./oresLogic";
 import { OreData } from "@/constants/Ore";
+import { GameState } from "@/interfaces/GameType";
 
 // Constants
 export const MapLayerType: LayerName[][] = [];
@@ -134,6 +135,9 @@ const generateCaveShape = (
     }
   }
 
+  // Add door at top center
+  shape[0][Math.floor(width / 2)] = true;
+
   return shape;
 };
 
@@ -196,7 +200,7 @@ export const updateMapType = (
   spriteName: SpriteName,
   id: number,
   mapType: LayerName
-): void => {
+): PIXI.Sprite => {
   const tileTexture = createTilesetTexture(spriteName, id);
   const tile = new PIXI.Sprite(tileTexture);
 
@@ -208,13 +212,53 @@ export const updateMapType = (
     MapLayerType[position.y] = [];
   }
   MapLayerType[position.y][position.x] = mapType;
+
+  return tile;
 };
 
 const createFloorTiles = (
   containers: MapContainer,
   bounds: { start: MapPosition; end: MapPosition; shape: boolean[][] },
-  dimensions: MapDimensions
+  dimensions: MapDimensions,
+  onBaseClick: () => void,
+  updateGameState: (gameState: GameState) => void
 ): void => {
+  // First, find the top center position for the door
+  const doorX = Math.floor((bounds.start.x + bounds.end.x) / 2);
+  const doorY = bounds.start.y;
+  const doorPosition: MapPosition = { x: doorX, y: doorY };
+
+  // Place the door first
+  if (isPositionInBounds(doorPosition, dimensions)) {
+    const doorSprite = updateMapType(
+      containers.floor,
+      doorPosition,
+      SpriteName.MineDoors,
+      11,
+      LayerName.Floor
+    );
+
+    // Set the base position
+    updateGameState({
+      basePosition: {
+        x: (100 * doorPosition.x) / dimensions.width,
+        y: (100 * doorPosition.y) / dimensions.height,
+      },
+    } as GameState);
+
+    // Add click event to door sprite
+    if (doorSprite) {
+      doorSprite.eventMode = "static";
+      doorSprite.cursor = "pointer";
+      doorSprite.on("pointerdown", () => {
+        if (onBaseClick) {
+          onBaseClick();
+        }
+      });
+    }
+  }
+
+  // Then create the rest of the floor tiles
   for (let y = bounds.start.y; y < bounds.end.y; y++) {
     for (let x = bounds.start.x; x < bounds.end.x; x++) {
       const position = { x, y };
@@ -222,6 +266,9 @@ const createFloorTiles = (
 
       const relativeX = x - bounds.start.x;
       const relativeY = y - bounds.start.y;
+
+      // Skip the door position
+      if (x === doorX && y === doorY) continue;
 
       // Only create floor tiles where the shape is true
       if (bounds.shape[relativeY]?.[relativeX]) {
@@ -240,10 +287,8 @@ const createFloorTiles = (
 
 export const createOreSprite = (
   ore: Ore,
-  onOreClick: (ore: Ore, tileCountX: number, tileCountY: number) => void,
-  isBlackout: boolean,
-  tileCountX: number,
-  tileCountY: number
+  onOreClick: (ore: Ore) => void,
+  isBlackout: boolean
 ): PIXI.Sprite => {
   // Check cache first
   if (oreSpriteCache.has(ore.id)) {
@@ -253,9 +298,7 @@ export const createOreSprite = (
       cachedSprite.eventMode = "static";
       cachedSprite.cursor = "pointer";
       cachedSprite.removeAllListeners();
-      cachedSprite.on("pointerdown", () =>
-        onOreClick(ore, tileCountX, tileCountY)
-      );
+      cachedSprite.on("pointerdown", () => onOreClick(ore));
     }
     return cachedSprite;
   }
@@ -281,7 +324,7 @@ export const createOreSprite = (
   oreSprite.alpha = ore.depleted ? 0.4 : 1;
 
   if (!isBlackout && onOreClick) {
-    oreSprite.on("pointerdown", () => onOreClick(ore, tileCountX, tileCountY));
+    oreSprite.on("pointerdown", () => onOreClick(ore));
   }
 
   // Add regeneration timer text with cached style
@@ -352,95 +395,62 @@ export const createMinerSprite = (miner: Miner): PIXI.Sprite => {
   return sprite;
 };
 
-//   const spriteData = minerSprites.get(miner.id);
-//   if (!spriteData) return;
-
-//   const animationType = getMinerAnimationType(miner);
-//   const spriteName = SpriteName.CharacterPushBodyGreen;
-//   const spriteDataConfig = Sprites.find((s) => s.name === spriteName);
-//   if (!spriteDataConfig) return;
-
-//   const animationData = spriteDataConfig.animations[animationType];
-//   if (!animationData) return;
-
-//   // Update position
-//   spriteData.sprite.x = miner.position.x * MapTile.width;
-//   spriteData.sprite.y = miner.position.y * MapTile.height;
-
-//   // Update animation if type changed
-//   if (spriteData.animationType !== animationType) {
-//     spriteData.animationType = animationType;
-//     spriteData.frame = 0;
-//     spriteData.time = 0;
-
-//     const texture = createMinerTilesetTexture(
-//       SpriteName.CharacterPushBodyGreen,
-//       animationData.frames[0]
-//     );
-//     spriteData.sprite.texture = texture;
-//   }
-
-//   // Update animation frame
-//   spriteData.time += deltaTime / 1000;
-//   if (spriteData.time >= animationData.speed) {
-//     spriteData.time = 0;
-//     spriteData.frame = (spriteData.frame + 1) % animationData.frames.length;
-
-//     const texture = createMinerTilesetTexture(
-//       SpriteName.CharacterPushBodyGreen,
-//       animationData.frames[spriteData.frame]
-//     );
-//     spriteData.sprite.texture = texture;
-//   }
-// };
-
 // Main Function
 export const renderMapLayers = async (
   app: PIXI.Application,
   container: PIXI.Container,
-  miners: Miner[],
-  ores: Ore[],
-  activeMine: string,
-  tileCountX: number,
-  tileCountY: number,
-  onOreClick: (ore: Ore, tileCountX: number, tileCountY: number) => void,
-  isBlackout: boolean
+  gameState: GameState,
+  onOreClick: (ore: Ore) => void,
+  updateGameState: (gameState: GameState) => void,
+  isBlackout: boolean,
+  dimensions?: MapDimensions,
+  onBaseClick?: () => void
 ): Promise<void> => {
   try {
-    const mine = MineTypes.find((m) => m.id === activeMine);
+    console.log(gameState, dimensions);
+    const mine = MineTypes.find((m) => m.id === gameState.activeMine);
     if (!mine) {
       throw new Error("Active mine not found");
     }
-
-    const dimensions: MapDimensions = {
-      width: tileCountX,
-      height: tileCountY,
-    };
 
     const center = calculateMapCenter(dimensions);
     const bounds = calculateAvailableAreaBounds(center, mine.availableArea);
     const containers = createMapContainer(container);
 
-    createFloorTiles(containers, bounds, dimensions);
+    createFloorTiles(
+      containers,
+      bounds,
+      dimensions,
+      onBaseClick,
+      updateGameState
+    );
     createWallTiles(containers, bounds, dimensions);
 
-    const validOrePositions = findValidOrePositions(tileCountX, tileCountY);
-    updateOrePositions(ores, validOrePositions, mine.rareOreChance || 1);
-    ores.forEach((ore) => {
-      const oreSprite = createOreSprite(
-        ore,
-        onOreClick,
-        isBlackout,
-        tileCountX,
-        tileCountY
-      );
+    const validOrePositions = findValidOrePositions(
+      dimensions.width,
+      dimensions.height
+    );
+    updateOrePositions(
+      gameState.ores,
+      validOrePositions,
+      mine.rareOreChance || 1
+    );
+    gameState.ores.forEach((ore) => {
+      const oreSprite = createOreSprite(ore, onOreClick, isBlackout);
       containers.miner.addChild(oreSprite);
     });
 
-    const validMinerPositions = findValidMinerPositions(tileCountX, tileCountY);
-    updateMinerPositions(miners, validMinerPositions, activeMine);
+    const validMinerPositions = findValidMinerPositions(
+      dimensions.width,
+      dimensions.height
+    );
+    updateMinerPositions(
+      gameState.miners,
+      validMinerPositions,
+      gameState.activeMine
+    );
 
-    miners.forEach((miner) => {
+    gameState.miners.forEach((miner) => {
       const minerSprite = createMinerSprite(miner);
       containers.miner.addChild(minerSprite);
     });

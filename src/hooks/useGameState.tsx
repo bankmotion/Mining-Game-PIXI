@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { generateInitialOres, generateOresForMine } from "@/lib/oresLogic";
-import { initializeGameState, updateGameState } from "@/lib/gameLogic";
+import {
+  initializeGameState,
+  updateGameStateWithDeltaTime,
+} from "@/lib/gameLogic";
 import { toast } from "sonner";
 import { GameState } from "@/interfaces/GameType";
 import { CalculateUpgradeCost, Upgrades } from "@/constants/Upgrades";
@@ -11,6 +14,7 @@ import { EnergySource } from "@/interfaces/EnergyTypes";
 import { buildEnergySource, upgradeEnergySource } from "@/lib/energyLogic";
 import { setActiveMine, unlockMine } from "@/lib/mineLogic";
 import { createMiner } from "@/lib/minersLogic";
+import { InitialTileWidth } from "@/constants/Sprites";
 
 export const useGameState = () => {
   const [gameState, setGameState] = useState<GameState>(initializeGameState);
@@ -53,6 +57,13 @@ export const useGameState = () => {
     };
   }, []);
 
+  const updateGameState = (newState: GameState) => {
+    setGameState((prevState) => ({
+      ...prevState,
+      ...newState,
+    }));
+  };
+
   // Game loop
   useEffect(() => {
     if (isPaused) {
@@ -69,7 +80,10 @@ export const useGameState = () => {
 
       // Update game state
       setGameState((prevState) => {
-        const newState = updateGameState(prevState, cappedDeltaTime);
+        const newState = updateGameStateWithDeltaTime(
+          prevState,
+          cappedDeltaTime
+        );
 
         // Calculate money rate based on the change in money
         if (newState.money !== lastMoneyRef.current) {
@@ -309,7 +323,7 @@ export const useGameState = () => {
         ...miner,
         state: "returning" as MinerState,
         targetOreId: undefined,
-        targetPosition: { ...activeMine.basePosition },
+        targetPosition: { ...prevState.basePosition },
       }));
 
       return {
@@ -320,7 +334,7 @@ export const useGameState = () => {
   };
 
   // Handle ore click - make miners target the clicked ore
-  const handleOreClick = (ore: Ore, tileCountX: number, tileCountY: number) => {
+  const handleOreClick = (ore: Ore) => {
     setGameState((prevState) => {
       const updatedMiners = prevState.miners.map((miner) => {
         // If miner is already mining or moving to this ore, don't change their state
@@ -338,8 +352,8 @@ export const useGameState = () => {
 
         // Convert tile coordinates to percentage-based coordinates
         const targetPosition = {
-          x: (ore.position.x / tileCountX) * 100,
-          y: (ore.position.y / tileCountY) * 100,
+          x: (ore.position.x / prevState.mapDimensions.width) * 100,
+          y: (ore.position.y / prevState.mapDimensions.height) * 100,
         };
 
         // Otherwise, make the miner move to the ore
@@ -390,6 +404,7 @@ export const useGameState = () => {
 
   return {
     gameState,
+    updateGameState,
     isPaused,
     togglePause,
     buyUpgrade,

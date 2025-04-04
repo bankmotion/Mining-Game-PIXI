@@ -30,6 +30,7 @@ import { EnergyManagement } from "./EnergyManagement";
 export const GameContainer = () => {
   const {
     gameState,
+    updateGameState,
     isPaused,
     togglePause,
     buyUpgrade,
@@ -258,11 +259,10 @@ export const GameContainer = () => {
         {/* Main Mining Area - using PixiJS renderer */}
         <div className="flex-1 flex items-center justify-center p-4">
           <PixiMiningArea
-            miners={gameState.miners}
-            ores={gameState.ores}
-            activeMine={gameState.activeMine}
+            gameState={gameState}
             onOreClick={handleOreClick}
             onBaseClick={handleBaseClick}
+            updateGameState={updateGameState}
             isBlackout={gameState.energy.isBlackout}
           />
         </div>

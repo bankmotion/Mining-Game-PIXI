@@ -1,16 +1,10 @@
-import { MineMap } from "@/constants/Map";
-import { AnimatedSprite, BaseSpriteConfig } from "@/interfaces/PixiTypes";
-import * as PIXI from "pixi.js";
-import {
-  createMinerTilesetTexture,
-  createTilesetTexture,
-  textureCache,
-} from "./spriteLoader";
-import { Ore } from "@/interfaces/OreTypes";
 import { OreData } from "@/constants/Ore";
-import { Miner } from "@/interfaces/MinerTypes";
-import { MinerAnimations, MinerAnimationType } from "@/constants/Miners";
 import { SpriteName } from "@/constants/Sprites";
+import { Miner } from "@/interfaces/MinerTypes";
+import { Ore } from "@/interfaces/OreTypes";
+import { BaseSpriteConfig } from "@/interfaces/PixiTypes";
+import * as PIXI from "pixi.js";
+import { createTilesetTexture } from "./spriteLoader";
 
 // Cache for base sprite configurations
 const baseSpriteCache = new Map<string, PIXI.Container>();
