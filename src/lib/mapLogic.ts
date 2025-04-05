@@ -28,7 +28,7 @@ import * as PIXI from "pixi.js";
 import {
   findValidMinerPositions,
   getMinerAnimationType,
-  updateMinerPositions,
+  updateMinerPositionsRandomly,
 } from "./minersLogic";
 import { findValidOrePositions, updateOrePositions } from "./oresLogic";
 import { updateRailPositions } from "./railLogic";
@@ -623,7 +623,12 @@ export const renderMapLayers = async (
       dimensions.width,
       dimensions.height
     );
-    updateMinerPositions(miners, validMinerPositions, gameState.activeMine);
+    updateMinerPositionsRandomly(
+      miners,
+      validMinerPositions,
+      gameState.activeMine,
+      dimensions
+    );
 
     // Create miner sprites
     miners.forEach((miner) => {

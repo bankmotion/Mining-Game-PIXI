@@ -4,11 +4,16 @@ import {
   LastNames,
   MinerTypes,
 } from "@/constants/Miners";
-import { AnimationType, LayerName } from "@/constants/Sprites";
+import {
+  AnimationType,
+  InitialTileWidth,
+  LayerName,
+} from "@/constants/Sprites";
 import { Miner, MinerState, MinerType } from "@/interfaces/MinerTypes";
 import { OreType } from "@/interfaces/OreTypes";
 import { MapLayerType } from "./mapLogic";
 import { MineTypes } from "@/constants/Mine";
+import { MapDimensions } from "@/interfaces/MapTypes";
 
 // Types
 interface Position {
@@ -99,10 +104,11 @@ export const findValidMinerPositions = (
   return validPositions;
 };
 
-export const updateMinerPositions = (
+export const updateMinerPositionsRandomly = (
   miners: Miner[],
   validPositions: Position[],
-  activeMine: string
+  activeMine: string,
+  mapDimensions: MapDimensions
 ): void => {
   // Get the mine configuration
   const mine = MineTypes.find((m) => m.id === activeMine);
@@ -117,9 +123,14 @@ export const updateMinerPositions = (
   // Update each miner's position
   miners.forEach((miner, index) => {
     if (generatedPositions[index]) {
-      miner.position = { ...generatedPositions[index] };
+      console.log("generatedPositions[index]", generatedPositions[index]);
+      miner.position = {
+        x: (generatedPositions[index].x * 100) / mapDimensions.width,
+        y: (generatedPositions[index].y * 100) / mapDimensions.height,
+      };
     }
   });
+  console.log("miners", miners);
 };
 
 // Helper function to generate miner positions
