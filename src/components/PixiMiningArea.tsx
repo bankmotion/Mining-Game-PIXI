@@ -7,6 +7,8 @@ import { GameState } from "@/interfaces/GameType";
 import { Miner } from "@/interfaces/MinerTypes";
 import { Ore } from "@/interfaces/OreTypes";
 import { renderMapLayers } from "@/lib/mapLogic";
+import { createMiner } from "@/lib/minersLogic";
+import { generateInitialOres } from "@/lib/oresLogic";
 import { preloadSprites } from "@/utils/spriteLoader";
 import { Scale } from "lucide-react";
 import * as PIXI from "pixi.js";
@@ -82,11 +84,11 @@ export const PixiMiningArea = ({
         return;
       }
 
-    initAttemptedRef.current = true;
+      initAttemptedRef.current = true;
       console.log("Starting PixiJS initialization...");
 
       // Create PixiJS application with optimized settings
-        const app = new PIXI.Application({
+      const app = new PIXI.Application({
         width: pixiContainerRef.current.clientWidth,
         height: pixiContainerRef.current.clientHeight,
         backgroundColor: 0x1a1a1a,
@@ -94,7 +96,7 @@ export const PixiMiningArea = ({
         autoDensity: true,
         resizeTo: pixiContainerRef.current,
         powerPreference: "high-performance",
-          antialias: false,
+        antialias: false,
         hello: true,
       });
 
@@ -102,7 +104,7 @@ export const PixiMiningArea = ({
       pixiContainerRef.current.appendChild(app.view as HTMLCanvasElement);
 
       // Store the application reference
-          appRef.current = app;
+      appRef.current = app;
 
       const tileCountX = Math.floor(
         pixiContainerRef.current.clientWidth / InitialTileWidth / MapScale
@@ -111,11 +113,19 @@ export const PixiMiningArea = ({
         pixiContainerRef.current.clientHeight / InitialTileWidth / MapScale
       );
 
+      // Generate initial ores for the starter mine
+      const initialOres = generateInitialOres(20, 100, 100);
+
+      // Create the first miner
+      const initialMiner = createMiner("basic", { x: 50, y: 50 });
+
       updateGameState({
         mapDimensions: { width: tileCountX, height: tileCountY },
+        miners: [initialMiner],
+        ores: initialOres,
+        lastUpdateTime: Date.now(),
       } as GameState);
 
-      setTileCounts({ x: tileCountX, y: tileCountY });
       console.log({
         tileCountX,
         tileCountY,
@@ -151,6 +161,8 @@ export const PixiMiningArea = ({
             app,
             gameContainer,
             gameState,
+            [initialMiner],
+            initialOres,
             onOreClick,
             updateGameState,
             isBlackout,

@@ -26,22 +26,7 @@ export const useGameState = () => {
 
   // Initialize game state
   useEffect(() => {
-    // Generate initial ores for the starter mine
-    const initialOres = generateInitialOres(20, 100, 100);
-
-    // Create the first miner
-    const initialMiner = createMiner("basic", { x: 50, y: 50 });
-
-    setGameState((prevState) => {
-      const initialState = {
-        ...prevState,
-        miners: [initialMiner],
-        ores: initialOres,
-        lastUpdateTime: Date.now(),
-      };
-      lastMoneyRef.current = initialState.money;
-      return initialState;
-    });
+    lastMoneyRef.current = gameState.money;
 
     toast.success("Welcome to DEFI Miners! 🪨⛏️", {
       description:
@@ -57,11 +42,37 @@ export const useGameState = () => {
     };
   }, []);
 
-  const updateGameState = (newState: GameState) => {
-    setGameState((prevState) => ({
-      ...prevState,
-      ...newState,
-    }));
+  const updateGameState = (newState: Partial<GameState>) => {
+    setGameState((prevState) => {
+      // Handle nested objects explicitly
+      const mergedState = {
+        ...prevState,
+        ...newState,
+        // Deep merge for nested objects that should be preserved
+        resources: {
+          ...prevState.resources,
+          ...newState.resources,
+        },
+        resourceRate: {
+          ...prevState.resourceRate,
+          ...newState.resourceRate,
+        },
+        upgrades: {
+          ...prevState.upgrades,
+          ...newState.upgrades,
+        },
+        mines: {
+          ...prevState.mines,
+          ...newState.mines,
+        },
+        // Arrays - decide whether to replace or merge
+        miners: newState.miners ?? prevState.miners,
+        rails: newState.rails ?? prevState.rails,
+        ores: newState.ores ?? prevState.ores,
+      };
+
+      return mergedState;
+    });
   };
 
   // Game loop

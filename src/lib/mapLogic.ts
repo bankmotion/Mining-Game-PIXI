@@ -560,6 +560,8 @@ export const renderMapLayers = async (
   app: PIXI.Application,
   container: PIXI.Container,
   gameState: GameState,
+  miners: Miner[],
+  ores: Ore[],
   onOreClick: (ore: Ore) => void,
   updateGameState: (gameState: GameState) => void,
   isBlackout: boolean,
@@ -610,12 +612,8 @@ export const renderMapLayers = async (
       dimensions.width,
       dimensions.height
     );
-    updateOrePositions(
-      gameState.ores,
-      validOrePositions,
-      mine.rareOreChance || 1
-    );
-    gameState.ores.forEach((ore) => {
+    updateOrePositions(ores, validOrePositions, mine.rareOreChance || 1);
+    ores.forEach((ore) => {
       const oreSprite = createOreSprite(ore, onOreClick, isBlackout);
       containers.miner.addChild(oreSprite);
     });
@@ -625,14 +623,10 @@ export const renderMapLayers = async (
       dimensions.width,
       dimensions.height
     );
-    updateMinerPositions(
-      gameState.miners,
-      validMinerPositions,
-      gameState.activeMine
-    );
+    updateMinerPositions(miners, validMinerPositions, gameState.activeMine);
 
     // Create miner sprites
-    gameState.miners.forEach((miner) => {
+    miners.forEach((miner) => {
       const minerSprite = createMinerSprite(miner);
       containers.miner.addChild(minerSprite);
     });
