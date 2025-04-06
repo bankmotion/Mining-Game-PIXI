@@ -102,7 +102,7 @@ export const createMinerTilesetTexture = (
   return new PIXI.Texture(
     textureCache[spriteName].baseTexture,
     new PIXI.Rectangle(
-      (tilesetCol + 1) * sprite.tileWidth + sprite.tileWidth / 2,
+      (tilesetCol - 1) * sprite.tileWidth + sprite.tileWidth / 2,
       tilesetRow * sprite.tileHeight + sprite.tileHeight / 2,
       sprite.tileWidth,
       sprite.tileHeight

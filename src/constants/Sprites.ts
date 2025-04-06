@@ -270,7 +270,7 @@ export const Sprites: SpriteType[] = [
     height: 96,
     tileWidth: 16,
     tileHeight: 16,
-    tileCount: 12,
+    tileCount: 48,
     animations: {
       [AnimationType.MineCartAnimationLeft]: {
         frames: [1, 3, 5, 7],
@@ -309,19 +309,19 @@ export const Sprites: SpriteType[] = [
     tileCount: 192,
     animations: {
       [AnimationType.DrillingRight]: {
-        frames: [60, 64, 68],
-        speed: 0.1,
-      },
-      [AnimationType.DrillingLeft]: {
-        frames: [61, 65, 69],
-        speed: 0.1,
-      },
-      [AnimationType.DrillingUp]: {
         frames: [62, 66, 70],
         speed: 0.1,
       },
-      [AnimationType.DrillingDown]: {
+      [AnimationType.DrillingLeft]: {
         frames: [63, 67, 71],
+        speed: 0.1,
+      },
+      [AnimationType.DrillingUp]: {
+        frames: [64, 68, 72],
+        speed: 0.1,
+      },
+      [AnimationType.DrillingDown]: {
+        frames: [65, 69, 73],
         speed: 0.1,
       },
     },
@@ -336,23 +336,23 @@ export const Sprites: SpriteType[] = [
     tileCount: 384,
     animations: {
       [AnimationType.Standing]: {
-        frames: [24],
+        frames: [26],
         speed: 0.1,
       },
       [AnimationType.PushRight]: {
-        frames: [24, 28, 32, 36, 40, 44],
+        frames: [26, 30, 34, 38, 42, 46],
         speed: 0.1,
       },
       [AnimationType.PushLeft]: {
-        frames: [120, 124, 128, 132, 136, 140],
+        frames: [122, 126, 130, 134, 138, 142],
         speed: 0.1,
       },
       [AnimationType.PushUp]: {
-        frames: [216, 220, 224, 228, 232, 236],
+        frames: [218, 222, 226, 230, 234, 238],
         speed: 0.1,
       },
       [AnimationType.PushDown]: {
-        frames: [312, 316, 320, 324, 328, 332],
+        frames: [314, 318, 322, 326, 330, 334],
         speed: 0.1,
       },
     },

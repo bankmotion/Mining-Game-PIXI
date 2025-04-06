@@ -13,11 +13,19 @@ import {
   createMinerTilesetTexture,
   createTilesetTexture,
 } from "@/utils/spriteLoader";
+import { AnimatedSprite } from "@/interfaces/PixiTypes";
 
 export let MineCartRoutes: {
   pos: MapPosition;
   direction: "up" | "down" | "left" | "right";
 }[] = [];
+export const MineCartSpriteProgress: {
+  tinyProgress: number; // from 0 to 1
+  frameId: number;
+} = {
+  tinyProgress: 0,
+  frameId: 0,
+};
 
 export const createMineCartRoute = (
   start: MapPosition
@@ -163,4 +171,56 @@ const getMineCartFrameByDirection = (direction: Direction): AnimationType => {
     default:
       return AnimationType.MineCartAnimationUp;
   }
+};
+
+export const updateMineCartAnimation = (
+  sprite: AnimatedSprite,
+  deltaTime: number
+) => {
+  const spriteData = Sprites.find(
+    (sprite) => sprite.name === SpriteName.MineCartAnimation
+  );
+  if (!spriteData) return;
+
+  MineCartSpriteProgress.tinyProgress += (deltaTime / 1000) * 3;
+  if (MineCartSpriteProgress.tinyProgress > 1) {
+    MineCartSpriteProgress.tinyProgress = 0;
+    MineCartSpriteProgress.frameId++;
+  }
+
+  // Get the current route
+  const mineCartRoute = MineCartRoutes[MineCartSpriteProgress.frameId];
+
+  // update position
+  const direction =
+    MineCartRoutes[MineCartSpriteProgress.frameId + 1]?.direction ||
+    mineCartRoute.direction;
+  console.log(direction, mineCartRoute.pos.x, mineCartRoute.pos.y);
+  sprite.x =
+    (mineCartRoute.pos.x +
+      (direction === "left"
+        ? -MineCartSpriteProgress.tinyProgress
+        : direction === "right"
+        ? MineCartSpriteProgress.tinyProgress
+        : 0)) *
+    InitialTileWidth;
+  sprite.y =
+    (mineCartRoute.pos.y +
+      (direction === "up"
+        ? -MineCartSpriteProgress.tinyProgress
+        : direction === "down"
+        ? MineCartSpriteProgress.tinyProgress
+        : 0)) *
+    InitialTileWidth;
+
+  const animation =
+    spriteData?.animations[
+      getMineCartFrameByDirection(mineCartRoute.direction)
+    ];
+
+  const texture = createMinerTilesetTexture(
+    SpriteName.MineCartAnimation,
+    animation.frames[MineCartSpriteProgress.frameId % animation.frames.length]
+  );
+  sprite.texture = texture;
 };

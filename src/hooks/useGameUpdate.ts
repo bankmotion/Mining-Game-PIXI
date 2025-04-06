@@ -1,10 +1,8 @@
 import { OreData } from "@/constants/Ore";
-import {
-  InitialTileWidth,
-  LayerName
-} from "@/constants/Sprites";
+import { InitialTileWidth, LayerName } from "@/constants/Sprites";
 import { GameState } from "@/interfaces/GameType";
 import { AnimatedSprite } from "@/interfaces/PixiTypes";
+import { updateMineCartAnimation } from "@/lib/mineCartLogic";
 import { updateMinerMovement } from "@/lib/minerMovement";
 import { updateMinerAnimation } from "@/lib/minersLogic";
 import * as PIXI from "pixi.js";
@@ -35,7 +33,6 @@ export const useGameUpdate = ({ appRef, gameState }: UseGameStateProps) => {
           `ore-${ore.id}`
         ) as PIXI.Sprite;
         if (!oreSprite) return;
-        console.log("hello");
 
         oreSprite.alpha = ore.depleted ? 0.4 : 1;
 
@@ -113,13 +110,35 @@ export const useGameUpdate = ({ appRef, gameState }: UseGameStateProps) => {
     [appRef, gameState.miners]
   );
 
+  // Update mine cart animations
+  const updateMineCartAnimations = useCallback(
+    (deltaTime: number) => {
+      if (!appRef.current) return;
+      const app = appRef.current;
+      const gameContainer = app.stage.getChildAt(0) as PIXI.Container;
+      if (!gameContainer) return;
+
+      const mineCartContainer = gameContainer.getChildByName(
+        LayerName.MineCart
+      );
+      if (!mineCartContainer) return;
+
+      mineCartContainer.children.forEach((child) => {
+        if (!(child instanceof PIXI.Sprite)) return;
+
+        updateMineCartAnimation(child as AnimatedSprite, deltaTime);
+      });
+    },
+    [appRef]
+  );
   // Update game state
   const updateGame = useCallback(
     (deltaTime: number) => {
       updateOreStates(deltaTime);
       updateMinerAnimations(deltaTime);
+      updateMineCartAnimations(deltaTime);
     },
-    [updateOreStates, updateMinerAnimations]
+    [updateOreStates, updateMinerAnimations, updateMineCartAnimations]
   );
 
   // Add game state update ticker
