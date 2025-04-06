@@ -28,6 +28,7 @@ export interface Miner {
   id: string;
   name: string;
   type: MinerType;
+  isBot: boolean;
   efficiency: number;
   speed: number;
   capacity: number;

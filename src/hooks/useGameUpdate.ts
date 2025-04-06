@@ -5,6 +5,7 @@ import { AnimatedSprite } from "@/interfaces/PixiTypes";
 import { updateMineCartAnimation } from "@/lib/mineCartLogic";
 import { updateMinerMovement } from "@/lib/minerMovement";
 import { updateMinerAnimation } from "@/lib/minersLogic";
+import { createMinerSprite } from "@/lib/minerSprite";
 import * as PIXI from "pixi.js";
 import { useCallback, useEffect } from "react";
 
@@ -94,17 +95,26 @@ export const useGameUpdate = ({ appRef, gameState }: UseGameStateProps) => {
       const minersContainer = gameContainer.getChildByName(LayerName.Miners);
       if (!minersContainer) return;
 
-      minersContainer.children.forEach((child) => {
-        if (!(child instanceof PIXI.Sprite)) return;
+      gameState.miners.forEach((miner) => {
+        const minerContainer = minersContainer as PIXI.Container;
+        if (!minerContainer) return;
 
-        const minerId = child.name.replace("miner-", "");
-        const miner = gameState.miners.find((m) => m.id === minerId);
-        if (!miner) return;
+        let minerSprite = minerContainer.getChildByName(
+          `miner-${miner.id}`
+        ) as PIXI.Sprite;
+        if (!minerSprite) {
+          minerSprite = minerContainer.addChild(createMinerSprite(miner));
+        }
+
+        if (!minerSprite) {
+          console.error("Miner sprite not found");
+          return;
+        }
 
         updateMinerMovement(miner, deltaTime);
 
         // Update animation
-        updateMinerAnimation(child as AnimatedSprite, miner, deltaTime);
+        updateMinerAnimation(minerSprite as AnimatedSprite, miner, deltaTime);
       });
     },
     [appRef, gameState.miners]

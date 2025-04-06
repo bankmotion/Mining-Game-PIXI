@@ -51,6 +51,7 @@ export const createMiner = (
   type: MinerType,
   position: MapPosition,
   mapDimensions: MapDimensions,
+  isBot: boolean,
   specialization?: OreType
 ): Miner => {
   const typeData = MinerTypes[type];
@@ -71,6 +72,7 @@ export const createMiner = (
     restProgress: 0,
     restDuration: 0,
     cost: typeData.baseCost,
+    isBot: isBot || false,
   };
 
   if (specialization && type === "expert") {
@@ -193,6 +195,7 @@ export const moveMinerTowards = (
 ): Miner => {
   const speed = InitialSpeed * (state === "moving" ? 1 : 2);
   const moveAmount = speed * deltaTime;
+  console.log(moveAmount);
   const newState = { ...miner.movement };
 
   newState.moveProgress += moveAmount;

@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { MinerTypes } from "@/constants/Miners";
+import { Miner } from "@/interfaces/MinerTypes";
 import { cn, formatNumber } from "@/lib/utils";
 import { User, UserCog, Truck, Compass, Wrench } from "lucide-react";
 
 interface HiringStationProps {
   money: number;
-  miners: Array<{ id: string; type: string }>;
+  miners: Miner[];
   onHire: (
     type: "basic" | "expert" | "hauler" | "prospector" | "engineer"
   ) => void;
@@ -36,7 +37,7 @@ export const HiringStation = ({
 }: HiringStationProps) => {
   // Calculate miner costs based on current counts
   const getMinerCost = (type: string) => {
-    const count = miners.filter((m) => m.type === type).length;
+    const count = miners.filter((m) => m.type === type && m.isBot).length;
     const baseCost = MinerTypes[type as keyof typeof MinerTypes].baseCost;
     return Math.floor(baseCost * Math.pow(1.2, count));
   };
@@ -49,7 +50,7 @@ export const HiringStation = ({
 
       <div className="space-y-3">
         {Object.entries(MinerTypes).map(([type, data], index) => {
-          const count = miners.filter((m) => m.type === type).length;
+          const count = miners.filter((m) => m.type === type && m.isBot).length;
           const cost = getMinerCost(type);
           const canAfford = money >= cost;
 

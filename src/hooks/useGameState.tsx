@@ -1,27 +1,22 @@
-import { useState, useEffect, useRef } from "react";
-import { generateInitialOres, generateOresForMine } from "@/lib/oresLogic";
+import { MineTypes } from "@/constants/Mine";
+import { CalculateUpgradeCost, Upgrades } from "@/constants/Upgrades";
+import { EnergySource } from "@/interfaces/EnergyTypes";
+import { GameState } from "@/interfaces/GameType";
+import { MinerState } from "@/interfaces/MinerTypes";
+import { Ore } from "@/interfaces/OreTypes";
+import { buildEnergySource, upgradeEnergySource } from "@/lib/energyLogic";
 import {
   initializeGameState,
   updateGameStateWithDeltaTime,
 } from "@/lib/gameLogic";
-import { toast } from "sonner";
-import { GameState } from "@/interfaces/GameType";
-import { CalculateUpgradeCost, Upgrades } from "@/constants/Upgrades";
-import { MinerState } from "@/interfaces/MinerTypes";
-import { Ore } from "@/interfaces/OreTypes";
-import { MineTypes } from "@/constants/Mine";
-import { EnergySource } from "@/interfaces/EnergyTypes";
-import { buildEnergySource, upgradeEnergySource } from "@/lib/energyLogic";
 import { setActiveMine, unlockMine } from "@/lib/mineLogic";
 import { createMiner } from "@/lib/minersLogic";
-import { InitialTileWidth } from "@/constants/Sprites";
-import { getRandomNumber } from "@/utils/utils";
-import {
-  calculateAvailableAreaBounds,
-  calculateMapCenter,
-} from "@/lib/mapLogic";
+import { getAvailableMinerPositions } from "@/lib/minerSprite";
+import { generateOresForMine } from "@/lib/oresLogic";
 import { findPath } from "@/lib/pathFindingLogic";
-import { getOreColor } from "@/constants/Ore";
+import { getRandomNumber } from "@/utils/utils";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 export const useGameState = () => {
   const [gameState, setGameState] = useState<GameState>(initializeGameState);
@@ -209,33 +204,18 @@ export const useGameState = () => {
         return prevState;
       }
 
-      // Find a random position that's not too close to existing miners
-      let randomX = 0,
-        randomY = 0;
-      let attempts = 0;
-      const minDistance = 1; // Increased minimum distance between miners
-
-      const mapDimensions = gameState.mapDimensions;
-      const availableArea = calculateAvailableAreaBounds(
-        calculateMapCenter(mapDimensions),
-        mapDimensions
-      );
-
-      while (attempts <= 50) {
-        // Generate random position within the available mining area
-        randomX = getRandomNumber(availableArea.start.x, availableArea.end.x);
-        randomY = getRandomNumber(availableArea.start.y, availableArea.end.y);
-
-        // Check if it is not duplicated with other miners
-        const isFarEnough = prevState.miners.every(
-          (miner) =>
-            Math.abs(miner.movement.currentTilePos.x - randomX) > minDistance &&
-            Math.abs(miner.movement.currentTilePos.y - randomY) > minDistance
-        );
-
-        if (isFarEnough) break;
-        attempts++;
+      const mine = gameState.mines[gameState.activeMine];
+      if (!mine) {
+        console.error("Active mine not found");
+        return prevState;
       }
+
+      // Get available tiles
+      const availableTiles = getAvailableMinerPositions(gameState);
+      console.log(availableTiles);
+
+      const randomTile =
+        availableTiles[getRandomNumber(0, availableTiles.length - 1)];
 
       // Create specialized expert miners
       let newMiner;
@@ -252,8 +232,9 @@ export const useGameState = () => {
           oreTypes[Math.floor(Math.random() * oreTypes.length)];
         newMiner = createMiner(
           type,
-          { x: randomX, y: randomY },
+          { x: randomTile.x, y: randomTile.y },
           gameState.mapDimensions,
+          true,
           randomOreType
         );
         toast.success(
@@ -262,8 +243,9 @@ export const useGameState = () => {
       } else {
         newMiner = createMiner(
           type,
-          { x: randomX, y: randomY },
-          gameState.mapDimensions
+          { x: randomTile.x, y: randomTile.y },
+          gameState.mapDimensions,
+          true
         );
         toast.success(`Hired a new ${type} miner: ${newMiner.name}`);
       }
@@ -351,18 +333,26 @@ export const useGameState = () => {
       const activeMine = prevState.mines[prevState.activeMine];
       if (!activeMine) return prevState;
 
-      const updatedMiners = prevState.miners.map((miner) => ({
-        ...miner,
-        state: "returning" as MinerState,
-        targetOreId: undefined,
-        movement: {
-          ...miner.movement,
-          targetTilePos: prevState.basePosition,
-          path: findPath(miner.movement.currentTilePos, prevState.basePosition),
-          currentPathIndex: 0,
-          isMoving: true,
-        },
-      }));
+      const updatedMiners = prevState.miners.map((miner) => {
+        // If miner is a bot, don't change their state
+        if (miner.isBot) return miner;
+
+        return {
+          ...miner,
+          state: "returning" as MinerState,
+          targetOreId: undefined,
+          movement: {
+            ...miner.movement,
+            targetTilePos: prevState.basePosition,
+            path: findPath(
+              miner.movement.currentTilePos,
+              prevState.basePosition
+            ),
+            currentPathIndex: 0,
+            isMoving: true,
+          },
+        };
+      });
 
       return {
         ...prevState,
@@ -375,6 +365,9 @@ export const useGameState = () => {
   const handleOreClick = (ore: Ore) => {
     setGameState((prevState) => {
       const updatedMiners = prevState.miners.map((miner) => {
+        // If miner is a bot, don't change their state
+        if (miner.isBot) return miner;
+
         // If miner is already mining or moving to this ore, don't change their state
         if (
           miner.targetOreId === ore.id &&

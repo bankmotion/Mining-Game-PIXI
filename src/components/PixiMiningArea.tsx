@@ -120,7 +120,8 @@ export const PixiMiningArea = ({
       const initialMiner = createMiner(
         "basic",
         { x: 0, y: 0 },
-        { width: tileCountX, height: tileCountY }
+        { width: tileCountX, height: tileCountY },
+        false
       );
 
       updateGameState({

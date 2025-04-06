@@ -19,6 +19,8 @@ import {
 } from "./oresLogic";
 import { MapPosition } from "@/interfaces/MapTypes";
 import { findPath, heuristic } from "./pathFindingLogic";
+import { getAvailableMinerPositions } from "./minerSprite";
+import { getRandomNumber } from "@/utils/utils";
 
 export const updateMinerState = (
   miner: Miner,
@@ -37,6 +39,7 @@ export const updateMinerState = (
   let updatedMiner = { ...miner };
   let updatedOre: Ore | undefined;
   let collectedResources: { type: OreType; amount: number } | undefined;
+  // console.log(miners);
 
   // If blackout, freeze all actions
   if (energyState.isBlackout) {
@@ -74,34 +77,70 @@ export const updateMinerState = (
       }
 
       // Check if miner has reached their target position
-      if (
-        heuristic(
-          miner.movement.currentTilePos,
-          miner.movement.targetTilePos
-        ) <= 1
-      ) {
-        const targetOre = ores.find((ore) => ore.id === miner.targetOreId);
-        if (targetOre && !targetOre.depleted) {
-          updatedMiner = {
-            ...updatedMiner,
-            state: "mining",
-            miningProgress: 0,
-            movement: {
-              ...miner.movement,
-              targetTilePos: { ...miner.movement.currentTilePos },
-              path: [],
-              currentPathIndex: 0,
-              moveProgress: 0,
-              isMoving: false,
-            },
-          };
-        }
+      // if (
+      //   heuristic(
+      //     miner.movement.currentTilePos,
+      //     miner.movement.targetTilePos
+      //   ) <= 1
+      // ) {
+      //   const targetOre = ores.find((ore) => ore.id === miner.targetOreId);
+      //   if (targetOre && !targetOre.depleted) {
+      //     updatedMiner = {
+      //       ...updatedMiner,
+      //       state: "mining",
+      //       miningProgress: 0,
+      //       movement: {
+      //         ...miner.movement,
+      //         targetTilePos: { ...miner.movement.currentTilePos },
+      //         path: [],
+      //         currentPathIndex: 0,
+      //         moveProgress: 0,
+      //         isMoving: false,
+      //       },
+      //     };
+      //   }
+      //   break
+      // }
+
+      if (miner.isBot) {
+        // If miner is a bot, automatically find a new target ore
+        const availOres = ores.filter(
+          (ore) =>
+            !ore.depleted &&
+            !miners.some(
+              (mi) =>
+                mi.movement.currentTilePos.x === ore.position.x &&
+                mi.movement.currentTilePos.y === ore.position.y
+            )
+        );
+        const randomOre = availOres[getRandomNumber(0, availOres.length - 1)];
+        console.log(randomOre, availOres);
+
+        updatedMiner = {
+          ...updatedMiner,
+          state: "moving",
+          targetOreId: randomOre.id,
+          movement: {
+            ...miner.movement,
+            targetTilePos: { ...randomOre.position },
+            path: findPath(miner.movement.currentTilePos, randomOre.position),
+            currentPathIndex: 0,
+            moveProgress: 0,
+            isMoving: true,
+          },
+        };
       }
       break;
     }
 
     case "moving": {
       const targetOre = ores.find((ore) => ore.id === miner.targetOreId);
+      console.log(
+        "updated",
+        miner.movement.isMoving,
+        miner.movement.path.length,
+        targetOre
+      );
 
       if (!miner.movement.isMoving) {
         updatedMiner = {

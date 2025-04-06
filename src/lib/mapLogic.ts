@@ -4,7 +4,6 @@ import {
   InitialTileWidth,
   LayerName,
   SpriteName,
-  Sprites,
   WallData,
 } from "@/constants/Sprites";
 import { GameState } from "@/interfaces/GameType";
@@ -17,24 +16,21 @@ import {
 import { Miner } from "@/interfaces/MinerTypes";
 import { Ore } from "@/interfaces/OreTypes";
 import { Rail } from "@/interfaces/RailType";
-import {
-  createMinerTilesetTexture,
-  createTilesetTexture,
-} from "@/utils/spriteLoader";
+import { createTilesetTexture } from "@/utils/spriteLoader";
 import { getRandomTileId } from "@/utils/utils";
 import * as PIXI from "pixi.js";
-import {
-  findValidMinerPositions,
-  getMinerAnimationType,
-  updateMinerPositionsRandomly,
-} from "./minersLogic";
-import { findValidOrePositions, updateOrePositions } from "./oresLogic";
-import { updateRailPositions } from "./railLogic";
 import {
   createMineCartRoute,
   createMineCartSprite,
   MineCartRoutes,
 } from "./mineCartLogic";
+import {
+  findValidMinerPositions,
+  updateMinerPositionsRandomly,
+} from "./minersLogic";
+import { findValidOrePositions, updateOrePositions } from "./oresLogic";
+import { updateRailPositions } from "./railLogic";
+import { createMinerSprite } from "./minerSprite";
 
 // Constants
 export const MapLayerType: LayerName[][] = [];
@@ -480,44 +476,6 @@ const createWallTiles = (
   console.log(MapLayerType);
 };
 
-export const createMinerSprite = (miner: Miner): PIXI.Sprite => {
-  const animationType = getMinerAnimationType(miner);
-  const spriteName = SpriteName.CharacterPushBodyGreen;
-  const spriteData = Sprites.find((s) => s.name === spriteName);
-  if (!spriteData) return null;
-
-  const animationData = spriteData.animations[animationType];
-  if (!animationData) return null;
-
-  const sprite = new PIXI.Sprite();
-  sprite.name = `miner-${miner.id}`;
-
-  // Set initial position
-  sprite.x =
-    (miner.movement.currentTilePos.x + miner.movement.moveProgress) *
-    InitialTileWidth;
-  sprite.y =
-    (miner.movement.currentTilePos.y + miner.movement.moveProgress) *
-    InitialTileWidth;
-
-  // Set initial texture
-  const texture = createMinerTilesetTexture(
-    SpriteName.CharacterPushBodyGreen,
-    animationData.frames[0]
-  );
-  sprite.texture = texture;
-
-  // Store animation data
-  minerSprites.set(miner.id, {
-    sprite,
-    animationType,
-    frame: 0,
-    time: 0,
-  });
-
-  return sprite;
-};
-
 export const createRailSprite = (
   rail: Rail,
   containers: MapContainer
@@ -616,10 +574,10 @@ export const renderMapLayers = async (
     );
 
     // Create miner sprites
-    miners.forEach((miner) => {
-      const minerSprite = createMinerSprite(miner);
-      containers.miner.addChild(minerSprite);
-    });
+    // miners.forEach((miner) => {
+    //   const minerSprite = createMinerSprite(miner);
+    //   containers.miner.addChild(minerSprite);
+    // });
 
     // create mine cart sprites
     createMineCartRoute({
