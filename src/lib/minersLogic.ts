@@ -125,7 +125,6 @@ export const updateMinerPositionsRandomly = (
   // Update each miner's position
   miners.forEach((miner, index) => {
     if (generatedPositions[index]) {
-      console.log("generatedPositions[index]", generatedPositions[index]);
       miner.movement = {
         ...miner.movement,
         currentTilePos: generatedPositions[index],
@@ -137,7 +136,6 @@ export const updateMinerPositionsRandomly = (
       };
     }
   });
-  console.log("miners", miners);
 };
 
 // Helper function to generate miner positions
@@ -195,7 +193,6 @@ export const moveMinerTowards = (
 ): Miner => {
   const speed = InitialSpeed * (state === "moving" ? 1 : 2);
   const moveAmount = speed * deltaTime;
-  console.log(moveAmount);
   const newState = { ...miner.movement };
 
   newState.moveProgress += moveAmount;

@@ -39,7 +39,6 @@ export const updateMinerState = (
   let updatedMiner = { ...miner };
   let updatedOre: Ore | undefined;
   let collectedResources: { type: OreType; amount: number } | undefined;
-  // console.log(miners);
 
   // If blackout, freeze all actions
   if (energyState.isBlackout) {
@@ -114,7 +113,6 @@ export const updateMinerState = (
             )
         );
         const randomOre = availOres[getRandomNumber(0, availOres.length - 1)];
-        console.log(randomOre, availOres);
 
         updatedMiner = {
           ...updatedMiner,
@@ -135,12 +133,6 @@ export const updateMinerState = (
 
     case "moving": {
       const targetOre = ores.find((ore) => ore.id === miner.targetOreId);
-      console.log(
-        "updated",
-        miner.movement.isMoving,
-        miner.movement.path.length,
-        targetOre
-      );
 
       if (!miner.movement.isMoving) {
         updatedMiner = {

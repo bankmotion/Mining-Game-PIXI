@@ -106,29 +106,25 @@ export const updateRailPositions = (
   // Add the horizontal rails
   for (let i = 0; i < horizontalRails.length; i++) {
     const pos = horizontalRails[i];
-    const isEnd = i === 0 || i === horizontalRails.length - 1;
+    // const isEnd = i === 0 || i === horizontalRails.length - 1;
     const isBranchPoint = i === branchPointIndex;
 
     railObjects.push({
       id: `rail-horizontal-${i}`,
       position: pos,
-      type: isEnd
-        ? MineCartsData.End
-        : isBranchPoint
-        ? MineCartsData.T_Right
-        : MineCartsData.Horizontal,
+      type: isBranchPoint ? MineCartsData.T_Right : MineCartsData.Horizontal,
     });
   }
 
   // Add the additional vertical rails
   for (let i = 0; i < additionalVerticalRails.length; i++) {
     const pos = additionalVerticalRails[i];
-    const isEnd = i === additionalVerticalRails.length - 1;
+    // const isEnd = i === additionalVerticalRails.length - 1;
 
     railObjects.push({
       id: `rail-additional-vertical-${i}`,
       position: pos,
-      type: isEnd ? MineCartsData.End : MineCartsData.Vertical,
+      type: MineCartsData.Vertical,
     });
   }
 

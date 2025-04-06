@@ -212,7 +212,6 @@ export const useGameState = () => {
 
       // Get available tiles
       const availableTiles = getAvailableMinerPositions(gameState);
-      console.log(availableTiles);
 
       const randomTile =
         availableTiles[getRandomNumber(0, availableTiles.length - 1)];

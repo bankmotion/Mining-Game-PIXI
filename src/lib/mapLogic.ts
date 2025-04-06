@@ -1,3 +1,5 @@
+import * as PIXI from "pixi.js";
+
 import { OreData } from "@/constants/Ore";
 import {
   FloorData,
@@ -15,10 +17,8 @@ import {
 } from "@/interfaces/MapTypes";
 import { Miner } from "@/interfaces/MinerTypes";
 import { Ore } from "@/interfaces/OreTypes";
-import { Rail } from "@/interfaces/RailType";
 import { createTilesetTexture } from "@/utils/spriteLoader";
 import { getRandomTileId } from "@/utils/utils";
-import * as PIXI from "pixi.js";
 import {
   createMineCartRoute,
   createMineCartSprite,
@@ -30,7 +30,7 @@ import {
 } from "./minersLogic";
 import { findValidOrePositions, updateOrePositions } from "./oresLogic";
 import { updateRailPositions } from "./railLogic";
-import { createMinerSprite } from "./minerSprite";
+import { createRailSprite } from "./railMap";
 
 // Constants
 export const MapLayerType: LayerName[][] = [];
@@ -476,28 +476,6 @@ const createWallTiles = (
   console.log(MapLayerType);
 };
 
-export const createRailSprite = (
-  rail: Rail,
-  containers: MapContainer
-): PIXI.Sprite => {
-  // Create a rail sprite based on the rail type
-  const railSprite = updateMapType(
-    containers.rail,
-    rail.position,
-    SpriteName.MineCarts,
-    rail.type,
-    LayerName.Rails
-  );
-
-  railSprite.name = `rail-${rail.id}`;
-  railSprite.x = rail.position.x * InitialTileWidth;
-  railSprite.y = rail.position.y * InitialTileWidth;
-  railSprite.width = InitialTileWidth;
-  railSprite.height = InitialTileWidth;
-
-  return railSprite;
-};
-
 // Main Function
 export const renderMapLayers = async (
   app: PIXI.Application,
@@ -549,6 +527,7 @@ export const renderMapLayers = async (
       const railSprite = createRailSprite(rail, containers);
       containers.rail.addChild(railSprite);
     });
+    console.log(MapLayerType)
 
     // Create ore tiles
     const validOrePositions = findValidOrePositions(
