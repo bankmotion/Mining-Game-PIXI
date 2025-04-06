@@ -85,7 +85,7 @@ const createMapContainer = (container: PIXI.Container): MapContainer => {
   };
 };
 
-const calculateMapCenter = (dimensions: MapDimensions): MapPosition => ({
+export const calculateMapCenter = (dimensions: MapDimensions): MapPosition => ({
   x: Math.floor(dimensions.width / 2),
   y: Math.floor(dimensions.height / 2),
 });
@@ -157,7 +157,7 @@ const generateCaveShape = (
   return shape;
 };
 
-const calculateAvailableAreaBounds = (
+export const calculateAvailableAreaBounds = (
   center: MapPosition,
   availableArea: MapDimensions
 ): { start: MapPosition; end: MapPosition; shape: boolean[][] } => {
@@ -520,8 +520,12 @@ export const createMinerSprite = (miner: Miner): PIXI.Sprite => {
   sprite.name = `miner-${miner.id}`;
 
   // Set initial position
-  sprite.x = miner.position.x * InitialTileWidth;
-  sprite.y = miner.position.y * InitialTileWidth;
+  sprite.x =
+    (miner.movement.currentTilePos.x + miner.movement.moveProgress) *
+    InitialTileWidth;
+  sprite.y =
+    (miner.movement.currentTilePos.y + miner.movement.moveProgress) *
+    InitialTileWidth;
 
   // Set initial texture
   const texture = createMinerTilesetTexture(
@@ -541,10 +545,19 @@ export const createMinerSprite = (miner: Miner): PIXI.Sprite => {
   return sprite;
 };
 
-export const createRailSprite = (rail: Rail): PIXI.Sprite => {
+export const createRailSprite = (
+  rail: Rail,
+  containers: MapContainer
+): PIXI.Sprite => {
   // Create a rail sprite based on the rail type
   const railTexture = createTilesetTexture(SpriteName.MineCarts, rail.type);
-  const railSprite = new PIXI.Sprite(railTexture);
+  const railSprite = updateMapType(
+    containers.rail,
+    rail.position,
+    SpriteName.MineCarts,
+    rail.type,
+    LayerName.Rails
+  );
 
   railSprite.name = `rail-${rail.id}`;
   railSprite.x = rail.position.x * InitialTileWidth;
@@ -569,7 +582,7 @@ export const renderMapLayers = async (
   onBaseClick?: () => void
 ): Promise<void> => {
   try {
-    const mine = MineTypes.find((m) => m.id === gameState.activeMine);
+    const mine = gameState.mines[gameState.activeMine];
     if (!mine) {
       throw new Error("Active mine not found");
     }
@@ -603,7 +616,7 @@ export const renderMapLayers = async (
 
     // Render rail sprites
     rails.forEach((rail) => {
-      const railSprite = createRailSprite(rail);
+      const railSprite = createRailSprite(rail, containers);
       containers.rail.addChild(railSprite);
     });
 
@@ -632,6 +645,7 @@ export const renderMapLayers = async (
 
     // Create miner sprites
     miners.forEach((miner) => {
+      console.log({...miner})
       const minerSprite = createMinerSprite(miner);
       containers.miner.addChild(minerSprite);
     });

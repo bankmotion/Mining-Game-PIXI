@@ -13,13 +13,8 @@ import { Miner, MinerState, MinerType } from "@/interfaces/MinerTypes";
 import { OreType } from "@/interfaces/OreTypes";
 import { MapLayerType } from "./mapLogic";
 import { MineTypes } from "@/constants/Mine";
-import { MapDimensions } from "@/interfaces/MapTypes";
-
-// Types
-interface Position {
-  x: number;
-  y: number;
-}
+import { MapDimensions, MapPosition } from "@/interfaces/MapTypes";
+import { initializeMinerMovement } from "./minerMovement";
 
 type MinerInventory = Record<OreType, number>;
 
@@ -50,7 +45,8 @@ export const generateMinerName = (): string => {
 
 export const createMiner = (
   type: MinerType,
-  position: Position,
+  position: MapPosition,
+  mapDimensions: MapDimensions,
   specialization?: OreType
 ): Miner => {
   const typeData = MinerTypes[type];
@@ -62,7 +58,7 @@ export const createMiner = (
     efficiency: typeData.baseEfficiency,
     speed: typeData.baseSpeed,
     capacity: typeData.baseCapacity,
-    position: { ...position },
+    movement: initializeMinerMovement(position, mapDimensions),
     state: "seeking",
     inventory: { ...DEFAULT_INVENTORY },
     inventoryValue: 0,
@@ -84,8 +80,8 @@ export const createMiner = (
 export const findValidMinerPositions = (
   tileCountX: number,
   tileCountY: number
-): Position[] => {
-  const validPositions: Position[] = [];
+): MapPosition[] => {
+  const validPositions: MapPosition[] = [];
 
   // Find valid positions within the mining area
   for (let y = 0; y < tileCountY; y++) {
@@ -106,7 +102,7 @@ export const findValidMinerPositions = (
 
 export const updateMinerPositionsRandomly = (
   miners: Miner[],
-  validPositions: Position[],
+  validPositions: MapPosition[],
   activeMine: string,
   mapDimensions: MapDimensions
 ): void => {
@@ -124,9 +120,14 @@ export const updateMinerPositionsRandomly = (
   miners.forEach((miner, index) => {
     if (generatedPositions[index]) {
       console.log("generatedPositions[index]", generatedPositions[index]);
-      miner.position = {
-        x: (generatedPositions[index].x * 100) / mapDimensions.width,
-        y: (generatedPositions[index].y * 100) / mapDimensions.height,
+      miner.movement = {
+        ...miner.movement,
+        currentTilePos: generatedPositions[index],
+        targetTilePos: generatedPositions[index],
+        path: [],
+        currentPathIndex: 0,
+        isMoving: false,
+        moveProgress: 0,
       };
     }
   });
@@ -135,9 +136,9 @@ export const updateMinerPositionsRandomly = (
 
 // Helper function to generate miner positions
 const generateMinerPositions = (
-  validPositions: Position[],
+  validPositions: MapPosition[],
   count: number
-): Position[] => {
+): MapPosition[] => {
   const availablePositions = [...validPositions];
 
   // Shuffle positions
@@ -155,17 +156,6 @@ const generateMinerPositions = (
   return selectedPositions;
 };
 
-export const createMinerAtPositions = (
-  miners: Miner[],
-  validPositions: Position[]
-): void => {
-  miners.forEach((miner, index) => {
-    if (validPositions[index]) {
-      miner.position = { ...validPositions[index] };
-    }
-  });
-};
-
 export const calculateInventoryValue = (
   inventory: MinerInventory,
   oreValues: Record<OreType, { value: number }>
@@ -175,7 +165,10 @@ export const calculateInventoryValue = (
   }, 0);
 };
 
-export const calculateDistance = (pos1: Position, pos2: Position): number => {
+export const calculateDistance = (
+  pos1: MapPosition,
+  pos2: MapPosition
+): number => {
   const dx = pos2.x - pos1.x;
   const dy = pos2.y - pos1.y;
   return Math.sqrt(dx * dx + dy * dy);
@@ -191,33 +184,32 @@ export const isInventoryFull = (miner: Miner): boolean => {
 
 export const moveMinerTowards = (
   miner: Miner,
-  targetPosition: Position,
   deltaTime: number,
   state: MinerState
 ): Miner => {
   const speed = InitialSpeed * (state === "moving" ? 1 : 2);
-  const dx = targetPosition.x - miner.position.x;
-  const dy = targetPosition.y - miner.position.y;
-  const distance = Math.sqrt(dx * dx + dy * dy);
+  const moveAmount = speed * deltaTime;
+  const newState = { ...miner.movement };
 
-  if (distance < 0.1) {
-    return {
-      ...miner,
-      position: { ...targetPosition },
-      targetPosition: undefined,
-    };
+  newState.moveProgress += moveAmount;
+
+  if (newState.moveProgress >= 1) {
+    newState.moveProgress = 0;
+    newState.currentPathIndex++;
   }
 
-  const moveX = (dx / distance) * speed * deltaTime;
-  const moveY = (dy / distance) * speed * deltaTime;
+  // if i've reached the target position, stop moving
+  if (newState.currentPathIndex >= newState.path.length - 1) {
+    newState.isMoving = false;
+    newState.targetTilePos = { ...newState.currentTilePos };
+    newState.path = [];
+  }
 
-  return {
-    ...miner,
-    position: {
-      x: miner.position.x + moveX,
-      y: miner.position.y + moveY,
-    },
+  newState.currentTilePos = {
+    ...newState.path[newState.currentPathIndex],
   };
+
+  return { ...miner, movement: newState };
 };
 
 export const getMinerAnimationType = (miner: Miner): AnimationType => {
@@ -225,69 +217,4 @@ export const getMinerAnimationType = (miner: Miner): AnimationType => {
   if (miner.state === "moving" || miner.state === "returning")
     return AnimationType.PushLeft;
   return AnimationType.Standing;
-};
-
-// New functions for miner state management
-export const updateMinerState = (
-  miner: Miner,
-  deltaTime: number,
-  targetOreId?: string
-): Miner => {
-  let updatedMiner = { ...miner };
-
-  switch (miner.state) {
-    case "seeking":
-      if (targetOreId) {
-        updatedMiner.state = "moving";
-        updatedMiner.targetOreId = targetOreId;
-      }
-      break;
-    case "moving":
-      if (miner.targetPosition) {
-        updatedMiner = moveMinerTowards(
-          updatedMiner,
-          miner.targetPosition,
-          deltaTime,
-          "moving"
-        );
-      }
-      break;
-    case "mining":
-      updatedMiner.miningProgress += deltaTime * miner.efficiency;
-      if (updatedMiner.miningProgress >= 1) {
-        updatedMiner.state = "returning";
-        updatedMiner.miningProgress = 0;
-      }
-      break;
-    case "returning":
-      if (miner.targetPosition) {
-        updatedMiner = moveMinerTowards(
-          updatedMiner,
-          miner.targetPosition,
-          deltaTime,
-          "returning"
-        );
-      }
-      break;
-    case "resting":
-      updatedMiner.restProgress += deltaTime;
-      if (updatedMiner.restProgress >= updatedMiner.restDuration) {
-        updatedMiner.state = "seeking";
-        updatedMiner.restProgress = 0;
-      }
-      break;
-  }
-
-  return updatedMiner;
-};
-
-export const updateMiners = (
-  miners: Miner[],
-  deltaTime: number,
-  targetOreIds: Record<string, string>
-): Miner[] => {
-  return miners.map((miner) => {
-    const targetOreId = targetOreIds[miner.id];
-    return updateMinerState(miner, deltaTime, targetOreId);
-  });
 };

@@ -1,3 +1,4 @@
+import { MapPosition } from "./MapTypes";
 import { OreType } from "./OreTypes";
 
 export type MinerState =
@@ -6,13 +7,22 @@ export type MinerState =
   | "mining"
   | "returning"
   | "resting";
-  
+
 export type MinerType =
   | "basic"
   | "expert"
   | "hauler"
   | "prospector"
   | "engineer";
+
+export interface MinerMovementState {
+  currentTilePos: MapPosition;
+  targetTilePos: MapPosition;
+  path: MapPosition[];
+  currentPathIndex: number;
+  isMoving: boolean;
+  moveProgress: number; // 0 to 1
+}
 
 export interface Miner {
   id: string;
@@ -22,8 +32,7 @@ export interface Miner {
   speed: number;
   capacity: number;
   specialization?: OreType;
-  position: { x: number; y: number };
-  targetPosition?: { x: number; y: number };
+  movement: MinerMovementState;
   state: MinerState;
   inventory: Record<OreType, number>;
   inventoryValue: number;

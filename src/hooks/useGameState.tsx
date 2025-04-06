@@ -15,6 +15,12 @@ import { buildEnergySource, upgradeEnergySource } from "@/lib/energyLogic";
 import { setActiveMine, unlockMine } from "@/lib/mineLogic";
 import { createMiner } from "@/lib/minersLogic";
 import { InitialTileWidth } from "@/constants/Sprites";
+import { getRandomNumber } from "@/utils/utils";
+import {
+  calculateAvailableAreaBounds,
+  calculateMapCenter,
+} from "@/lib/mapLogic";
+import { findPath } from "@/lib/pathFindingLogic";
 
 export const useGameState = () => {
   const [gameState, setGameState] = useState<GameState>(initializeGameState);
@@ -206,20 +212,25 @@ export const useGameState = () => {
       let randomX = 0,
         randomY = 0;
       let attempts = 0;
-      const minDistance = 15; // Increased minimum distance between miners
+      const minDistance = 1; // Increased minimum distance between miners
+
+      const mapDimensions = gameState.mapDimensions;
+      const availableArea = calculateAvailableAreaBounds(
+        calculateMapCenter(mapDimensions),
+        mapDimensions
+      );
 
       while (attempts <= 50) {
-        // Generate random position within the mining area (20-80% range)
-        randomX = Math.floor(20 + Math.random() * 60);
-        randomY = Math.floor(20 + Math.random() * 60);
+        // Generate random position within the available mining area
+        randomX = getRandomNumber(availableArea.start.x, availableArea.end.x);
+        randomY = getRandomNumber(availableArea.start.y, availableArea.end.y);
 
-        // Check if this position is far enough from other miners
-        const isFarEnough = prevState.miners.every((miner) => {
-          const dx = miner.position.x - randomX;
-          const dy = miner.position.y - randomY;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          return distance > minDistance;
-        });
+        // Check if it is not duplicated with other miners
+        const isFarEnough = prevState.miners.every(
+          (miner) =>
+            Math.abs(miner.movement.currentTilePos.x - randomX) > minDistance &&
+            Math.abs(miner.movement.currentTilePos.y - randomY) > minDistance
+        );
 
         if (isFarEnough) break;
         attempts++;
@@ -238,12 +249,21 @@ export const useGameState = () => {
         ] as const;
         const randomOreType =
           oreTypes[Math.floor(Math.random() * oreTypes.length)];
-        newMiner = createMiner(type, { x: randomX, y: randomY }, randomOreType);
+        newMiner = createMiner(
+          type,
+          { x: randomX, y: randomY },
+          gameState.mapDimensions,
+          randomOreType
+        );
         toast.success(
           `Hired a new expert miner specialized in ${randomOreType}: ${newMiner.name}`
         );
       } else {
-        newMiner = createMiner(type, { x: randomX, y: randomY });
+        newMiner = createMiner(
+          type,
+          { x: randomX, y: randomY },
+          gameState.mapDimensions
+        );
         toast.success(`Hired a new ${type} miner: ${newMiner.name}`);
       }
 
@@ -361,18 +381,25 @@ export const useGameState = () => {
           return miner;
         }
 
-        // Convert tile coordinates to percentage-based coordinates
-        const targetPosition = {
-          x: (ore.position.x / prevState.mapDimensions.width) * 100,
-          y: (ore.position.y / prevState.mapDimensions.height) * 100,
-        };
-
         // Otherwise, make the miner move to the ore
         return {
           ...miner,
           state: "moving" as MinerState,
           targetOreId: ore.id,
-          targetPosition,
+          movement: {
+            ...miner.movement,
+            targetTilePos: {
+              x: ore.position.x,
+              y: ore.position.y,
+            },
+            path: findPath(miner.movement.currentTilePos, {
+              x: ore.position.x,
+              y: ore.position.y,
+            }),
+            isMoving: true,
+            moveProgress: 0,
+            currentPathIndex: 0,
+          },
         };
       });
 

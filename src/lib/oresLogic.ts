@@ -235,13 +235,16 @@ export const findNearestOre = (
     if (specializedOres.length > 0) {
       let closestOre = specializedOres[0];
       let closestDistance = calculateDistance(
-        miner.position,
+        miner.movement.currentTilePos,
         closestOre.position
       );
 
       for (let i = 1; i < specializedOres.length; i++) {
         const ore = specializedOres[i];
-        const distance = calculateDistance(miner.position, ore.position);
+        const distance = calculateDistance(
+          miner.movement.currentTilePos,
+          ore.position
+        );
         if (distance < closestDistance) {
           closestOre = ore;
           closestDistance = distance;
@@ -264,13 +267,16 @@ export const findNearestOre = (
     if (topOres.length > 0) {
       let closestOre = topOres[0];
       let closestDistance = calculateDistance(
-        miner.position,
+        miner.movement.currentTilePos,
         closestOre.position
       );
 
       for (let i = 1; i < topOres.length; i++) {
         const ore = topOres[i];
-        const distance = calculateDistance(miner.position, ore.position);
+        const distance = calculateDistance(
+          miner.movement.currentTilePos,
+          ore.position
+        );
         if (distance < closestDistance) {
           closestOre = ore;
           closestDistance = distance;
@@ -293,13 +299,16 @@ export const findNearestOre = (
     if (topHardOres.length > 0) {
       let closestOre = topHardOres[0];
       let closestDistance = calculateDistance(
-        miner.position,
+        miner.movement.currentTilePos,
         closestOre.position
       );
 
       for (let i = 1; i < topHardOres.length; i++) {
         const ore = topHardOres[i];
-        const distance = calculateDistance(miner.position, ore.position);
+        const distance = calculateDistance(
+          miner.movement.currentTilePos,
+          ore.position
+        );
         if (distance < closestDistance) {
           closestOre = ore;
           closestDistance = distance;
@@ -311,11 +320,17 @@ export const findNearestOre = (
   }
 
   let closestOre = availableOres[0];
-  let closestDistance = calculateDistance(miner.position, closestOre.position);
+  let closestDistance = calculateDistance(
+    miner.movement.currentTilePos,
+    closestOre.position
+  );
 
   for (let i = 1; i < availableOres.length; i++) {
     const ore = availableOres[i];
-    const distance = calculateDistance(miner.position, ore.position);
+    const distance = calculateDistance(
+      miner.movement.currentTilePos,
+      ore.position
+    );
     if (distance < closestDistance) {
       closestOre = ore;
       closestDistance = distance;

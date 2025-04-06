@@ -11,6 +11,11 @@ import { Miner } from "@/interfaces/MinerTypes";
 import { Ore } from "@/interfaces/OreTypes";
 import { AnimatedSprite } from "@/interfaces/PixiTypes";
 import { minerSprites } from "@/lib/mapLogic";
+import {
+  getMinerDirection,
+  initializeMinerMovement,
+  updateMinerMovement,
+} from "@/lib/minerMovement";
 import { getMinerAnimationType } from "@/lib/minersLogic";
 import { createMinerTilesetTexture } from "@/utils/spriteLoader";
 import * as PIXI from "pixi.js";
@@ -103,32 +108,21 @@ export const useGameUpdate = ({ appRef, gameState }: UseGameStateProps) => {
         const miner = gameState.miners.find((m) => m.id === minerId);
         if (!miner) return;
 
+        updateMinerMovement(miner, deltaTime);
+
         // Update animation
-        updateMinerAnimation(
-          child as AnimatedSprite,
-          miner,
-          deltaTime,
-          gameState.mapDimensions
-        );
+        updateMinerAnimation(child as AnimatedSprite, miner, deltaTime);
       });
     },
-    [appRef, gameState.miners, gameState.mapDimensions]
+    [appRef, gameState.miners]
   );
 
   // Helper function to update miner animation
   const updateMinerAnimation = (
     sprite: AnimatedSprite,
     miner: Miner,
-    deltaTime: number,
-    dimensions: MapDimensions
+    deltaTime: number
   ) => {
-    const tileX =
-      (miner.position.x / 100) * dimensions.width * InitialTileWidth;
-    const tileY =
-      (miner.position.y / 100) * dimensions.height * InitialTileWidth;
-    sprite.x = tileX * InitialTileWidth;
-    sprite.y = tileY * InitialTileWidth;
-
     const animationType = getMinerAnimationType(miner);
     const spriteName =
       miner.state === "mining"
@@ -153,14 +147,25 @@ export const useGameUpdate = ({ appRef, gameState }: UseGameStateProps) => {
       minerSprites.set(miner.id, minerSpriteData);
     }
 
+    // get direction
+    const direction = getMinerDirection(miner);
+
     // Update position
     sprite.x =
-      (miner.position.x / 100) *
-      gameState.mapDimensions.width *
+      (miner.movement.currentTilePos.x +
+        (direction === "left"
+          ? -miner.movement.moveProgress
+          : direction === "right"
+          ? miner.movement.moveProgress
+          : 0)) *
       InitialTileWidth;
     sprite.y =
-      (miner.position.y / 100) *
-      gameState.mapDimensions.height *
+      (miner.movement.currentTilePos.y +
+        (direction === "up"
+          ? -miner.movement.moveProgress
+          : direction === "down"
+          ? miner.movement.moveProgress
+          : 0)) *
       InitialTileWidth;
 
     // Update animation if type changed

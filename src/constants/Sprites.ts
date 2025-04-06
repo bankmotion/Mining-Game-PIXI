@@ -156,7 +156,7 @@ export enum MountainData {
   GeneralWall = 213,
 }
 
-export const InitialTileWidth = 16;
+export const InitialTileWidth: number = 16;
 
 export const Sprites: SpriteType[] = [
   {

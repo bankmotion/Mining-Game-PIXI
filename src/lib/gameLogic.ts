@@ -18,6 +18,7 @@ import {
   updateOreRegeneration,
 } from "./oresLogic";
 import { MapPosition } from "@/interfaces/MapTypes";
+import { findPath, heuristic } from "./pathFindingLogic";
 
 export const updateMinerState = (
   miner: Miner,
@@ -44,7 +45,10 @@ export const updateMinerState = (
         ...updatedMiner,
         state: "seeking",
         targetOreId: undefined,
-        targetPosition: undefined,
+        movement: {
+          ...miner.movement,
+          isMoving: false,
+        },
       },
     };
   }
@@ -57,16 +61,24 @@ export const updateMinerState = (
           ...updatedMiner,
           state: "returning",
           targetOreId: undefined,
-          targetPosition: { ...basePosition },
+          movement: {
+            ...miner.movement,
+            targetTilePos: { ...basePosition },
+            path: findPath(miner.movement.currentTilePos, basePosition),
+            currentPathIndex: 0,
+            moveProgress: 0,
+            isMoving: true,
+          },
         };
         break;
       }
 
       // Check if miner has reached their target position
       if (
-        miner?.targetPosition &&
-        Math.abs(miner.position.x - miner.targetPosition.x) < 0.1 &&
-        Math.abs(miner.position.y - miner.targetPosition.y) < 0.1
+        heuristic(
+          miner.movement.currentTilePos,
+          miner.movement.targetTilePos
+        ) <= 1
       ) {
         const targetOre = ores.find((ore) => ore.id === miner.targetOreId);
         if (targetOre && !targetOre.depleted) {
@@ -74,6 +86,14 @@ export const updateMinerState = (
             ...updatedMiner,
             state: "mining",
             miningProgress: 0,
+            movement: {
+              ...miner.movement,
+              targetTilePos: { ...miner.movement.currentTilePos },
+              path: [],
+              currentPathIndex: 0,
+              moveProgress: 0,
+              isMoving: false,
+            },
           };
         }
       }
@@ -83,29 +103,43 @@ export const updateMinerState = (
     case "moving": {
       const targetOre = ores.find((ore) => ore.id === miner.targetOreId);
 
-      if (miner.targetPosition) {
-        updatedMiner = moveMinerTowards(
-          updatedMiner,
-          miner.targetPosition,
-          deltaTime,
-          miner.state
-        );
+      if (!miner.movement.isMoving) {
+        updatedMiner = {
+          ...updatedMiner,
+        };
+      } else if (miner.movement.targetTilePos) {
+        updatedMiner = moveMinerTowards(updatedMiner, deltaTime, miner.state);
 
         // Check if miner has reached the target position
         if (
-          Math.abs(updatedMiner.position.x - miner.targetPosition.x) < 0.1 &&
-          Math.abs(updatedMiner.position.y - miner.targetPosition.y) < 0.1
+          heuristic(
+            updatedMiner.movement.currentTilePos,
+            updatedMiner.movement.targetTilePos
+          ) <= 1
         ) {
           updatedMiner = {
             ...updatedMiner,
             state: "mining",
-            miningProgress: 0,
+            movement: {
+              ...updatedMiner.movement,
+              targetTilePos: { ...updatedMiner.movement.currentTilePos },
+              path: [],
+              currentPathIndex: 0,
+              moveProgress: 0,
+            },
           };
         }
       } else if (targetOre) {
         updatedMiner = {
           ...updatedMiner,
-          targetPosition: { ...targetOre.position },
+          movement: {
+            ...updatedMiner.movement,
+            targetTilePos: { ...targetOre.position },
+            path: findPath(
+              updatedMiner.movement.currentTilePos,
+              targetOre.position
+            ),
+          },
         };
       }
       break;
@@ -118,7 +152,6 @@ export const updateMinerState = (
         updatedMiner = {
           ...updatedMiner,
           state: "seeking",
-          miningProgress: 0,
         };
         break;
       }
@@ -128,8 +161,13 @@ export const updateMinerState = (
           ...updatedMiner,
           state: "returning",
           targetOreId: undefined,
-          targetPosition: { ...basePosition },
-          miningProgress: 0,
+          movement: {
+            ...miner.movement,
+            targetTilePos: { ...basePosition },
+            path: findPath(miner.movement.currentTilePos, basePosition),
+            currentPathIndex: 0,
+            moveProgress: 0,
+          },
         };
         break;
       }
@@ -181,31 +219,33 @@ export const updateMinerState = (
     }
 
     case "returning": {
-      if (miner.targetPosition) {
-        updatedMiner = moveMinerTowards(
-          updatedMiner,
-          miner.targetPosition,
-          deltaTime,
-          miner.state
-        );
+      if (!updatedMiner.movement.isMoving) {
+        updatedMiner = {
+          ...updatedMiner,
+        };
+      } else if (miner.movement.path.length > 0) {
+        updatedMiner = moveMinerTowards(updatedMiner, deltaTime, miner.state);
 
-        // Check if miner has reached the base
         if (
-          Math.abs(updatedMiner.position.x - basePosition.x) < 0.1 &&
-          Math.abs(updatedMiner.position.y - basePosition.y) < 0.1
+          heuristic(
+            updatedMiner.movement.currentTilePos,
+            updatedMiner.movement.targetTilePos
+          ) <= 1
         ) {
           updatedMiner = {
             ...updatedMiner,
             state: "resting",
             restProgress: 0,
             restDuration: 5,
+            movement: {
+              ...updatedMiner.movement,
+              targetTilePos: { ...updatedMiner.movement.currentTilePos },
+              path: [],
+              currentPathIndex: 0,
+              moveProgress: 0,
+            },
           };
         }
-      } else {
-        updatedMiner = {
-          ...updatedMiner,
-          targetPosition: { ...basePosition },
-        };
       }
       break;
     }
