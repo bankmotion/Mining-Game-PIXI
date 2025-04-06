@@ -13,12 +13,16 @@ export enum AnimationType {
   PushUp = "push_up",
   PushDown = "push_down",
 
+  Right = "right",
+  Left = "left",
+  Up = "up",
+  Down = "down",
+  Standing = "standing",
+
   DrillingRight = "drilling_right",
   DrillingLeft = "drilling_left",
   DrillingUp = "drilling_up",
   DrillingDown = "drilling_down",
-
-  Standing = "standing",
 }
 
 export enum SpriteName {
@@ -34,9 +38,13 @@ export enum SpriteName {
   LampAnimation = "LampAnimation",
   MineCartAnimation = "MineCartAnimation",
   Ladders = "Ladders",
+
   CharacterToolsDrillBodyGreen = "CharacterToolsDrillBodyGreen",
   CharacterPushBodyGreen = "CharacterPushBodyGreen",
   CharacterPushClothesFullBodyOverhallsBlue = "CharacterPushClothesFullBodyOverhallsBlue",
+
+  CharacterWalkBodyLight = "CharacterWalkBodyLight",
+
   MineProps = "MineProps",
   ChracterPushHairStylesRadicalCurveBlack = "ChracterPushHairStylesRadicalCurveBlack",
   MiningOres = "MiningOres",
@@ -432,5 +440,36 @@ export const Sprites: SpriteType[] = [
     tileWidth: 16,
     tileHeight: 16,
     tileCount: 80,
+  },
+  {
+    name: SpriteName.CharacterWalkBodyLight,
+    path: "/assets/character/walk/character_body/character_walk_body_light.png",
+    width: 384,
+    height: 256,
+    tileWidth: 16,
+    tileHeight: 16,
+    tileCount: 384,
+    animations: {
+      [AnimationType.Standing]: {
+        frames: [218],
+        speed: 0.1,
+      },
+      [AnimationType.Right]: {
+        frames: [26, 30, 34, 38, 42, 46],
+        speed: 0.3,
+      },
+      [AnimationType.Left]: {
+        frames: [122, 126, 130, 134, 138, 142],
+        speed: 0.3,
+      },
+      [AnimationType.Down]: {
+        frames: [218, 222, 226, 230, 234, 238],
+        speed: 0.3,
+      },
+      [AnimationType.Up]: {
+        frames: [314, 318, 322, 326, 330, 334],
+        speed: 0.3,
+      },
+    },
   },
 ];

@@ -4,8 +4,7 @@ import { GameState } from "@/interfaces/GameType";
 import { AnimatedSprite } from "@/interfaces/PixiTypes";
 import { updateMineCartAnimation } from "@/lib/mineCartLogic";
 import { updateMinerMovement } from "@/lib/minerMovement";
-import { updateMinerAnimation } from "@/lib/minersLogic";
-import { createMinerSprite } from "@/lib/minerSprite";
+import { createMinerSprite, updateMinerAnimation } from "@/lib/minerSprite";
 import * as PIXI from "pixi.js";
 import { useCallback, useEffect } from "react";
 
@@ -102,6 +101,7 @@ export const useGameUpdate = ({ appRef, gameState }: UseGameStateProps) => {
         let minerSprite = minerContainer.getChildByName(
           `miner-${miner.id}`
         ) as PIXI.Sprite;
+
         if (!minerSprite) {
           minerSprite = minerContainer.addChild(createMinerSprite(miner));
         }
