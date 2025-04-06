@@ -256,10 +256,7 @@ const createFloorTiles = (
 
     // Set the base position
     updateGameState({
-      basePosition: {
-        x: (100 * doorPosition.x) / dimensions.width,
-        y: (100 * doorPosition.y) / dimensions.height,
-      },
+      basePosition: doorPosition,
     } as GameState);
 
     // Add click event to door sprite
@@ -303,58 +300,68 @@ const createFloorTiles = (
 };
 
 export const createOreSprite = (
+  containers: MapContainer,
   ore: Ore,
   onOreClick: (ore: Ore) => void,
   isBlackout: boolean
-): PIXI.Sprite => {
-  // Check cache first
-  if (oreSpriteCache.has(ore.id)) {
-    const cachedSprite = oreSpriteCache.get(ore.id)!;
-    cachedSprite.alpha = ore.depleted ? 0.4 : 1;
-    if (!isBlackout && onOreClick) {
-      cachedSprite.eventMode = "static";
-      cachedSprite.cursor = "pointer";
-      cachedSprite.removeAllListeners();
-      cachedSprite.on("pointerdown", () => onOreClick(ore));
-    }
-    return cachedSprite;
-  }
-
-  const oreTileset = Sprites.find((ts) => ts.name === SpriteName.MiningOres);
-  if (!oreTileset) {
-    throw new Error("Ore tileset not found");
-  }
-
-  const tileTexture = createTilesetTexture(
+) => {
+  const sprite = updateMapType(
+    containers.ore,
+    ore.position,
     SpriteName.MiningOres,
-    24 + Object.keys(OreData).findIndex((or) => or === ore.type)
+    24 + Object.keys(OreData).findIndex((or) => or === ore.type),
+    LayerName.Ore
   );
 
-  const oreSprite = new PIXI.Sprite(tileTexture);
-  oreSprite.name = `ore-${ore.id}`;
-  oreSprite.x = ore.position.x * InitialTileWidth;
-  oreSprite.y = ore.position.y * InitialTileWidth;
-  oreSprite.width = InitialTileWidth;
-  oreSprite.height = InitialTileWidth;
-  oreSprite.eventMode = "static";
-  oreSprite.cursor = "pointer";
-  oreSprite.alpha = ore.depleted ? 0.4 : 1;
+  // Check cache first
+  // if (oreSpriteCache.has(ore.id)) {
+  //   const cachedSprite = oreSpriteCache.get(ore.id)!;
+  sprite.alpha = ore.depleted ? 0.4 : 1;
 
   if (!isBlackout && onOreClick) {
-    oreSprite.on("pointerdown", () => onOreClick(ore));
+    sprite.eventMode = "static";
+    sprite.cursor = "pointer";
+    sprite.removeAllListeners();
+    sprite.on("pointerdown", () => onOreClick(ore));
   }
+  //   return cachedSprite;
+  // }
 
-  // Add regeneration timer text with cached style
-  const timerText = new PIXI.Text("", textStyles.timer);
-  timerText.name = "timer-text";
-  timerText.anchor.set(0.5, -1);
-  timerText.y = -10;
-  oreSprite.addChild(timerText);
+  // const oreTileset = Sprites.find((ts) => ts.name === SpriteName.MiningOres);
+  // if (!oreTileset) {
+  //   throw new Error("Ore tileset not found");
+  // }
 
-  // Cache the sprite
-  oreSpriteCache.set(ore.id, oreSprite);
+  // const tileTexture = createTilesetTexture(
+  //   SpriteName.MiningOres,
+  //   24 + Object.keys(OreData).findIndex((or) => or === ore.type)
+  // );
 
-  return oreSprite;
+  // const oreSprite = new PIXI.Sprite(tileTexture);
+  sprite.name = `ore-${ore.id}`;
+  // oreSprite.x = ore.position.x * InitialTileWidth;
+  // oreSprite.y = ore.position.y * InitialTileWidth;
+  // oreSprite.width = InitialTileWidth;
+  // oreSprite.height = InitialTileWidth;
+  // oreSprite.eventMode = "static";
+  sprite.cursor = "pointer";
+  // oreSprite.alpha = ore.depleted ? 0.4 : 1;
+
+  // if (!isBlackout && onOreClick) {
+  //   oreSprite.on("pointerdown", () => onOreClick(ore));
+  // }
+
+  // // Add regeneration timer text with cached style
+  // const timerText = new PIXI.Text("", textStyles.timer);
+  // timerText.name = "timer-text";
+  // timerText.anchor.set(0.5, -1);
+  // timerText.y = -10;
+  // oreSprite.addChild(timerText);
+
+  // // Cache the sprite
+  // oreSpriteCache.set(ore.id, oreSprite);
+
+  // return oreSprite;
 };
 
 const isConnectWithWallTile = (position: MapPosition) => {
@@ -492,13 +499,12 @@ const createWallTiles = (
 
       const { tileType } = isBellowMountain(position);
       if (tileType) {
-        console.log("hi");
         updateMapType(
           containers.wall,
           position,
           SpriteName.WallsFloors,
           WallData[tileType],
-          LayerName.Wall
+          LayerName.Floor
         );
       }
     }
@@ -627,8 +633,8 @@ export const renderMapLayers = async (
     );
     updateOrePositions(ores, validOrePositions, mine.rareOreChance || 1);
     ores.forEach((ore) => {
-      const oreSprite = createOreSprite(ore, onOreClick, isBlackout);
-      containers.miner.addChild(oreSprite);
+      createOreSprite(containers, ore, onOreClick, isBlackout);
+      // containers.miner.addChild(oreSprite);
     });
 
     // Create miner tiles
@@ -645,7 +651,7 @@ export const renderMapLayers = async (
 
     // Create miner sprites
     miners.forEach((miner) => {
-      console.log({...miner})
+      console.log({ ...miner });
       const minerSprite = createMinerSprite(miner);
       containers.miner.addChild(minerSprite);
     });

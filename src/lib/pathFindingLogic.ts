@@ -31,7 +31,7 @@ export const findPath = (
     closedSet.set(`${current.pos.x}-${current.pos.y}`, true);
 
     // get neighbors (only horizontal and vertical)
-    const neighbors = getNeighbors(current.pos);
+    const neighbors = getNeighbors(current.pos, end);
 
     for (const neighbor of neighbors) {
       const neighborKey = `${neighbor.x}-${neighbor.y}`;
@@ -87,7 +87,7 @@ const reconstructPath = (endNode: Node): MapPosition[] => {
   return path;
 };
 
-const getNeighbors = (pos: MapPosition): MapPosition[] => {
+const getNeighbors = (pos: MapPosition, end: MapPosition): MapPosition[] => {
   const neighbors: MapPosition[] = [];
   const directions = [
     { dx: 0, dy: -1 },
@@ -103,7 +103,11 @@ const getNeighbors = (pos: MapPosition): MapPosition[] => {
     if (
       MapLayerType[newY] &&
       (MapLayerType[newY][newX] === LayerName.Floor ||
-        MapLayerType[newY][newX] === LayerName.Rails)
+        MapLayerType[newY][newX] === LayerName.Rails ||
+        MapLayerType[newY][newX] === LayerName.Doors ||
+        (newX === end.x &&
+          newY === end.y &&
+          MapLayerType[newY][newX] === LayerName.Ore))
     ) {
       neighbors.push({ x: newX, y: newY });
     }

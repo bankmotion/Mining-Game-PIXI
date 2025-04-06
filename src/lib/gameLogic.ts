@@ -107,7 +107,19 @@ export const updateMinerState = (
         updatedMiner = {
           ...updatedMiner,
         };
-      } else if (miner.movement.targetTilePos) {
+      } else if (miner.movement.path.length === 0 && targetOre) {
+        updatedMiner = {
+          ...updatedMiner,
+          movement: {
+            ...updatedMiner.movement,
+            targetTilePos: { ...targetOre.position },
+            path: findPath(
+              updatedMiner.movement.currentTilePos,
+              targetOre.position
+            ),
+          },
+        };
+      } else {
         updatedMiner = moveMinerTowards(updatedMiner, deltaTime, miner.state);
 
         // Check if miner has reached the target position
@@ -129,18 +141,6 @@ export const updateMinerState = (
             },
           };
         }
-      } else if (targetOre) {
-        updatedMiner = {
-          ...updatedMiner,
-          movement: {
-            ...updatedMiner.movement,
-            targetTilePos: { ...targetOre.position },
-            path: findPath(
-              updatedMiner.movement.currentTilePos,
-              targetOre.position
-            ),
-          },
-        };
       }
       break;
     }

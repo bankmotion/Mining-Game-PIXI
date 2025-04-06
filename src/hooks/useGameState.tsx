@@ -21,6 +21,7 @@ import {
   calculateMapCenter,
 } from "@/lib/mapLogic";
 import { findPath } from "@/lib/pathFindingLogic";
+import { getOreColor } from "@/constants/Ore";
 
 export const useGameState = () => {
   const [gameState, setGameState] = useState<GameState>(initializeGameState);
@@ -354,7 +355,13 @@ export const useGameState = () => {
         ...miner,
         state: "returning" as MinerState,
         targetOreId: undefined,
-        targetPosition: { ...prevState.basePosition },
+        movement: {
+          ...miner.movement,
+          targetTilePos: prevState.basePosition,
+          path: findPath(miner.movement.currentTilePos, prevState.basePosition),
+          currentPathIndex: 0,
+          isMoving: true,
+        },
       }));
 
       return {
