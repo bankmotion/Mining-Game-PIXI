@@ -22,7 +22,7 @@ export const findPath = (
     openSet.sort((a, b) => a.totalCost - b.totalCost);
     const current = openSet.shift()!;
 
-    // check if we reached the end
+    // check if we reached the end.
     if (current.pos.x === end.x && current.pos.y === end.y) {
       return reconstructPath(current);
     }
@@ -46,6 +46,13 @@ export const findPath = (
       let neighborNode = nodesByPos.get(neighborKey);
 
       if (!neighborNode) {
+        if (
+          neighbor.x === current.pos.x &&
+          neighbor.x === end.x &&
+          neighbor.y === end.y
+        ) {
+          continue;
+        }
         // create new node
         neighborNode = new Node(
           neighbor,

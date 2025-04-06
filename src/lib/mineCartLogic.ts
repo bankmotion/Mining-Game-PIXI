@@ -49,7 +49,6 @@ export const createMineCartRoute = (
   const directions: Direction[] = ["up", "down", "left", "right"];
   const maxMeeting = 5;
   let attemptCount = 0;
-  console.log(MapLayerType);
 
   const isValid = (pos: MapPosition) => {
     if (

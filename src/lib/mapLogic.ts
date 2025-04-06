@@ -472,8 +472,6 @@ const createWallTiles = (
       }
     }
   }
-
-  console.log(MapLayerType);
 };
 
 // Main Function
@@ -527,7 +525,6 @@ export const renderMapLayers = async (
       const railSprite = createRailSprite(rail, containers);
       containers.rail.addChild(railSprite);
     });
-    console.log(MapLayerType)
 
     // Create ore tiles
     const validOrePositions = findValidOrePositions(

@@ -76,30 +76,31 @@ export const updateMinerState = (
       }
 
       // Check if miner has reached their target position
-      // if (
-      //   heuristic(
-      //     miner.movement.currentTilePos,
-      //     miner.movement.targetTilePos
-      //   ) <= 1
-      // ) {
-      //   const targetOre = ores.find((ore) => ore.id === miner.targetOreId);
-      //   if (targetOre && !targetOre.depleted) {
-      //     updatedMiner = {
-      //       ...updatedMiner,
-      //       state: "mining",
-      //       miningProgress: 0,
-      //       movement: {
-      //         ...miner.movement,
-      //         targetTilePos: { ...miner.movement.currentTilePos },
-      //         path: [],
-      //         currentPathIndex: 0,
-      //         moveProgress: 0,
-      //         isMoving: false,
-      //       },
-      //     };
-      //   }
-      //   break
-      // }
+      if (
+        heuristic(
+          miner.movement.currentTilePos,
+          miner.movement.targetTilePos
+        ) <= 1 &&
+        !miner.isBot
+      ) {
+        const targetOre = ores.find((ore) => ore.id === miner.targetOreId);
+        if (targetOre && !targetOre.depleted) {
+          updatedMiner = {
+            ...updatedMiner,
+            state: "mining",
+            miningProgress: 0,
+            movement: {
+              ...miner.movement,
+              targetTilePos: { ...miner.movement.currentTilePos },
+              path: [],
+              currentPathIndex: 0,
+              moveProgress: 0,
+              isMoving: false,
+            },
+          };
+        }
+        break;
+      }
 
       if (miner.isBot) {
         // If miner is a bot, automatically find a new target ore
@@ -155,10 +156,8 @@ export const updateMinerState = (
 
         // Check if miner has reached the target position
         if (
-          heuristic(
-            updatedMiner.movement.currentTilePos,
-            updatedMiner.movement.targetTilePos
-          ) <= 1
+          updatedMiner.movement.currentPathIndex >=
+          updatedMiner.movement.path.length - 2
         ) {
           updatedMiner = {
             ...updatedMiner,
@@ -258,10 +257,8 @@ export const updateMinerState = (
         updatedMiner = moveMinerTowards(updatedMiner, deltaTime, miner.state);
 
         if (
-          heuristic(
-            updatedMiner.movement.currentTilePos,
-            updatedMiner.movement.targetTilePos
-          ) <= 1
+          updatedMiner.movement.currentPathIndex >=
+          updatedMiner.movement.path.length - 2
         ) {
           updatedMiner = {
             ...updatedMiner,

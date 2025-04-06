@@ -17,7 +17,6 @@ export const createRailSprite = (
     rail.type,
     LayerName.Rails
   );
-  console.log(rail.position)
 
   railSprite.name = `rail-${rail.id}`;
   railSprite.x = rail.position.x * InitialTileWidth;
