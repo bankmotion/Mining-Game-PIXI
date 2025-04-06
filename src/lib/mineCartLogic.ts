@@ -189,13 +189,14 @@ export const updateMineCartAnimation = (
   }
 
   // Get the current route
-  const mineCartRoute = MineCartRoutes[MineCartSpriteProgress.frameId];
+  const mineCartRoute =
+    MineCartRoutes[MineCartSpriteProgress.frameId % MineCartRoutes.length];
 
   // update position
   const direction =
-    MineCartRoutes[MineCartSpriteProgress.frameId + 1]?.direction ||
-    mineCartRoute.direction;
-  console.log(direction, mineCartRoute.pos.x, mineCartRoute.pos.y);
+    MineCartRoutes[(MineCartSpriteProgress.frameId + 1) % MineCartRoutes.length]
+      .direction;
+
   sprite.x =
     (mineCartRoute.pos.x +
       (direction === "left"
