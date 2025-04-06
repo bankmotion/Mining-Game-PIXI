@@ -6,17 +6,11 @@ import {
   Sprites,
 } from "@/constants/Sprites";
 import { GameState } from "@/interfaces/GameType";
-import { MapDimensions } from "@/interfaces/MapTypes";
 import { Miner } from "@/interfaces/MinerTypes";
-import { Ore } from "@/interfaces/OreTypes";
 import { AnimatedSprite } from "@/interfaces/PixiTypes";
 import { minerSprites } from "@/lib/mapLogic";
-import {
-  getMinerDirection,
-  initializeMinerMovement,
-  updateMinerMovement,
-} from "@/lib/minerMovement";
-import { getMinerAnimationType } from "@/lib/minersLogic";
+import { getMinerDirection, updateMinerMovement } from "@/lib/minerMovement";
+import { getMinerAnimationType, updateMinerAnimation } from "@/lib/minersLogic";
 import { createMinerTilesetTexture } from "@/utils/spriteLoader";
 import * as PIXI from "pixi.js";
 import { useCallback, useEffect } from "react";
@@ -31,15 +25,22 @@ export const useGameUpdate = ({ appRef, gameState }: UseGameStateProps) => {
   const updateOreStates = useCallback(
     (deltaTime: number) => {
       if (!appRef.current) return;
+
       const app = appRef.current;
       const gameContainer = app.stage.getChildAt(0) as PIXI.Container;
       if (!gameContainer) return;
 
+      const oreContainer = gameContainer.getChildByName(
+        LayerName.Ore
+      ) as PIXI.Container;
+      if (!oreContainer) return;
+
       gameState.ores.forEach((ore) => {
-        const oreSprite = gameContainer.getChildByName(
+        const oreSprite = oreContainer.getChildByName(
           `ore-${ore.id}`
         ) as PIXI.Sprite;
         if (!oreSprite) return;
+        console.log("hello");
 
         oreSprite.alpha = ore.depleted ? 0.4 : 1;
 
@@ -116,85 +117,6 @@ export const useGameUpdate = ({ appRef, gameState }: UseGameStateProps) => {
     },
     [appRef, gameState.miners]
   );
-
-  // Helper function to update miner animation
-  const updateMinerAnimation = (
-    sprite: AnimatedSprite,
-    miner: Miner,
-    deltaTime: number
-  ) => {
-    const animationType = getMinerAnimationType(miner);
-    const spriteName =
-      miner.state === "mining"
-        ? SpriteName.CharacterToolsDrillBodyGreen
-        : SpriteName.CharacterPushBodyGreen;
-
-    const spriteData = Sprites.find((s) => s.name === spriteName);
-    if (!spriteData) return;
-
-    const animationData = spriteData.animations[animationType];
-    if (!animationData) return;
-
-    // Get or create sprite data from minerSprites Map
-    let minerSpriteData = minerSprites.get(miner.id);
-    if (!minerSpriteData) {
-      minerSpriteData = {
-        sprite,
-        animationType,
-        frame: 0,
-        time: 0,
-      };
-      minerSprites.set(miner.id, minerSpriteData);
-    }
-
-    // get direction
-    const direction = getMinerDirection(miner);
-
-    // Update position
-    sprite.x =
-      (miner.movement.currentTilePos.x +
-        (direction === "left"
-          ? -miner.movement.moveProgress
-          : direction === "right"
-          ? miner.movement.moveProgress
-          : 0)) *
-      InitialTileWidth;
-    sprite.y =
-      (miner.movement.currentTilePos.y +
-        (direction === "up"
-          ? -miner.movement.moveProgress
-          : direction === "down"
-          ? miner.movement.moveProgress
-          : 0)) *
-      InitialTileWidth;
-
-    // Update animation if type changed
-    if (minerSpriteData.animationType !== animationType) {
-      minerSpriteData.animationType = animationType;
-      minerSpriteData.frame = 0;
-      minerSpriteData.time = 0;
-
-      const texture = createMinerTilesetTexture(
-        spriteName,
-        animationData.frames[0]
-      );
-      sprite.texture = texture;
-    }
-
-    // Update animation frame
-    minerSpriteData.time += deltaTime / 1000;
-    if (minerSpriteData.time >= animationData.speed) {
-      minerSpriteData.time = 0;
-      minerSpriteData.frame =
-        (minerSpriteData.frame + 1) % animationData.frames.length;
-
-      const texture = createMinerTilesetTexture(
-        spriteName,
-        animationData.frames[minerSpriteData.frame]
-      );
-      sprite.texture = texture;
-    }
-  };
 
   // Update game state
   const updateGame = useCallback(

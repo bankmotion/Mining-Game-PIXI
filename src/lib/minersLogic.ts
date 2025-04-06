@@ -8,13 +8,17 @@ import {
   AnimationType,
   InitialTileWidth,
   LayerName,
+  SpriteName,
+  Sprites,
 } from "@/constants/Sprites";
 import { Miner, MinerState, MinerType } from "@/interfaces/MinerTypes";
 import { OreType } from "@/interfaces/OreTypes";
-import { MapLayerType } from "./mapLogic";
+import { MapLayerType, minerSprites } from "./mapLogic";
 import { MineTypes } from "@/constants/Mine";
 import { MapDimensions, MapPosition } from "@/interfaces/MapTypes";
-import { initializeMinerMovement } from "./minerMovement";
+import { getMinerDirection, initializeMinerMovement } from "./minerMovement";
+import { createMinerTilesetTexture } from "@/utils/spriteLoader";
+import { AnimatedSprite } from "@/interfaces/PixiTypes";
 
 type MinerInventory = Record<OreType, number>;
 
@@ -217,4 +221,83 @@ export const getMinerAnimationType = (miner: Miner): AnimationType => {
   if (miner.state === "moving" || miner.state === "returning")
     return AnimationType.PushLeft;
   return AnimationType.Standing;
+};
+
+// Helper function to update miner animation
+export const updateMinerAnimation = (
+  sprite: AnimatedSprite,
+  miner: Miner,
+  deltaTime: number
+) => {
+  const animationType = getMinerAnimationType(miner);
+  const spriteName =
+    miner.state === "mining"
+      ? SpriteName.CharacterToolsDrillBodyGreen
+      : SpriteName.CharacterPushBodyGreen;
+
+  const spriteData = Sprites.find((s) => s.name === spriteName);
+  if (!spriteData) return;
+
+  const animationData = spriteData.animations[animationType];
+  if (!animationData) return;
+
+  // Get or create sprite data from minerSprites Map
+  let minerSpriteData = minerSprites.get(miner.id);
+  if (!minerSpriteData) {
+    minerSpriteData = {
+      sprite,
+      animationType,
+      frame: 0,
+      time: 0,
+    };
+    minerSprites.set(miner.id, minerSpriteData);
+  }
+
+  // get direction
+  const direction = getMinerDirection(miner);
+
+  // Update position
+  sprite.x =
+    (miner.movement.currentTilePos.x +
+      (direction === "left"
+        ? -miner.movement.moveProgress
+        : direction === "right"
+        ? miner.movement.moveProgress
+        : 0)) *
+    InitialTileWidth;
+  sprite.y =
+    (miner.movement.currentTilePos.y +
+      (direction === "up"
+        ? -miner.movement.moveProgress
+        : direction === "down"
+        ? miner.movement.moveProgress
+        : 0)) *
+    InitialTileWidth;
+
+  // Update animation if type changed
+  if (minerSpriteData.animationType !== animationType) {
+    minerSpriteData.animationType = animationType;
+    minerSpriteData.frame = 0;
+    minerSpriteData.time = 0;
+
+    const texture = createMinerTilesetTexture(
+      spriteName,
+      animationData.frames[0]
+    );
+    sprite.texture = texture;
+  }
+
+  // Update animation frame
+  minerSpriteData.time += deltaTime / 1000;
+  if (minerSpriteData.time >= animationData.speed) {
+    minerSpriteData.time = 0;
+    minerSpriteData.frame =
+      (minerSpriteData.frame + 1) % animationData.frames.length;
+
+    const texture = createMinerTilesetTexture(
+      spriteName,
+      animationData.frames[minerSpriteData.frame]
+    );
+    sprite.texture = texture;
+  }
 };
