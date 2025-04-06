@@ -107,7 +107,7 @@ const getNeighbors = (pos: MapPosition, end: MapPosition): MapPosition[] => {
         MapLayerType[newY][newX] === LayerName.Doors ||
         (newX === end.x &&
           newY === end.y &&
-          MapLayerType[newY][newX] === LayerName.Ore))
+          MapLayerType[newY][newX] === LayerName.Ore)) // allow the miner to move to the ore
     ) {
       neighbors.push({ x: newX, y: newY });
     }

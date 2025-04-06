@@ -1,13 +1,11 @@
-import { MineTypes } from "@/constants/Mine";
 import { OreData } from "@/constants/Ore";
 import {
   FloorData,
   InitialTileWidth,
   LayerName,
-  MountainData,
   SpriteName,
   Sprites,
-  WallData,
+  WallData
 } from "@/constants/Sprites";
 import { GameState } from "@/interfaces/GameType";
 import {
@@ -36,7 +34,6 @@ import { updateRailPositions } from "./railLogic";
 // Constants
 export const MapLayerType: LayerName[][] = [];
 export const minerSprites = new Map<string, MinerSpriteData>();
-export const oreSpriteCache = new Map<string, PIXI.Sprite>();
 
 // Cache for text styles
 const textStyles = {
@@ -313,55 +310,15 @@ export const createOreSprite = (
     LayerName.Ore
   );
 
-  // Check cache first
-  // if (oreSpriteCache.has(ore.id)) {
-  //   const cachedSprite = oreSpriteCache.get(ore.id)!;
-  sprite.alpha = ore.depleted ? 0.4 : 1;
-
   if (!isBlackout && onOreClick) {
     sprite.eventMode = "static";
     sprite.cursor = "pointer";
     sprite.removeAllListeners();
     sprite.on("pointerdown", () => onOreClick(ore));
   }
-  //   return cachedSprite;
-  // }
-
-  // const oreTileset = Sprites.find((ts) => ts.name === SpriteName.MiningOres);
-  // if (!oreTileset) {
-  //   throw new Error("Ore tileset not found");
-  // }
-
-  // const tileTexture = createTilesetTexture(
-  //   SpriteName.MiningOres,
-  //   24 + Object.keys(OreData).findIndex((or) => or === ore.type)
-  // );
-
-  // const oreSprite = new PIXI.Sprite(tileTexture);
   sprite.name = `ore-${ore.id}`;
-  // oreSprite.x = ore.position.x * InitialTileWidth;
-  // oreSprite.y = ore.position.y * InitialTileWidth;
-  // oreSprite.width = InitialTileWidth;
-  // oreSprite.height = InitialTileWidth;
-  // oreSprite.eventMode = "static";
   sprite.cursor = "pointer";
-  // oreSprite.alpha = ore.depleted ? 0.4 : 1;
-
-  // if (!isBlackout && onOreClick) {
-  //   oreSprite.on("pointerdown", () => onOreClick(ore));
-  // }
-
-  // // Add regeneration timer text with cached style
-  // const timerText = new PIXI.Text("", textStyles.timer);
-  // timerText.name = "timer-text";
-  // timerText.anchor.set(0.5, -1);
-  // timerText.y = -10;
-  // oreSprite.addChild(timerText);
-
-  // // Cache the sprite
-  // oreSpriteCache.set(ore.id, oreSprite);
-
-  // return oreSprite;
+  sprite.alpha = ore.depleted ? 0.4 : 1;
 };
 
 const isConnectWithWallTile = (position: MapPosition) => {
