@@ -2,15 +2,22 @@ import { SpriteType } from "@/interfaces/PixiTypes";
 
 export enum AnimationType {
   LampAnimation = "lamp_animation",
-  MineCartAnimation = "mine_cart_animation",
+
+  MineCartAnimationLeft = "mine_cart_animation_left",
+  MineCartAnimationRight = "mine_cart_animation_right",
+  MineCartAnimationUp = "mine_cart_animation_up",
+  MineCartAnimationDown = "mine_cart_animation_down",
+
   PushRight = "push_right",
   PushLeft = "push_left",
   PushUp = "push_up",
   PushDown = "push_down",
+
   DrillingRight = "drilling_right",
   DrillingLeft = "drilling_left",
   DrillingUp = "drilling_up",
   DrillingDown = "drilling_down",
+
   Standing = "standing",
 }
 
@@ -43,6 +50,7 @@ export enum LayerName {
   Miners = "Miners",
   Ore = "Ore",
   Doors = "Doors",
+  MineCart = "MineCart",
 }
 
 export enum MineCartsData {
@@ -264,8 +272,20 @@ export const Sprites: SpriteType[] = [
     tileHeight: 16,
     tileCount: 12,
     animations: {
-      [AnimationType.MineCartAnimation]: {
-        frames: [0, 1, 2, 3],
+      [AnimationType.MineCartAnimationLeft]: {
+        frames: [1, 3, 5, 7],
+        speed: 0.3,
+      },
+      [AnimationType.MineCartAnimationRight]: {
+        frames: [17, 19, 21, 23],
+        speed: 0.3,
+      },
+      [AnimationType.MineCartAnimationUp]: {
+        frames: [33, 35, 37, 39],
+        speed: 0.3,
+      },
+      [AnimationType.MineCartAnimationDown]: {
+        frames: [33, 35, 37, 39],
         speed: 0.3,
       },
     },

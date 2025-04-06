@@ -5,7 +5,7 @@ import {
   LayerName,
   SpriteName,
   Sprites,
-  WallData
+  WallData,
 } from "@/constants/Sprites";
 import { GameState } from "@/interfaces/GameType";
 import {
@@ -30,6 +30,11 @@ import {
 } from "./minersLogic";
 import { findValidOrePositions, updateOrePositions } from "./oresLogic";
 import { updateRailPositions } from "./railLogic";
+import {
+  createMineCartRoute,
+  createMineCartSprite,
+  MineCartRoutes,
+} from "./mineCartLogic";
 
 // Constants
 export const MapLayerType: LayerName[][] = [];
@@ -73,12 +78,17 @@ const createMapContainer = (container: PIXI.Container): MapContainer => {
   oreContainer.name = LayerName.Ore;
   container.addChild(oreContainer);
 
+  const mineCartContainer = new PIXI.Container();
+  mineCartContainer.name = LayerName.MineCart;
+  container.addChild(mineCartContainer);
+
   return {
     floor: floorContainer,
     wall: wallContainer,
     miner: minerContainer,
     ore: oreContainer,
     rail: railContainer,
+    mineCart: mineCartContainer,
   };
 };
 
@@ -513,7 +523,6 @@ export const createRailSprite = (
   containers: MapContainer
 ): PIXI.Sprite => {
   // Create a rail sprite based on the rail type
-  const railTexture = createTilesetTexture(SpriteName.MineCarts, rail.type);
   const railSprite = updateMapType(
     containers.rail,
     rail.position,
@@ -608,10 +617,18 @@ export const renderMapLayers = async (
 
     // Create miner sprites
     miners.forEach((miner) => {
-      console.log({ ...miner });
       const minerSprite = createMinerSprite(miner);
       containers.miner.addChild(minerSprite);
     });
+
+    // create mine cart sprites
+    createMineCartRoute({
+      x: doorPosition.x,
+      y: doorPosition.y + 1,
+    });
+
+    const mineCartSprite = createMineCartSprite(MineCartRoutes[0], 0);
+    containers.mineCart.addChild(mineCartSprite);
   } catch (error) {
     console.error("Error rendering map layers:", error);
     throw error;

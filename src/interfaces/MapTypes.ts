@@ -18,6 +18,7 @@ export interface MapContainer {
   miner: PIXI.Container;
   ore: PIXI.Container;
   rail: PIXI.Container;
+  mineCart: PIXI.Container;
 }
 
 export interface MinerSpriteData {
@@ -26,3 +27,5 @@ export interface MinerSpriteData {
   frame: number;
   time: number;
 }
+
+export type Direction = "up" | "down" | "left" | "right";

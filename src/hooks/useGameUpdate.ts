@@ -1,17 +1,12 @@
 import { OreData } from "@/constants/Ore";
 import {
   InitialTileWidth,
-  LayerName,
-  SpriteName,
-  Sprites,
+  LayerName
 } from "@/constants/Sprites";
 import { GameState } from "@/interfaces/GameType";
-import { Miner } from "@/interfaces/MinerTypes";
 import { AnimatedSprite } from "@/interfaces/PixiTypes";
-import { minerSprites } from "@/lib/mapLogic";
-import { getMinerDirection, updateMinerMovement } from "@/lib/minerMovement";
-import { getMinerAnimationType, updateMinerAnimation } from "@/lib/minersLogic";
-import { createMinerTilesetTexture } from "@/utils/spriteLoader";
+import { updateMinerMovement } from "@/lib/minerMovement";
+import { updateMinerAnimation } from "@/lib/minersLogic";
 import * as PIXI from "pixi.js";
 import { useCallback, useEffect } from "react";
 
