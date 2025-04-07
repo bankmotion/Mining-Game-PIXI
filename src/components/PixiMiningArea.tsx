@@ -131,13 +131,6 @@ export const PixiMiningArea = ({
         lastUpdateTime: Date.now(),
       } as GameState);
 
-      console.log({
-        tileCountX,
-        tileCountY,
-        width: pixiContainerRef.current.clientWidth,
-        height: pixiContainerRef.current.clientHeight,
-      });
-
       // Create game container with optimized scaling
       const gameContainer = new PIXI.Container();
       gameContainer.scale.set(MapScale);

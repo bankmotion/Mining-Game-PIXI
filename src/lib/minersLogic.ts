@@ -1,3 +1,4 @@
+import { MineTypes } from "@/constants/Mine";
 import {
   FirstNames,
   InitialSpeed,
@@ -6,23 +7,17 @@ import {
 } from "@/constants/Miners";
 import {
   AnimationType,
-  InitialTileWidth,
-  LayerName,
-  SpriteName,
-  Sprites,
+  LayerName
 } from "@/constants/Sprites";
+import { MapDimensions, MapPosition } from "@/interfaces/MapTypes";
 import { Miner, MinerState, MinerType } from "@/interfaces/MinerTypes";
 import { Ore, OreType } from "@/interfaces/OreTypes";
-import { MapLayerType, minerSprites } from "./mapLogic";
-import { MineTypes } from "@/constants/Mine";
-import { MapDimensions, MapPosition } from "@/interfaces/MapTypes";
+import { MapLayerType } from "./mapLogic";
 import {
   getMinerDirection,
   getMinerDirectionByTwoPos,
   initializeMinerMovement,
 } from "./minerMovement";
-import { createMinerTilesetTexture } from "@/utils/spriteLoader";
-import { AnimatedSprite } from "@/interfaces/PixiTypes";
 
 type MinerInventory = Record<OreType, number>;
 

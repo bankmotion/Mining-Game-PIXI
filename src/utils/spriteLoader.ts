@@ -52,7 +52,6 @@ export const preloadSprites = async (
       name: sprite.name,
     });
   });
-  console.log(spritesToLoad.map((sprite) => sprite.name));
 
   const total = spritesToLoad.length;
   let loaded = 0;
