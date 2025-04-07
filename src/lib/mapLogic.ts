@@ -31,6 +31,7 @@ import {
 import { findValidOrePositions, updateOrePositions } from "./oresLogic";
 import { updateRailPositions } from "./railLogic";
 import { createRailSprite } from "./railMap";
+import { createOreSprite } from "./oreSprite";
 
 // Constants
 export const MapLayerType: LayerName[][] = [];
@@ -302,31 +303,6 @@ const createFloorTiles = (
   return { doorPosition };
 };
 
-export const createOreSprite = (
-  containers: MapContainer,
-  ore: Ore,
-  onOreClick: (ore: Ore) => void,
-  isBlackout: boolean
-) => {
-  const sprite = updateMapType(
-    containers.ore,
-    ore.position,
-    SpriteName.MiningOres,
-    25 + Object.keys(OreData).findIndex((or) => or === ore.type),
-    LayerName.Ore
-  );
-
-  if (!isBlackout && onOreClick) {
-    sprite.eventMode = "static";
-    sprite.cursor = "pointer";
-    sprite.removeAllListeners();
-    sprite.on("pointerdown", () => onOreClick(ore));
-  }
-  sprite.name = `ore-${ore.id}`;
-  sprite.cursor = "pointer";
-  sprite.alpha = ore.depleted ? 0.4 : 1;
-};
-
 const isConnectWithWallTile = (position: MapPosition) => {
   const { x, y } = position;
   const adjacent = {
@@ -529,7 +505,8 @@ export const renderMapLayers = async (
     // Create ore tiles
     const validOrePositions = findValidOrePositions(
       dimensions.width,
-      dimensions.height
+      dimensions.height,
+      doorPosition
     );
     updateOrePositions(ores, validOrePositions, mine.rareOreChance || 1);
     ores.forEach((ore) => {

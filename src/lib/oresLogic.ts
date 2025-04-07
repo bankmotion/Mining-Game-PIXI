@@ -56,13 +56,20 @@ export const generateOresAtPositions = (
     ];
   }
 
-  // Take only the number of positions we need
-  const selectedPositions = availablePositions.slice(0, count);
+  // if it is in the next of the previous ore, skip it
+  for (let i = 0; i < availablePositions.length; i++) {
+    if (
+      ores.some(
+        (ore) => calculateDistance(availablePositions[i], ore.position) <= 1
+      )
+    ) {
+      continue;
+    }
 
-  // Generate ores at selected positions
-  for (const position of selectedPositions) {
-    const type = generateRandomOreType(rareOreChance);
-    ores.push(createOre(type, position));
+    ores.push(
+      createOre(generateRandomOreType(rareOreChance), availablePositions[i])
+    );
+    if (ores.length === count) break;
   }
 
   return ores;
@@ -71,8 +78,10 @@ export const generateOresAtPositions = (
 // Function to find valid positions for ores on the map
 export const findValidOrePositions = (
   tileCountX: number,
-  tileCountY: number
+  tileCountY: number,
+  doorPosition: MapPosition
 ): Array<{ x: number; y: number }> => {
+  console.log(doorPosition);
   const validPositions: Array<{ x: number; y: number }> = [];
 
   // Find valid positions within the available area
@@ -80,6 +89,9 @@ export const findValidOrePositions = (
     for (let x = 0; x < tileCountX; x++) {
       // Skip if out of bounds
       if (x < 0 || x >= tileCountX || y < 0 || y >= tileCountY) continue;
+
+      // Skip if the position is too close to the door
+      if (calculateDistance({ x, y }, doorPosition) <= 1) continue;
 
       // Check if the position is valid (has floor and no wall)
       if (MapLayerType[y] && MapLayerType[y][x] === LayerName.Floor) {
@@ -169,8 +181,8 @@ export const updateOrePositions = (
   ores.forEach((ore, index) => {
     if (generatedOres[index]) {
       ore.position = {
-        x: validPositions[index].x,
-        y: validPositions[index].y,
+        x: generatedOres[index].position.x,
+        y: generatedOres[index].position.y,
       };
     }
   });
