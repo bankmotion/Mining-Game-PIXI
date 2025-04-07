@@ -9,6 +9,11 @@ export const MinerTypes: Record<
     baseSpeed: number;
     baseCapacity: number;
     baseCost: number;
+    energy: {
+      recovery: number;
+      movingConsumption: number;
+      miningConsumption: number;
+    };
     description: string;
   }
 > = {
@@ -17,6 +22,11 @@ export const MinerTypes: Record<
     baseSpeed: 1,
     baseCapacity: 10,
     baseCost: 10,
+    energy: {
+      recovery: 3,
+      movingConsumption: 4,
+      miningConsumption: 10,
+    },
     description: "A standard miner that can mine any ore type.",
   },
   expert: {
@@ -24,6 +34,11 @@ export const MinerTypes: Record<
     baseSpeed: 0.8,
     baseCapacity: 12,
     baseCost: 50,
+    energy: {
+      recovery: 5,
+      movingConsumption: 7,
+      miningConsumption: 15,
+    },
     description:
       "Specialized in mining specific ore types with high efficiency (+150% bonus).",
   },
@@ -32,6 +47,11 @@ export const MinerTypes: Record<
     baseSpeed: 1.8,
     baseCapacity: 35,
     baseCost: 75,
+    energy: {
+      recovery: 8,
+      movingConsumption: 10,
+      miningConsumption: 20,
+    },
     description:
       "Very fast movement and extra large carrying capacity for efficient transport.",
   },
@@ -40,6 +60,11 @@ export const MinerTypes: Record<
     baseSpeed: 1.4,
     baseCapacity: 8,
     baseCost: 100,
+    energy: {
+      recovery: 10,
+      movingConsumption: 12,
+      miningConsumption: 25,
+    },
     description:
       "Prioritizes valuable ores and finds them faster than other miners.",
   },
@@ -48,6 +73,11 @@ export const MinerTypes: Record<
     baseSpeed: 1.1,
     baseCapacity: 25,
     baseCost: 150,
+    energy: {
+      recovery: 15,
+      movingConsumption: 20,
+      miningConsumption: 50,
+    },
     description:
       "Advanced miner with exceptional mining efficiency (+150% yield bonus) and large capacity.",
   },

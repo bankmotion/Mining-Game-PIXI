@@ -6,6 +6,7 @@ import {
   MiningEnergyConsumption,
   MovementEnergyConsumption,
 } from "@/constants/Energy";
+import { MinerTypes } from "@/constants/Miners";
 import {
   EnergySource,
   EnergySourceType,
@@ -20,12 +21,12 @@ export const calculateEnergyConsumption = (miners: Miner[]): number => {
 
     // mining consumption
     if (miner.state === "mining") {
-      consumption += MiningEnergyConsumption;
+      consumption += MinerTypes[miner.type].energy.miningConsumption;
     }
 
     // movement consumption
     if (miner.state === "moving" || miner.state === "returning") {
-      consumption += MovementEnergyConsumption;
+      consumption += MinerTypes[miner.type].energy.movingConsumption;
     }
 
     return total + consumption;
@@ -33,10 +34,13 @@ export const calculateEnergyConsumption = (miners: Miner[]): number => {
 };
 
 export const calculateEnergyGeneration = (
-  energySources: EnergySourceType[]
+  energySources: EnergySourceType[],
+  miners: Miner[]
 ): number => {
   return (
-    InitialEnergyRegenRate +
+    miners.reduce((total, miner) => {
+      return total + MinerTypes[miner.type].energy.recovery;
+    }, 0) +
     energySources.reduce((total, source) => {
       const sourceData = EnergySourceData[source.type];
       const lvlMultiplier = Math.pow(
@@ -56,7 +60,10 @@ export const updateEnergyState = (
   const consumption = energyState.isBlackout
     ? 0
     : calculateEnergyConsumption(miners);
-  const sourceGeneration = calculateEnergyGeneration(energyState.energySources);
+  const sourceGeneration = calculateEnergyGeneration(
+    energyState.energySources,
+    miners
+  );
 
   // calculate net energy change
   const netEnergyChange = (sourceGeneration - consumption) * deltaTime;
