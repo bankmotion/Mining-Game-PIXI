@@ -3,8 +3,10 @@ import { MapContainer } from "@/interfaces/MapTypes";
 import { Ore } from "@/interfaces/OreTypes";
 import { updateMapType } from "./mapLogic";
 import { OreData } from "@/constants/Ore";
+import { GameState } from "@/interfaces/GameType";
 
 export const createOreSprite = (
+  gameState: GameState,
   containers: MapContainer,
   ore: Ore,
   onOreClick: (ore: Ore) => void,
@@ -14,8 +16,8 @@ export const createOreSprite = (
     containers.ore,
     ore.position,
     SpriteName.MiningOres,
-    25 + Object.keys(OreData).findIndex((or) => or === ore.type),
-    LayerName.Ore
+    25 + Object.keys(OreData).findIndex((or) => or === ore.type)
+    // LayerName.Ore
   );
 
   if (!isBlackout && onOreClick) {

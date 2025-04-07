@@ -4,7 +4,6 @@ import { GameState } from "@/interfaces/GameType";
 import { MapPosition } from "@/interfaces/MapTypes";
 import { Miner } from "@/interfaces/MinerTypes";
 import { Ore, OreType } from "@/interfaces/OreTypes";
-import { MapLayerType } from "./mapLogic";
 import { calculateDistance } from "./minersLogic";
 
 // Create a new ore
@@ -76,24 +75,30 @@ export const generateOresAtPositions = (
 
 // Function to find valid positions for ores on the map
 export const findValidOrePositions = (
-  tileCountX: number,
-  tileCountY: number,
-  doorPosition: MapPosition
+  gameState: GameState
 ): Array<{ x: number; y: number }> => {
-  console.log(doorPosition);
   const validPositions: Array<{ x: number; y: number }> = [];
 
   // Find valid positions within the available area
-  for (let y = 0; y < tileCountY; y++) {
-    for (let x = 0; x < tileCountX; x++) {
+  for (let y = 0; y < gameState.mapDimensions.height; y++) {
+    for (let x = 0; x < gameState.mapDimensions.width; x++) {
       // Skip if out of bounds
-      if (x < 0 || x >= tileCountX || y < 0 || y >= tileCountY) continue;
+      if (
+        x < 0 ||
+        x >= gameState.mapDimensions.width ||
+        y < 0 ||
+        y >= gameState.mapDimensions.height
+      )
+        continue;
 
       // Skip if the position is too close to the door
-      if (calculateDistance({ x, y }, doorPosition) <= 1) continue;
+      if (calculateDistance({ x, y }, gameState.basePosition) <= 1) continue;
 
       // Check if the position is valid (has floor and no wall)
-      if (MapLayerType[y] && MapLayerType[y][x] === LayerName.Floor) {
+      if (
+        gameState.mapLayerType[y] &&
+        gameState.mapLayerType[y][x] === LayerName.Floor
+      ) {
         validPositions.push({
           x,
           y,

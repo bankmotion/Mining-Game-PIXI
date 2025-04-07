@@ -34,7 +34,6 @@ export const PixiMiningArea = ({
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(5);
   const [loadingError, setLoadingError] = useState<string | null>(null);
-  const [tileCounts, setTileCounts] = useState({ x: 0, y: 0 });
 
   // Flag to track if initialization has been attempted and completed
   const initAttemptedRef = useRef(false);
@@ -131,6 +130,8 @@ export const PixiMiningArea = ({
         lastUpdateTime: Date.now(),
       } as GameState);
 
+      gameState.mapDimensions = { width: tileCountX, height: tileCountY };
+
       // Create game container with optimized scaling
       const gameContainer = new PIXI.Container();
       gameContainer.scale.set(MapScale);
@@ -164,7 +165,6 @@ export const PixiMiningArea = ({
             onOreClick,
             updateGameState,
             isBlackout,
-            { width: tileCountX, height: tileCountY },
             onBaseClick
           );
 

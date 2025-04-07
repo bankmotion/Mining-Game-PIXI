@@ -1,7 +1,7 @@
 import {
   BlackoutThreshold,
   BlackoutUnlockedThreshold,
-  EnergySourceData
+  EnergySourceData,
 } from "@/constants/Energy";
 import { MinerTypes } from "@/constants/Miners";
 import {
@@ -140,14 +140,23 @@ export const upgradeEnergySource = (
       ? {
           ...s,
           level: s.level + 1,
-          efficiency: Math.pow(sourceData.efficiencyMultiplier, s.level),
+          efficiency:
+            Math.floor(
+              Math.pow(sourceData.efficiencyMultiplier, s.level) * 100
+            ) / 100,
           cost: upgradeCost,
           energyOutput:
-            sourceData.baseOutput *
-            Math.pow(sourceData.efficiencyMultiplier, s.level),
+            Math.floor(
+              sourceData.baseOutput *
+                Math.pow(sourceData.efficiencyMultiplier, s.level) *
+                100
+            ) / 100,
           maintenanceCost:
-            sourceData.baseMaintenance *
-            Math.pow(sourceData.efficiencyMultiplier, s.level),
+            Math.floor(
+              sourceData.baseMaintenance *
+                Math.pow(sourceData.efficiencyMultiplier, s.level) *
+                100
+            ) / 100,
         }
       : s
   );

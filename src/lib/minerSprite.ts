@@ -8,12 +8,12 @@ import {
   Sprites,
 } from "@/constants/Sprites";
 import { createMinerTilesetTexture } from "@/utils/spriteLoader";
-import { MapLayerType, minerSprites } from "./mapLogic";
 import { GameState } from "@/interfaces/GameType";
 import { MapPosition } from "@/interfaces/MapTypes";
 import { getMinerDirection } from "./minerMovement";
 import { AnimatedSprite } from "@/interfaces/PixiTypes";
 import { Ore } from "@/interfaces/OreTypes";
+import { minerSprites } from "./mapLogic";
 
 export const createMinerSprite = (miner: Miner, ores: Ore[]): PIXI.Sprite => {
   const animationType = getMinerAnimationType(miner, ores);
@@ -147,7 +147,7 @@ export const getAvailableMinerPositions = (
   for (let i = 0; i < dimH; i++) {
     for (let j = 0; j < dimW; j++) {
       if (
-        MapLayerType[i][j] === LayerName.Floor &&
+        gameState.mapLayerType[i][j] === LayerName.Floor &&
         !miners.some(
           (miner) =>
             miner.movement.currentTilePos.x === i &&

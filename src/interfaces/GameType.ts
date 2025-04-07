@@ -1,8 +1,10 @@
+import { LayerName } from "@/constants/Sprites";
 import { EnergyState } from "./EnergyTypes";
 import { MapDimensions, MapPosition } from "./MapTypes";
 import { Miner } from "./MinerTypes";
 import { MineType } from "./MineType";
 import { Ore, OreType } from "./OreTypes";
+import { Rail } from "./RailType";
 
 export interface GameState {
   miners: Miner[]; // Array of miners
@@ -20,4 +22,6 @@ export interface GameState {
   basePosition: MapPosition; // Position of the base
   energy: EnergyState; // Current energy state
   mapDimensions: MapDimensions; // Dimensions of the map
+
+  mapLayerType: LayerName[][];
 }

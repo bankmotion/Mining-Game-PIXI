@@ -11,7 +11,6 @@ import { Direction, MapPosition } from "@/interfaces/MapTypes";
 import { AnimatedSprite } from "@/interfaces/PixiTypes";
 import { createMinerTilesetTexture } from "@/utils/spriteLoader";
 import { getRandomNumber } from "@/utils/utils";
-import { MapLayerType } from "./mapLogic";
 
 export let MineCartRoutes: {
   pos: MapPosition;
@@ -27,6 +26,7 @@ export const MineCartSpriteProgress: {
 };
 
 export const createMineCartRoute = (
+  mapLayerType: LayerName[][],
   start: MapPosition
 ): { pos: MapPosition; direction: "up" | "down" | "left" | "right" }[] => {
   const route: {
@@ -51,9 +51,9 @@ export const createMineCartRoute = (
 
   const isValid = (pos: MapPosition) => {
     if (
-      MapLayerType[pos.y] &&
-      MapLayerType[pos.y][pos.x] &&
-      MapLayerType[pos.y][pos.x] === LayerName.Rails
+      mapLayerType[pos.y] &&
+      mapLayerType[pos.y][pos.x] &&
+      mapLayerType[pos.y][pos.x] === LayerName.Rails
     ) {
       return true;
     }

@@ -344,6 +344,7 @@ export const useGameState = () => {
             ...miner.movement,
             targetTilePos: prevState.basePosition,
             path: findPath(
+              prevState.mapLayerType,
               miner.movement.currentTilePos,
               prevState.basePosition
             ),
@@ -391,10 +392,14 @@ export const useGameState = () => {
               x: ore.position.x,
               y: ore.position.y,
             },
-            path: findPath(miner.movement.currentTilePos, {
-              x: ore.position.x,
-              y: ore.position.y,
-            }),
+            path: findPath(
+              gameState.mapLayerType,
+              miner.movement.currentTilePos,
+              {
+                x: ore.position.x,
+                y: ore.position.y,
+              }
+            ),
             isMoving: true,
             moveProgress: 0,
             currentPathIndex: 0,

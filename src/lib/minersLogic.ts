@@ -5,19 +5,16 @@ import {
   LastNames,
   MinerTypes,
 } from "@/constants/Miners";
-import {
-  AnimationType,
-  LayerName
-} from "@/constants/Sprites";
+import { AnimationType, LayerName } from "@/constants/Sprites";
 import { MapDimensions, MapPosition } from "@/interfaces/MapTypes";
 import { Miner, MinerState, MinerType } from "@/interfaces/MinerTypes";
 import { Ore, OreType } from "@/interfaces/OreTypes";
-import { MapLayerType } from "./mapLogic";
 import {
   getMinerDirection,
   getMinerDirectionByTwoPos,
   initializeMinerMovement,
 } from "./minerMovement";
+import { GameState } from "@/interfaces/GameType";
 
 type MinerInventory = Record<OreType, number>;
 
@@ -83,19 +80,27 @@ export const createMiner = (
 };
 
 export const findValidMinerPositions = (
-  tileCountX: number,
-  tileCountY: number
+  gameState: GameState
 ): MapPosition[] => {
   const validPositions: MapPosition[] = [];
 
   // Find valid positions within the mining area
-  for (let y = 0; y < tileCountY; y++) {
-    for (let x = 0; x < tileCountX; x++) {
+  for (let y = 0; y < gameState.mapDimensions.height; y++) {
+    for (let x = 0; x < gameState.mapDimensions.width; x++) {
       // Skip if out of bounds
-      if (x < 0 || x >= tileCountX || y < 0 || y >= tileCountY) continue;
+      if (
+        x < 0 ||
+        x >= gameState.mapDimensions.width ||
+        y < 0 ||
+        y >= gameState.mapDimensions.height
+      )
+        continue;
 
       // Check if the position is valid (has floor and no wall)
-      if (MapLayerType[y] && MapLayerType[y][x] === LayerName.Floor) {
+      if (
+        gameState.mapLayerType[y] &&
+        gameState.mapLayerType[y][x] === LayerName.Floor
+      ) {
         // Ensure position is not too close to the base
         validPositions.push({ x, y });
       }

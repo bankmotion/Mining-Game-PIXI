@@ -20,8 +20,11 @@ import {
   updateOreRegeneration,
 } from "./oresLogic";
 import { findPath, heuristic } from "./pathFindingLogic";
+import { importGameState } from "./localstorageLogic";
+import { Game } from "@/constants/Game";
 
 export const updateMinerState = (
+  gameState: GameState,
   miner: Miner,
   ores: Ore[],
   miners: Miner[],
@@ -65,7 +68,11 @@ export const updateMinerState = (
           movement: {
             ...miner.movement,
             targetTilePos: { ...basePosition },
-            path: findPath(miner.movement.currentTilePos, basePosition),
+            path: findPath(
+              gameState.mapLayerType,
+              miner.movement.currentTilePos,
+              basePosition
+            ),
             currentPathIndex: 0,
             moveProgress: 0,
             isMoving: true,
@@ -121,7 +128,11 @@ export const updateMinerState = (
           movement: {
             ...miner.movement,
             targetTilePos: { ...randomOre.position },
-            path: findPath(miner.movement.currentTilePos, randomOre.position),
+            path: findPath(
+              gameState.mapLayerType,
+              miner.movement.currentTilePos,
+              randomOre.position
+            ),
             currentPathIndex: 0,
             moveProgress: 0,
             isMoving: true,
@@ -145,6 +156,7 @@ export const updateMinerState = (
             ...updatedMiner.movement,
             targetTilePos: { ...targetOre.position },
             path: findPath(
+              gameState.mapLayerType,
               updatedMiner.movement.currentTilePos,
               targetOre.position
             ),
@@ -193,7 +205,11 @@ export const updateMinerState = (
           movement: {
             ...miner.movement,
             targetTilePos: { ...basePosition },
-            path: findPath(miner.movement.currentTilePos, basePosition),
+            path: findPath(
+              gameState.mapLayerType,
+              miner.movement.currentTilePos,
+              basePosition
+            ),
             currentPathIndex: 0,
             moveProgress: 0,
           },
@@ -346,6 +362,7 @@ export const updateGameStateWithDeltaTime = (
 
   for (const miner of state.miners) {
     const { updatedMiner, updatedOre, collectedResources } = updateMinerState(
+      state,
       miner,
       updatedOres,
       state.miners,
@@ -430,6 +447,13 @@ export const updateGameStateWithDeltaTime = (
 };
 
 export const initializeGameState = (): GameState => {
+  const prevState = importGameState();
+  if (prevState) {
+    Game.loadedStatus = true;
+    console.log("true");
+    return prevState;
+  }
+
   const mines: Record<string, MineType> = {};
   MineTypes.forEach((mine) => {
     mines[mine.id] = { ...mine };
@@ -481,5 +505,6 @@ export const initializeGameState = (): GameState => {
     basePosition: { x: 0, y: 0 },
     mapDimensions: { width: 0, height: 0 },
     energy: InitialEnergyState,
+    mapLayerType: [],
   };
 };

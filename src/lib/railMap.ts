@@ -4,8 +4,10 @@ import { InitialTileWidth, LayerName, SpriteName } from "@/constants/Sprites";
 import { MapContainer } from "@/interfaces/MapTypes";
 import { Rail } from "@/interfaces/RailType";
 import { updateMapType } from "./mapLogic";
+import { GameState } from "@/interfaces/GameType";
 
 export const createRailSprite = (
+  gameState: GameState,
   rail: Rail,
   containers: MapContainer
 ): PIXI.Sprite => {
@@ -14,8 +16,7 @@ export const createRailSprite = (
     containers.rail,
     rail.position,
     SpriteName.MineCarts,
-    rail.type,
-    LayerName.Rails
+    rail.type
   );
 
   railSprite.name = `rail-${rail.id}`;

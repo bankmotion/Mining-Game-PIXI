@@ -2,6 +2,7 @@ import { OreData } from "@/constants/Ore";
 import { InitialTileWidth, LayerName } from "@/constants/Sprites";
 import { GameState } from "@/interfaces/GameType";
 import { AnimatedSprite } from "@/interfaces/PixiTypes";
+import { saveGame } from "@/lib/localstorageLogic";
 import { updateMineCartAnimation } from "@/lib/mineCartLogic";
 import { updateMinerMovement } from "@/lib/minerMovement";
 import { createMinerSprite, updateMinerAnimation } from "@/lib/minerSprite";
@@ -12,6 +13,8 @@ interface UseGameStateProps {
   appRef: React.RefObject<PIXI.Application>;
   gameState: GameState;
 }
+
+let callIndex = 0;
 
 export const useGameUpdate = ({ appRef, gameState }: UseGameStateProps) => {
   // Update ore states
@@ -113,7 +116,7 @@ export const useGameUpdate = ({ appRef, gameState }: UseGameStateProps) => {
           return;
         }
 
-        updateMinerMovement(miner, deltaTime);
+        updateMinerMovement(gameState.mapLayerType, miner, deltaTime);
 
         // Update animation
         updateMinerAnimation(
@@ -161,6 +164,10 @@ export const useGameUpdate = ({ appRef, gameState }: UseGameStateProps) => {
   // Add game state update ticker
   useEffect(() => {
     if (!appRef.current) return;
+    callIndex++;
+    if (callIndex % 200 === 0) {
+      saveGame(gameState);
+    }
 
     const app = appRef.current;
     const tickerCallback = () => {

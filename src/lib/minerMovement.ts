@@ -1,6 +1,7 @@
 import { Direction, MapDimensions, MapPosition } from "@/interfaces/MapTypes";
 import { Miner, MinerMovementState } from "@/interfaces/MinerTypes";
 import { findPath } from "./pathFindingLogic";
+import { LayerName } from "@/constants/Sprites";
 
 export const initializeMinerMovement = (
   tilePos: MapPosition,
@@ -16,7 +17,11 @@ export const initializeMinerMovement = (
   };
 };
 
-export const updateMinerMovement = (miner: Miner, deltaTime: number) => {
+export const updateMinerMovement = (
+  mapLayerType: LayerName[][],
+  miner: Miner,
+  deltaTime: number
+) => {
   const movementState = miner.movement;
   const newState = { ...movementState };
 
@@ -26,7 +31,11 @@ export const updateMinerMovement = (miner: Miner, deltaTime: number) => {
     (newState.currentTilePos.x !== newState.targetTilePos.x ||
       newState.currentTilePos.y !== newState.targetTilePos.y)
   ) {
-    newState.path = findPath(newState.currentTilePos, newState.targetTilePos);
+    newState.path = findPath(
+      mapLayerType,
+      newState.currentTilePos,
+      newState.targetTilePos
+    );
     newState.currentPathIndex = 0;
     newState.isMoving = newState.path.length > 0;
   }

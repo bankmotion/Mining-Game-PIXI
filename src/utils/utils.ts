@@ -1,4 +1,4 @@
-export const getRandomTileId = (
+export const getRandomTileIdByChance = (
   data: { id: number; chance: number }[]
 ): number => {
   const totalChance = data.reduce((acc, curr) => acc + curr.chance, 0);

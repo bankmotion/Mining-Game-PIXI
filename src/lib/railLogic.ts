@@ -1,66 +1,69 @@
 import { LayerName, MineCartsData } from "@/constants/Sprites";
+import { GameState } from "@/interfaces/GameType";
 import { MapPosition } from "@/interfaces/MapTypes";
 import { MineType } from "@/interfaces/MineType";
 import { Rail } from "@/interfaces/RailType";
 import { getRandomNumber } from "@/utils/utils";
-import { MapLayerType } from "./mapLogic";
+import { updateMapLayerType } from "./mapLogic";
 
-export const findValidRailPositions = (
-  tileCountX: number,
-  tileCountY: number
-): MapPosition[] => {
-  const validPositions: MapPosition[] = [];
+// export const findValidRailPositions = (
+//   tileCountX: number,
+//   tileCountY: number
+// ): MapPosition[] => {
+//   const validPositions: MapPosition[] = [];
 
-  // Find valid positions within the available area
-  for (let y = 0; y < tileCountY; y++) {
-    for (let x = 0; x < tileCountX; x++) {
-      // Skip if out of bounds
-      if (x < 0 || x >= tileCountX || y < 0 || y >= tileCountY) continue;
+//   // Find valid positions within the available area
+//   for (let y = 0; y < tileCountY; y++) {
+//     for (let x = 0; x < tileCountX; x++) {
+//       // Skip if out of bounds
+//       if (x < 0 || x >= tileCountX || y < 0 || y >= tileCountY) continue;
 
-      // Check if the position is valid (has floor and no wall)
-      if (MapLayerType[y] && MapLayerType[y][x] === LayerName.Floor) {
-        validPositions.push({
-          x,
-          y,
-        });
-      }
-    }
-  }
+//       // Check if the position is valid (has floor and no wall)
+//       if (MapLayerType[y] && MapLayerType[y][x] === LayerName.Floor) {
+//         validPositions.push({
+//           x,
+//           y,
+//         });
+//       }
+//     }
+//   }
 
-  // Shuffle the positions
-  for (let i = validPositions.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [validPositions[i], validPositions[j]] = [
-      validPositions[j],
-      validPositions[i],
-    ];
-  }
+//   // Shuffle the positions
+//   for (let i = validPositions.length - 1; i > 0; i--) {
+//     const j = Math.floor(Math.random() * (i + 1));
+//     [validPositions[i], validPositions[j]] = [
+//       validPositions[j],
+//       validPositions[i],
+//     ];
+//   }
 
-  return validPositions;
-};
+//   return validPositions;
+// };
 
 export const updateRailPositions = (
-  activeMine: MineType,
-  doorPosition: MapPosition
-): Rail[] => {
+  gameState: GameState,
+  activeMine: MineType
+) => {
+  const basePos = gameState.basePosition;
+
   // Calculate the dimensions of the T-shape
   const verticalLength = Math.floor((activeMine.availableArea.height / 3) * 2); // 2/3 of the available height
   const horizontalLength = activeMine.availableArea.width; // Full width
 
   // Create the vertical part of the T (from door downward)
   const verticalRails: MapPosition[] = [];
-  for (let y = doorPosition.y; y < doorPosition.y + verticalLength; y++) {
-    verticalRails.push({ x: doorPosition.x, y });
+  for (let y = basePos.y; y < basePos.y + verticalLength; y++) {
+    verticalRails.push({ x: basePos.x, y });
   }
 
   // Create the horizontal part of the T
   const horizontalRails: MapPosition[] = [];
-  const horizontalStartX = doorPosition.x - Math.floor(horizontalLength / 2);
-  const horizontalY = doorPosition.y + verticalLength - 1; // Connect to the bottom of the vertical part
+  const horizontalStartX = basePos.x - Math.floor(horizontalLength / 2);
+  const horizontalY = basePos.y + verticalLength - 1; // Connect to the bottom of the vertical part
 
   for (let x = horizontalStartX; x < horizontalStartX + horizontalLength; x++) {
     // Skip the center position as it's already covered by the vertical rail
-    if (x !== doorPosition.x) {
+    if (x !== basePos.x) {
       horizontalRails.push({ x, y: horizontalY });
     }
   }
@@ -99,7 +102,7 @@ export const updateRailPositions = (
   // Add the T-junction
   railObjects.push({
     id: `rail-t-junction`,
-    position: { x: doorPosition.x, y: horizontalY },
+    position: { x: basePos.x, y: horizontalY },
     type: MineCartsData.T_Bottom,
   });
 
@@ -130,7 +133,7 @@ export const updateRailPositions = (
 
   // Update maplayer type
   for (const rail of railObjects) {
-    MapLayerType[rail.position.y][rail.position.x] = LayerName.Rails;
+    updateMapLayerType(gameState.mapLayerType, rail.position, LayerName.Rails);
   }
 
   return railObjects;
