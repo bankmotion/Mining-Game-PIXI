@@ -312,7 +312,7 @@ export const createOreSprite = (
     containers.ore,
     ore.position,
     SpriteName.MiningOres,
-    24 + Object.keys(OreData).findIndex((or) => or === ore.type),
+    25 + Object.keys(OreData).findIndex((or) => or === ore.type),
     LayerName.Ore
   );
 
