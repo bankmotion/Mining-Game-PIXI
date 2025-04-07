@@ -62,6 +62,8 @@ export const updateMinerAnimation = (
   const spriteName =
     miner.state === "mining"
       ? SpriteName.CharacterToolsDrillBodyGreen
+      : miner.isBot
+      ? SpriteName.CharacterWalkBodyDark
       : SpriteName.CharacterWalkBodyLight;
 
   const spriteData = Sprites.find((s) => s.name === spriteName);
