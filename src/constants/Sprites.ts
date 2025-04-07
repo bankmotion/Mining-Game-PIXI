@@ -40,6 +40,9 @@ export enum SpriteName {
   Ladders = "Ladders",
 
   CharacterToolsDrillBodyGreen = "CharacterToolsDrillBodyGreen",
+  CharacterToolsDrillBodyDark = "CharacterToolsDrillBodyDark",
+  CharacterToolsDrillBodyLight = "CharacterToolsDrillBodyLight",
+
   CharacterPushBodyGreen = "CharacterPushBodyGreen",
   CharacterPushClothesFullBodyOverhallsBlue = "CharacterPushClothesFullBodyOverhallsBlue",
 
@@ -309,33 +312,90 @@ export const Sprites: SpriteType[] = [
     tileHeight: 16,
     tileCount: 36,
   },
+
+  // Character tools drill body
   {
     name: SpriteName.CharacterToolsDrillBodyGreen,
-    path: "/assets/character/tools_drill/hairstyles/big_bun/character_tools_drill_hairstyles_big_bun_blue.png",
+    path: "/assets/character/tools_drill/character_body/character_tools_drill_hairstyles_big_bun_blue.png",
     width: 192,
     height: 256,
     tileWidth: 16,
     tileHeight: 16,
     tileCount: 192,
     animations: {
-      [AnimationType.DrillingRight]: {
+      [AnimationType.Right]: {
+        frames: [14, 18, 22],
+        speed: 0.1,
+      },
+      [AnimationType.Left]: {
         frames: [62, 66, 70],
         speed: 0.1,
       },
-      [AnimationType.DrillingLeft]: {
-        frames: [63, 67, 71],
+      [AnimationType.Up]: {
+        frames: [110, 114, 118],
         speed: 0.1,
       },
-      [AnimationType.DrillingUp]: {
-        frames: [64, 68, 72],
-        speed: 0.1,
-      },
-      [AnimationType.DrillingDown]: {
-        frames: [65, 69, 73],
+      [AnimationType.Down]: {
+        frames: [158, 162, 166],
         speed: 0.1,
       },
     },
   },
+  {
+    name: SpriteName.CharacterToolsDrillBodyDark,
+    path: "/assets/character/tools_drill/character_body/character_tools_drill_body_dark.png",
+    width: 192,
+    height: 256,
+    tileWidth: 16,
+    tileHeight: 16,
+    tileCount: 192,
+    animations: {
+      [AnimationType.Right]: {
+        frames: [14, 18, 22],
+        speed: 0.1,
+      },
+      [AnimationType.Left]: {
+        frames: [62, 66, 70],
+        speed: 0.1,
+      },
+      [AnimationType.Up]: {
+        frames: [110, 114, 118],
+        speed: 0.1,
+      },
+      [AnimationType.Down]: {
+        frames: [158, 162, 166],
+        speed: 0.1,
+      },
+    },
+  },
+  {
+    name: SpriteName.CharacterToolsDrillBodyLight,
+    path: "/assets/character/tools_drill/character_body/character_tools_drill_body_light.png",
+    width: 192,
+    height: 256,
+    tileWidth: 16,
+    tileHeight: 16,
+    tileCount: 192,
+    animations: {
+      [AnimationType.Right]: {
+        frames: [14, 18, 22],
+        speed: 0.1,
+      },
+      [AnimationType.Left]: {
+        frames: [62, 66, 70],
+        speed: 0.1,
+      },
+      [AnimationType.Up]: {
+        frames: [110, 114, 118],
+        speed: 0.1,
+      },
+      [AnimationType.Down]: {
+        frames: [158, 162, 166],
+        speed: 0.1,
+      },
+    },
+  },
+
   {
     name: SpriteName.CharacterPushBodyGreen,
     path: "/assets/character/push/character_body/character_push_body_green.png",

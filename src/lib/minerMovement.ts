@@ -1,4 +1,4 @@
-import { MapDimensions, MapPosition } from "@/interfaces/MapTypes";
+import { Direction, MapDimensions, MapPosition } from "@/interfaces/MapTypes";
 import { Miner, MinerMovementState } from "@/interfaces/MinerTypes";
 import { findPath } from "./pathFindingLogic";
 import { InitialTileWidth } from "@/constants/Sprites";
@@ -59,16 +59,14 @@ export const updateMinerMovement = (miner: Miner, deltaTime: number) => {
   miner.movement = newState;
 };
 
-export const getMinerDirection = (
-  miner: Miner
-): "up" | "down" | "left" | "right" | "none" => {
+export const getMinerDirection = (miner: Miner): Direction => {
   const movementState = miner.movement;
 
   if (
     !movementState.isMoving ||
     movementState.currentPathIndex >= movementState.path.length
   ) {
-    return "none";
+    return "left";
   }
 
   const current = movementState.currentTilePos;
@@ -79,5 +77,17 @@ export const getMinerDirection = (
   if (next.y > current.y) return "down";
   if (next.y < current.y) return "up";
 
-  return "none";
+  return "left";
+};
+
+export const getMinerDirectionByTwoPos = (
+  currentPos: MapPosition,
+  targetPos: MapPosition
+): Direction => {
+  if (targetPos.x > currentPos.x) return "right";
+  if (targetPos.x < currentPos.x) return "left";
+  if (targetPos.y > currentPos.y) return "down";
+  if (targetPos.y < currentPos.y) return "up";
+
+  return "left";
 };

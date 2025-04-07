@@ -13,6 +13,7 @@ import { GameState } from "@/interfaces/GameType";
 import { MapPosition } from "@/interfaces/MapTypes";
 import { getMinerDirection } from "./minerMovement";
 import { AnimatedSprite } from "@/interfaces/PixiTypes";
+import { Ore } from "@/interfaces/OreTypes";
 
 export const createMinerSprite = (miner: Miner): PIXI.Sprite => {
   const animationType = getMinerAnimationType(miner);
@@ -56,12 +57,15 @@ export const createMinerSprite = (miner: Miner): PIXI.Sprite => {
 export const updateMinerAnimation = (
   sprite: AnimatedSprite,
   miner: Miner,
+  ores: Ore[],
   deltaTime: number
 ) => {
-  const animationType = getMinerAnimationType(miner);
+  const animationType = getMinerAnimationType(miner, ores);
   const spriteName =
     miner.state === "mining"
-      ? SpriteName.CharacterToolsDrillBodyGreen
+      ? miner.isBot
+        ? SpriteName.CharacterToolsDrillBodyDark
+        : SpriteName.CharacterToolsDrillBodyLight
       : miner.isBot
       ? SpriteName.CharacterWalkBodyDark
       : SpriteName.CharacterWalkBodyLight;

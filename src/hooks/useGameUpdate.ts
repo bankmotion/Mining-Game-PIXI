@@ -114,7 +114,12 @@ export const useGameUpdate = ({ appRef, gameState }: UseGameStateProps) => {
         updateMinerMovement(miner, deltaTime);
 
         // Update animation
-        updateMinerAnimation(minerSprite as AnimatedSprite, miner, deltaTime);
+        updateMinerAnimation(
+          minerSprite as AnimatedSprite,
+          miner,
+          gameState.ores,
+          deltaTime
+        );
       });
     },
     [appRef, gameState.miners]

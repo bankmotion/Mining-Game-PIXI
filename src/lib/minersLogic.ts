@@ -12,11 +12,15 @@ import {
   Sprites,
 } from "@/constants/Sprites";
 import { Miner, MinerState, MinerType } from "@/interfaces/MinerTypes";
-import { OreType } from "@/interfaces/OreTypes";
+import { Ore, OreType } from "@/interfaces/OreTypes";
 import { MapLayerType, minerSprites } from "./mapLogic";
 import { MineTypes } from "@/constants/Mine";
 import { MapDimensions, MapPosition } from "@/interfaces/MapTypes";
-import { getMinerDirection, initializeMinerMovement } from "./minerMovement";
+import {
+  getMinerDirection,
+  getMinerDirectionByTwoPos,
+  initializeMinerMovement,
+} from "./minerMovement";
 import { createMinerTilesetTexture } from "@/utils/spriteLoader";
 import { AnimatedSprite } from "@/interfaces/PixiTypes";
 
@@ -216,22 +220,22 @@ export const moveMinerTowards = (
   return { ...miner, movement: newState };
 };
 
-export const getMinerAnimationType = (miner: Miner): AnimationType => {
-  if (miner.state === "mining") return AnimationType.DrillingRight;
-  if (miner.state === "moving" || miner.state === "returning") {
-    const direction = getMinerDirection(miner);
-    switch (direction) {
-      case "right":
-        return AnimationType.Right;
-      case "left":
-        return AnimationType.Left;
-      case "up":
-        return AnimationType.Up;
-      case "down":
-        return AnimationType.Down;
-      default:
-        return AnimationType.Standing;
+export const getMinerAnimationType = (
+  miner: Miner,
+  ores: Ore[]
+): AnimationType => {
+  if (miner.state === "mining") {
+    const targetOre = ores.find((ore) => ore.id === miner.targetOreId);
+    if (targetOre) {
+      const direction = getMinerDirectionByTwoPos(
+        miner.movement.currentTilePos,
+        targetOre.position
+      ) as AnimationType;
+      return direction;
     }
+  } else if (miner.state === "moving" || miner.state === "returning") {
+    const direction = getMinerDirection(miner) as AnimationType;
+    return direction;
   }
   return AnimationType.Standing;
 };
