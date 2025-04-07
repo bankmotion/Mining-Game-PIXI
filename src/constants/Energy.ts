@@ -12,28 +12,28 @@ export const EnergySourceData: Record<
 > = {
   solar: {
     baseCost: 100,
-    baseOutput: 1,
+    baseOutput: 3,
     baseMaintenance: 1,
     efficiencyMultiplier: 1.2,
     maxLevel: 5,
   },
   wind: {
     baseCost: 250,
-    baseOutput: 2,
+    baseOutput: 10,
     baseMaintenance: 2,
     efficiencyMultiplier: 1.3,
     maxLevel: 5,
   },
   geothermal: {
     baseCost: 1000,
-    baseOutput: 5,
+    baseOutput: 20,
     baseMaintenance: 5,
     efficiencyMultiplier: 1.5,
     maxLevel: 3,
   },
   nuclear: {
     baseCost: 5000,
-    baseOutput: 20,
+    baseOutput: 50,
     baseMaintenance: 15,
     efficiencyMultiplier: 2,
     maxLevel: 2,
