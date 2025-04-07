@@ -1,7 +1,6 @@
 import { Direction, MapDimensions, MapPosition } from "@/interfaces/MapTypes";
 import { Miner, MinerMovementState } from "@/interfaces/MinerTypes";
 import { findPath } from "./pathFindingLogic";
-import { InitialTileWidth } from "@/constants/Sprites";
 
 export const initializeMinerMovement = (
   tilePos: MapPosition,

@@ -1,9 +1,9 @@
 import * as PIXI from "pixi.js";
 
-import { Rail } from "@/interfaces/RailType";
-import { MapContainer } from "@/interfaces/MapTypes";
-import { updateMapType } from "./mapLogic";
 import { InitialTileWidth, LayerName, SpriteName } from "@/constants/Sprites";
+import { MapContainer } from "@/interfaces/MapTypes";
+import { Rail } from "@/interfaces/RailType";
+import { updateMapType } from "./mapLogic";
 
 export const createRailSprite = (
   rail: Rail,

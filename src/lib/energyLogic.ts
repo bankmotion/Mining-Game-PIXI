@@ -1,10 +1,7 @@
 import {
   BlackoutThreshold,
   BlackoutUnlockedThreshold,
-  EnergySourceData,
-  InitialEnergyRegenRate,
-  MiningEnergyConsumption,
-  MovementEnergyConsumption,
+  EnergySourceData
 } from "@/constants/Energy";
 import { MinerTypes } from "@/constants/Miners";
 import {

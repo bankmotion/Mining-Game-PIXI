@@ -3,9 +3,11 @@ import { MineTypes } from "@/constants/Mine";
 import { OreData } from "@/constants/Ore";
 import { EnergyState } from "@/interfaces/EnergyTypes";
 import { GameState } from "@/interfaces/GameType";
+import { MapPosition } from "@/interfaces/MapTypes";
 import { Miner } from "@/interfaces/MinerTypes";
 import { MineType } from "@/interfaces/MineType";
 import { Ore, OreType } from "@/interfaces/OreTypes";
+import { getRandomNumber } from "@/utils/utils";
 import { updateEnergyState } from "./energyLogic";
 import {
   calculateInventoryValue,
@@ -17,10 +19,7 @@ import {
   depleteOreVein,
   updateOreRegeneration,
 } from "./oresLogic";
-import { MapPosition } from "@/interfaces/MapTypes";
 import { findPath, heuristic } from "./pathFindingLogic";
-import { getAvailableMinerPositions } from "./minerSprite";
-import { getRandomNumber } from "@/utils/utils";
 
 export const updateMinerState = (
   miner: Miner,

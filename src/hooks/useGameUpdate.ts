@@ -103,7 +103,9 @@ export const useGameUpdate = ({ appRef, gameState }: UseGameStateProps) => {
         ) as PIXI.Sprite;
 
         if (!minerSprite) {
-          minerSprite = minerContainer.addChild(createMinerSprite(miner));
+          minerSprite = minerContainer.addChild(
+            createMinerSprite(miner, gameState.ores)
+          );
         }
 
         if (!minerSprite) {

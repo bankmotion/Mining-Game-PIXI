@@ -1,6 +1,5 @@
 import * as PIXI from "pixi.js";
 
-import { OreData } from "@/constants/Ore";
 import {
   FloorData,
   InitialTileWidth,
@@ -29,9 +28,9 @@ import {
   updateMinerPositionsRandomly,
 } from "./minersLogic";
 import { findValidOrePositions, updateOrePositions } from "./oresLogic";
+import { createOreSprite } from "./oreSprite";
 import { updateRailPositions } from "./railLogic";
 import { createRailSprite } from "./railMap";
-import { createOreSprite } from "./oreSprite";
 
 // Constants
 export const MapLayerType: LayerName[][] = [];

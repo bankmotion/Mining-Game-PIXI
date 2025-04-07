@@ -15,8 +15,8 @@ import { getMinerDirection } from "./minerMovement";
 import { AnimatedSprite } from "@/interfaces/PixiTypes";
 import { Ore } from "@/interfaces/OreTypes";
 
-export const createMinerSprite = (miner: Miner): PIXI.Sprite => {
-  const animationType = getMinerAnimationType(miner);
+export const createMinerSprite = (miner: Miner, ores: Ore[]): PIXI.Sprite => {
+  const animationType = getMinerAnimationType(miner, ores);
   const spriteName = SpriteName.CharacterWalkBodyLight;
   const spriteData = Sprites.find((s) => s.name === spriteName);
   if (!spriteData) return null;

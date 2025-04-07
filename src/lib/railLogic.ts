@@ -1,9 +1,9 @@
-import { MapPosition } from "@/interfaces/MapTypes";
-import { Rail } from "@/interfaces/RailType";
-import { MapLayerType } from "./mapLogic";
 import { LayerName, MineCartsData } from "@/constants/Sprites";
+import { MapPosition } from "@/interfaces/MapTypes";
 import { MineType } from "@/interfaces/MineType";
+import { Rail } from "@/interfaces/RailType";
 import { getRandomNumber } from "@/utils/utils";
+import { MapLayerType } from "./mapLogic";
 
 export const findValidRailPositions = (
   tileCountX: number,

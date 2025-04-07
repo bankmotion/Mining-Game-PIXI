@@ -1,4 +1,5 @@
-import { Direction, MapPosition } from "@/interfaces/MapTypes";
+import * as PIXI from "pixi.js";
+
 import {
   AnimationType,
   InitialTileWidth,
@@ -6,19 +7,17 @@ import {
   SpriteName,
   Sprites,
 } from "@/constants/Sprites";
-import { MapLayerType } from "./mapLogic";
-import { getRandomNumber } from "@/utils/utils";
-import * as PIXI from "pixi.js";
-import {
-  createMinerTilesetTexture,
-  createTilesetTexture,
-} from "@/utils/spriteLoader";
+import { Direction, MapPosition } from "@/interfaces/MapTypes";
 import { AnimatedSprite } from "@/interfaces/PixiTypes";
+import { createMinerTilesetTexture } from "@/utils/spriteLoader";
+import { getRandomNumber } from "@/utils/utils";
+import { MapLayerType } from "./mapLogic";
 
 export let MineCartRoutes: {
   pos: MapPosition;
   direction: "up" | "down" | "left" | "right";
 }[] = [];
+
 export const MineCartSpriteProgress: {
   tinyProgress: number; // from 0 to 1
   frameId: number;

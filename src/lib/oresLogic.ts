@@ -1,12 +1,11 @@
 import { OreData } from "@/constants/Ore";
-import { Ore, OreType } from "@/interfaces/OreTypes";
-import { MapLayerType } from "./mapLogic";
 import { LayerName } from "@/constants/Sprites";
-import { MineTypes } from "@/constants/Mine";
-import { calculateDistance } from "./minersLogic";
-import { Miner } from "@/interfaces/MinerTypes";
 import { GameState } from "@/interfaces/GameType";
 import { MapPosition } from "@/interfaces/MapTypes";
+import { Miner } from "@/interfaces/MinerTypes";
+import { Ore, OreType } from "@/interfaces/OreTypes";
+import { MapLayerType } from "./mapLogic";
+import { calculateDistance } from "./minersLogic";
 
 // Create a new ore
 export const createOre = (

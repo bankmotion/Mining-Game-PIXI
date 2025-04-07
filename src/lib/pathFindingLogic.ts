@@ -1,6 +1,6 @@
+import { LayerName } from "@/constants/Sprites";
 import { MapPosition } from "@/interfaces/MapTypes";
 import { MapLayerType } from "./mapLogic";
-import { LayerName } from "@/constants/Sprites";
 
 // A* pathfinding algorithm implementation
 export const findPath = (
