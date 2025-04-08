@@ -37,6 +37,7 @@ export const createMapContainer = (container: PIXI.Container): MapContainer => {
 
   const minerContainer = new PIXI.Container();
   minerContainer.name = LayerName.Miners;
+  minerContainer.sortableChildren = true;
   container.addChild(minerContainer);
 
   const oreContainer = new PIXI.Container();

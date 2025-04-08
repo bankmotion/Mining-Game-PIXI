@@ -20,20 +20,20 @@ const createPulseEffect = (): CustomGraphics => {
   const glow = new PIXI.Graphics() as CustomGraphics;
   glow.name = "pulse-glow";
   glow.userData = { countFrame: 0 };
-  
+
   // Create a gradient fill
   const gradient = new PIXI.Graphics();
-  gradient.beginFill(0xFFFFFF, 0.4);
+  gradient.beginFill(0xffffff, 0.4);
   gradient.drawCircle(0, 0, 20);
   gradient.endFill();
-  
+
   // Add blur filter for glow effect
   const blurFilter = new PIXI.BlurFilter(4, 4);
   glow.filters = [blurFilter];
-  
+
   // Add the gradient to the glow
   glow.addChild(gradient);
-  
+
   return glow;
 };
 
@@ -48,6 +48,11 @@ export const createMinerSprite = (miner: Miner, ores: Ore[]): PIXI.Sprite => {
 
   const sprite = new PIXI.Sprite();
   sprite.name = `miner-${miner.id}`;
+
+  if (!miner.isBot) {
+    sprite.zIndex = 1000;
+  }
+  console.log(sprite.zIndex);
 
   // Set initial position
   sprite.x =
@@ -161,23 +166,25 @@ export const updateMinerAnimation = (
     if (glow) {
       // Update frame counter for pulse animation
       glow.userData.countFrame += deltaTime;
-      
+
       // Create a smoother pulsing effect with wider scale range
       const progress = (glow.userData.countFrame * 0.0005) % 1;
-      const easeInOut = progress < 0.5 
-        ? 2 * progress * progress 
-        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-      
+      const easeInOut =
+        progress < 0.5
+          ? 2 * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
       // Wider scale range (0.5 to 2.0)
       const pulseScale = 0.5 + easeInOut * 1.5;
       glow.scale.set(pulseScale);
-      
+
       // Smoother alpha transition
       const alphaProgress = (glow.userData.countFrame * 0.0004) % 1;
-      const alphaEase = alphaProgress < 0.5 
-        ? 2 * alphaProgress * alphaProgress 
-        : 1 - Math.pow(-2 * alphaProgress + 2, 2) / 2;
-      
+      const alphaEase =
+        alphaProgress < 0.5
+          ? 2 * alphaProgress * alphaProgress
+          : 1 - Math.pow(-2 * alphaProgress + 2, 2) / 2;
+
       glow.alpha = 0.3 + alphaEase * 0.5;
     }
   }
