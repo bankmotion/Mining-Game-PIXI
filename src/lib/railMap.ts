@@ -3,8 +3,8 @@ import * as PIXI from "pixi.js";
 import { InitialTileWidth, LayerName, SpriteName } from "@/constants/Sprites";
 import { MapContainer } from "@/interfaces/MapTypes";
 import { Rail } from "@/interfaces/RailType";
-import { updateMapType } from "./mapLogic";
 import { GameState } from "@/interfaces/GameType";
+import { updateMapType } from "./mapSprite";
 
 export const createRailSprite = (
   gameState: GameState,

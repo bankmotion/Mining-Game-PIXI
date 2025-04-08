@@ -9,12 +9,9 @@ import { AnimationType, LayerName } from "@/constants/Sprites";
 import { MapDimensions, MapPosition } from "@/interfaces/MapTypes";
 import { Miner, MinerState, MinerType } from "@/interfaces/MinerTypes";
 import { Ore, OreType } from "@/interfaces/OreTypes";
-import {
-  getMinerDirection,
-  getMinerDirectionByTwoPos,
-  initializeMinerMovement,
-} from "./minerMovement";
+import { getMinerDirection, initializeMinerMovement } from "./minerMovement";
 import { GameState } from "@/interfaces/GameType";
+import { getDirectionByTwoPos } from "./mapLogic";
 
 type MinerInventory = Record<OreType, number>;
 
@@ -227,7 +224,7 @@ export const getMinerAnimationType = (
   if (miner.state === "mining") {
     const targetOre = ores.find((ore) => ore.id === miner.targetOreId);
     if (targetOre) {
-      const direction = getMinerDirectionByTwoPos(
+      const direction = getDirectionByTwoPos(
         miner.movement.currentTilePos,
         targetOre.position
       ) as AnimationType;

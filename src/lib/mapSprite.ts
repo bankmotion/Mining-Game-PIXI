@@ -2,6 +2,7 @@ import * as PIXI from "pixi.js";
 
 import {
   FloorData,
+  InitialTileWidth,
   LayerName,
   SpriteName,
   WallData,
@@ -15,12 +16,13 @@ import {
   isBellowMountain,
   isConnectWithMountainTile,
   isConnectWithWallTile,
-  updateMapType,
 } from "./mapLogic";
 import { GameState } from "@/interfaces/GameType";
 import { getRandomTileIdByChance } from "@/utils/utils";
 import { createRailSprite } from "./railMap";
 import { Rail } from "@/interfaces/RailType";
+import { createTilesetTexture } from "@/utils/spriteLoader";
+import { createPulseEffect } from "./effectSprite";
 
 export const createMapContainer = (container: PIXI.Container): MapContainer => {
   const floorContainer = new PIXI.Container();
@@ -58,6 +60,23 @@ export const createMapContainer = (container: PIXI.Container): MapContainer => {
   };
 };
 
+// Core Functions
+export const updateMapType = (
+  container: PIXI.Container<PIXI.DisplayObject>,
+  position: MapPosition,
+  spriteName: SpriteName,
+  id: number
+): PIXI.Sprite => {
+  const tileTexture = createTilesetTexture(spriteName, id);
+  const tile = new PIXI.Sprite(tileTexture);
+
+  tile.x = position.x * InitialTileWidth;
+  tile.y = position.y * InitialTileWidth;
+  container.addChild(tile);
+
+  return tile;
+};
+
 export const drawDoorSprite = (
   gameState: GameState,
   containers: MapContainer,
@@ -80,6 +99,12 @@ export const drawDoorSprite = (
         onBaseClick();
       }
     });
+
+    const doorGlow = createPulseEffect(20, "0xfff700");
+    doorGlow.x = doorSprite.width / 2;
+    doorGlow.y = doorSprite.height / 2;
+    doorGlow.zIndex = 1000;
+    doorSprite.addChild(doorGlow);
   }
 };
 

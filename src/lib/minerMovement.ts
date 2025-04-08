@@ -87,15 +87,3 @@ export const getMinerDirection = (miner: Miner): Direction => {
 
   return "left";
 };
-
-export const getMinerDirectionByTwoPos = (
-  currentPos: MapPosition,
-  targetPos: MapPosition
-): Direction => {
-  if (targetPos.x > currentPos.x) return "right";
-  if (targetPos.x < currentPos.x) return "left";
-  if (targetPos.y > currentPos.y) return "down";
-  if (targetPos.y < currentPos.y) return "up";
-
-  return "left";
-};

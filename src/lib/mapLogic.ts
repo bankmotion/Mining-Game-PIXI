@@ -1,23 +1,25 @@
 import * as PIXI from "pixi.js";
 
 import { Game } from "@/constants/Game";
-import {
-  FloorData,
-  InitialTileWidth,
-  LayerName,
-  SpriteName,
-  WallData,
-} from "@/constants/Sprites";
+import { InitialTileWidth, LayerName, SpriteName } from "@/constants/Sprites";
 import { GameState } from "@/interfaces/GameType";
 import {
-  MapContainer,
+  Direction,
   MapDimensions,
   MapPosition,
   MinerSpriteData,
 } from "@/interfaces/MapTypes";
 import { Miner } from "@/interfaces/MinerTypes";
 import { Ore } from "@/interfaces/OreTypes";
+import { Rail } from "@/interfaces/RailType";
 import { createTilesetTexture } from "@/utils/spriteLoader";
+import {
+  createMapContainer,
+  drawDoorSprite,
+  drawFloorTiles,
+  drawRailTiles,
+  drawWallAndMountainTiles,
+} from "./mapSprite";
 import {
   createMineCartRoute,
   createMineCartSprite,
@@ -30,15 +32,6 @@ import {
 import { findValidOrePositions, updateOrePositions } from "./oresLogic";
 import { createOreSprite } from "./oreSprite";
 import { updateRailPositions } from "./railLogic";
-import { createRailSprite } from "./railMap";
-import { Rail } from "@/interfaces/RailType";
-import {
-  createMapContainer,
-  drawDoorSprite,
-  drawFloorTiles,
-  drawRailTiles,
-  drawWallAndMountainTiles,
-} from "./mapSprite";
 
 // Constants
 export const minerSprites = new Map<string, MinerSpriteData>();
@@ -209,21 +202,16 @@ export const updateMapLayerType = (
   mapLayerType[position.y][position.x] = layerName;
 };
 
-// Core Functions
-export const updateMapType = (
-  container: PIXI.Container<PIXI.DisplayObject>,
-  position: MapPosition,
-  spriteName: SpriteName,
-  id: number
-): PIXI.Sprite => {
-  const tileTexture = createTilesetTexture(spriteName, id);
-  const tile = new PIXI.Sprite(tileTexture);
+export const getDirectionByTwoPos = (
+  currentPos: MapPosition,
+  targetPos: MapPosition
+): Direction => {
+  if (targetPos.x > currentPos.x) return "right";
+  if (targetPos.x < currentPos.x) return "left";
+  if (targetPos.y > currentPos.y) return "down";
+  if (targetPos.y < currentPos.y) return "up";
 
-  tile.x = position.x * InitialTileWidth;
-  tile.y = position.y * InitialTileWidth;
-  container.addChild(tile);
-
-  return tile;
+  return "left";
 };
 
 export const isConnectWithWallTile = (

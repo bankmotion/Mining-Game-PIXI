@@ -14,28 +14,7 @@ import { getMinerDirection } from "./minerMovement";
 import { AnimatedSprite, CustomGraphics } from "@/interfaces/PixiTypes";
 import { Ore } from "@/interfaces/OreTypes";
 import { minerSprites } from "./mapLogic";
-
-// Create a pulsing glow effect
-const createPulseEffect = (): CustomGraphics => {
-  const glow = new PIXI.Graphics() as CustomGraphics;
-  glow.name = "pulse-glow";
-  glow.userData = { countFrame: 0 };
-
-  // Create a gradient fill
-  const gradient = new PIXI.Graphics();
-  gradient.beginFill(0xffffff, 0.4);
-  gradient.drawCircle(0, 0, 20);
-  gradient.endFill();
-
-  // Add blur filter for glow effect
-  const blurFilter = new PIXI.BlurFilter(4, 4);
-  glow.filters = [blurFilter];
-
-  // Add the gradient to the glow
-  glow.addChild(gradient);
-
-  return glow;
-};
+import { createPulseEffect } from "./effectSprite";
 
 export const createMinerSprite = (miner: Miner, ores: Ore[]): PIXI.Sprite => {
   const animationType = getMinerAnimationType(miner, ores);
@@ -52,7 +31,6 @@ export const createMinerSprite = (miner: Miner, ores: Ore[]): PIXI.Sprite => {
   if (!miner.isBot) {
     sprite.zIndex = 1000;
   }
-  console.log(sprite.zIndex);
 
   // Set initial position
   sprite.x =
@@ -71,7 +49,7 @@ export const createMinerSprite = (miner: Miner, ores: Ore[]): PIXI.Sprite => {
 
   // Add highlight effect for manual miner (non-bot)
   if (!miner.isBot) {
-    const glow = createPulseEffect();
+    const glow = createPulseEffect(20, "0xffffff");
     glow.x = sprite.width / 2;
     glow.y = InitialTileWidth / 2; // Position above the miner's head
     sprite.addChild(glow);
