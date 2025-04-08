@@ -1,5 +1,11 @@
-import { SpriteName } from "@/constants/Sprites";
+import { SpriteName, AnimationType } from "@/constants/Sprites";
 import * as PIXI from "pixi.js";
+
+export interface CustomGraphics extends PIXI.Graphics {
+  userData?: {
+    countFrame: number;
+  };
+}
 
 export interface AnimatedSprite extends PIXI.Sprite {
   userData: {
@@ -41,4 +47,12 @@ export interface SpriteType {
       speed: number;
     };
   };
+}
+
+export interface MinerSpriteData {
+  sprite: PIXI.Sprite;
+  animationType: AnimationType;
+  frame: number;
+  time: number;
+  pulseTime: number;
 }
