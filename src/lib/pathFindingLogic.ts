@@ -7,7 +7,6 @@ export const findPath = (
   start: MapPosition,
   end: MapPosition
 ): MapPosition[] => {
-  console.log(mapLayerType, start, end);
   // if start and end are the same, return an empty array
   if (start.x === end.x && start.y === end.y) {
     return [];
@@ -25,7 +24,6 @@ export const findPath = (
 
     // check if we reached the end.
     if (current.pos.x === end.x && current.pos.y === end.y) {
-      console.log("oaky")
       return reconstructPath(current);
     }
 

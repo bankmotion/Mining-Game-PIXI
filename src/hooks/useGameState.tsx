@@ -188,7 +188,9 @@ export const useGameState = () => {
     type: "basic" | "expert" | "hauler" | "prospector" | "engineer"
   ) => {
     setGameState((prevState) => {
-      const minerCount = prevState.miners.filter((m) => m.type === type).length;
+      const minerCount = prevState.miners.filter(
+        (m) => m.type === type && m.isBot
+      ).length;
       const baseCost = {
         basic: 10,
         expert: 50,
@@ -198,6 +200,7 @@ export const useGameState = () => {
       }[type];
 
       const cost = Math.floor(baseCost * Math.pow(1.2, minerCount));
+      console.log(cost);
 
       if (prevState.money < cost) {
         toast.error(`Not enough money to hire a new ${type} miner`);
