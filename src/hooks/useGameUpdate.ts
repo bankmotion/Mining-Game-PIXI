@@ -10,7 +10,7 @@ import * as PIXI from "pixi.js";
 import { useCallback, useEffect } from "react";
 
 interface UseGameStateProps {
-  appRef: React.RefObject<PIXI.Application>;
+  appRef: React.MutableRefObject<PIXI.Application | null>;
   gameState: GameState;
 }
 
@@ -154,16 +154,18 @@ export const useGameUpdate = ({ appRef, gameState }: UseGameStateProps) => {
   // Update game state
   const updateGame = useCallback(
     (deltaTime: number) => {
-      updateOreStates(deltaTime);
-      updateMinerAnimations(deltaTime);
-      updateMineCartAnimations(deltaTime);
+      if (appRef?.current) {
+        updateOreStates(deltaTime);
+        updateMinerAnimations(deltaTime);
+        updateMineCartAnimations(deltaTime);
+      }
     },
-    [updateOreStates, updateMinerAnimations, updateMineCartAnimations]
+    [updateOreStates, updateMinerAnimations, updateMineCartAnimations, appRef]
   );
 
   // Add game state update ticker
   useEffect(() => {
-    if (!appRef.current) return;
+    if (!appRef?.current) return;
     callIndex++;
     if (callIndex % 200 === 0) {
       saveGame(gameState);

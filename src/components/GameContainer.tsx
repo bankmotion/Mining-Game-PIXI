@@ -1,31 +1,31 @@
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useGameState } from "@/hooks/useGameState";
-import { ResourceBar } from "./ResourceBar";
-import { UpgradeShop } from "./UpgradeShop";
-import { HiringStation } from "./HiringStation";
-import { MineSelector } from "./MineSelector";
-import {
-  Maximize,
-  Play,
-  Pause,
-  Settings,
-  ShoppingBag,
-  User,
-  Map,
-  Zap,
-} from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { IncomeForecast } from "./IncomeForecast";
+import { useGameState } from "@/hooks/useGameState";
+import {
+  Map,
+  Maximize,
+  Pause,
+  Play,
+  Settings,
+  ShoppingBag,
+  User,
+  Zap,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { PixiMiningArea } from "./PixiMiningArea";
 import { EnergyManagement } from "./EnergyManagement";
+import { HiringStation } from "./HiringStation";
+import { IncomeForecast } from "./IncomeForecast";
+import { MineSelector } from "./MineSelector";
+import { PixiMiningArea } from "./PixiMiningArea";
+import { ResourceBar } from "./ResourceBar";
+import { UpgradeShop } from "./UpgradeShop";
 
 export const GameContainer = () => {
   const {
@@ -263,7 +263,6 @@ export const GameContainer = () => {
             onOreClick={handleOreClick}
             onBaseClick={handleBaseClick}
             updateGameState={updateGameState}
-            isBlackout={gameState.energy.isBlackout}
           />
         </div>
       </div>

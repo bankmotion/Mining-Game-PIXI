@@ -11,6 +11,7 @@ import { getRandomNumber } from "@/utils/utils";
 import { updateEnergyState } from "./energyLogic";
 import {
   calculateInventoryValue,
+  createMiner,
   isInventoryFull,
   moveMinerTowards,
 } from "./minersLogic";
@@ -450,7 +451,6 @@ export const initializeGameState = (): GameState => {
   const prevState = importGameState();
   if (prevState) {
     Game.loadedStatus = true;
-    console.log("true");
     return prevState;
   }
 
@@ -459,8 +459,18 @@ export const initializeGameState = (): GameState => {
     mines[mine.id] = { ...mine };
   });
 
+  const initialMiner = createMiner(
+    "basic",
+    { x: 0, y: 0 },
+    {
+      width: 100,
+      height: 100,
+    },
+    false
+  );
+
   return {
-    miners: [],
+    miners: [initialMiner],
     rails: [],
     grounds: [],
     ores: [],
@@ -501,7 +511,7 @@ export const initializeGameState = (): GameState => {
     upgrades: {},
     tick: 0,
     lastUpdateTime: Date.now(),
-    activeMine: "starter",
+    activeMine: "advanced",
     mines,
     basePosition: { x: 0, y: 0 },
     mapDimensions: { width: 0, height: 0 },

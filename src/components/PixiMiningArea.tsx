@@ -1,25 +1,22 @@
 import { Progress } from "@/components/ui/progress";
 import { MapScale } from "@/constants/Map";
-import { MineTypes } from "@/constants/Mine";
 import { InitialTileWidth } from "@/constants/Sprites";
 import { useGameUpdate } from "@/hooks/useGameUpdate";
 import { GameState } from "@/interfaces/GameType";
-import { Miner } from "@/interfaces/MinerTypes";
 import { Ore } from "@/interfaces/OreTypes";
 import { renderMapLayers } from "@/lib/mapLogic";
 import { createMiner } from "@/lib/minersLogic";
 import { generateInitialOres } from "@/lib/oresLogic";
 import { preloadSprites } from "@/utils/spriteLoader";
-import { Scale } from "lucide-react";
 import * as PIXI from "pixi.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface PixiMiningAreaProps {
+  appRef: React.MutableRefObject<PIXI.Application | null>;
   gameState: GameState;
   onOreClick?: (ore: Ore) => void;
   onBaseClick?: () => void;
   updateGameState: (gameState: GameState) => void;
-  isBlackout?: boolean;
 }
 
 export const PixiMiningArea = ({
@@ -27,13 +24,13 @@ export const PixiMiningArea = ({
   onOreClick,
   onBaseClick,
   updateGameState,
-  isBlackout = false,
 }: PixiMiningAreaProps) => {
   const pixiContainerRef = useRef<HTMLDivElement>(null);
-  const appRef = useRef<PIXI.Application | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(5);
   const [loadingError, setLoadingError] = useState<string | null>(null);
+  const appRef = useRef<PIXI.Application | null>(null);
+  const gameContainerRef = useRef<PIXI.Container | null>(null);
 
   // Flag to track if initialization has been attempted and completed
   const initAttemptedRef = useRef(false);
@@ -44,6 +41,47 @@ export const PixiMiningArea = ({
     appRef,
     gameState,
   });
+
+  // handle mine swiching
+  useEffect(() => {
+    if (!appRef.current || !gameContainerRef.current) return;
+
+    gameContainerRef.current.removeChildren();
+
+    initAttemptedRef.current = false;
+    initCompletedRef.current = false;
+    setLoading(true);
+    setLoadingProgress(5);
+
+    const initializeGame = async () => {
+      try {
+        // Render map layers
+        console.log("Rendering map layers...");
+        await renderMapLayers(
+          gameContainerRef.current,
+          gameState,
+          gameState.miners,
+          gameState.ores,
+          onOreClick,
+          updateGameState,
+          onBaseClick
+        );
+
+        // Mark initialization as complete
+        console.log("Initialization complete!");
+        initCompletedRef.current = true;
+        setLoadingProgress(100);
+        setTimeout(() => setLoading(false), 500);
+      } catch (error) {
+        console.error("Failed to initialize game:", error);
+        setLoadingError("Failed to initialize game. Using fallback renderer.");
+        setLoadingProgress(100);
+        setTimeout(() => setLoading(false), 500);
+      }
+    };
+
+    initializeGame();
+  }, [gameState.activeMine]);
 
   // Optimize loading progress simulation
   useEffect(() => {
@@ -101,6 +139,7 @@ export const PixiMiningArea = ({
 
       // Add the canvas to the container
       pixiContainerRef.current.appendChild(app.view as HTMLCanvasElement);
+      pixiContainerRef.current.id = "map-container";
 
       // Store the application reference
       appRef.current = app;
@@ -112,21 +151,8 @@ export const PixiMiningArea = ({
         pixiContainerRef.current.clientHeight / InitialTileWidth / MapScale
       );
 
-      // Generate initial ores for the starter mine
-      const initialOres = generateInitialOres(20, 100, 100);
-
-      // Create the first miner
-      const initialMiner = createMiner(
-        "basic",
-        { x: 0, y: 0 },
-        { width: tileCountX, height: tileCountY },
-        false
-      );
-
       updateGameState({
         mapDimensions: { width: tileCountX, height: tileCountY },
-        miners: [initialMiner],
-        ores: initialOres,
         lastUpdateTime: Date.now(),
       } as GameState);
 
@@ -144,6 +170,7 @@ export const PixiMiningArea = ({
           tileCountY * InitialTileWidth * MapScale) /
         2;
       app.stage.addChild(gameContainer);
+      gameContainerRef.current = gameContainer;
 
       // Optimize sprite loading and game initialization
       const initializeGame = async () => {
@@ -157,14 +184,10 @@ export const PixiMiningArea = ({
           // Render map layers
           console.log("Rendering map layers...");
           await renderMapLayers(
-            app,
             gameContainer,
             gameState,
-            [initialMiner],
-            initialOres,
             onOreClick,
             updateGameState,
-            isBlackout,
             onBaseClick
           );
 
@@ -206,14 +229,7 @@ export const PixiMiningArea = ({
     return () => {
       cancelAnimationFrame(frameId);
     };
-  }, [
-    loadingProgress,
-    gameState,
-    isBlackout,
-    onOreClick,
-    onBaseClick,
-    updateGameState,
-  ]);
+  }, [loadingProgress, gameState, onOreClick, onBaseClick, updateGameState]);
 
   // Memoize loading screen render
   const renderLoadingScreen = useCallback(() => {
@@ -252,7 +268,7 @@ export const PixiMiningArea = ({
 
   // Memoize blackout overlay render
   const renderBlackoutOverlay = useCallback(() => {
-    if (!isBlackout) return null;
+    if (!gameState.energy.isBlackout) return null;
 
     return (
       <div className="absolute inset-0 bg-black/80 z-50 flex items-center justify-center">
@@ -265,7 +281,7 @@ export const PixiMiningArea = ({
         </div>
       </div>
     );
-  }, [isBlackout]);
+  }, [gameState.energy.isBlackout]);
 
   return (
     <div className="relative w-full h-full">

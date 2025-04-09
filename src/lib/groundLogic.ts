@@ -22,7 +22,7 @@ export const createGround = (gameState: GameState) => {
 
   const directionKeys = Object.keys(direction);
 
-  if (positions.length === 0) return [];
+  if (positions.length === 0) return { updatedGrounds: [] };
 
   // create the ground without type
   grounds.push({
@@ -140,7 +140,7 @@ export const createGround = (gameState: GameState) => {
   }
   console.log(grounds);
 
-  return grounds;
+  return { updatedGrounds: grounds };
 };
 
 // get all positions that are available to create ground

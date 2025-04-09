@@ -102,5 +102,5 @@ export const updateRailPositions = (
     updateMapLayerType(gameState.mapLayerType, rail.position, LayerName.Rails);
   }
 
-  return railObjects;
+  return {updatedRails: railObjects};
 };

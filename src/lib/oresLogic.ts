@@ -177,24 +177,17 @@ export const generateInitialOres = (
 };
 
 export const updateOrePositions = (
-  ores: Ore[],
+  gameState: GameState,
   validPositions: MapPosition[],
   rareOreChance: number
-): void => {
-  const generatedOres = generateOresAtPositions(
+) => {
+  const updatedOres = generateOresAtPositions(
     validPositions,
-    ores.length,
+    gameState.mines[gameState.activeMine].oreCount,
     rareOreChance
   );
 
-  ores.forEach((ore, index) => {
-    if (generatedOres[index]) {
-      ore.position = {
-        x: generatedOres[index].position.x,
-        y: generatedOres[index].position.y,
-      };
-    }
-  });
+  return { updatedOres };
 };
 
 export const depleteOreVein = (ore: Ore): Ore => {

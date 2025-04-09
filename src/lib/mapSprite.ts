@@ -26,6 +26,12 @@ import { createPulseEffect } from "./effectSprite";
 import { GroundType } from "@/interfaces/GroundType";
 
 export const createMapContainer = (container: PIXI.Container): MapContainer => {
+  // if exist clear all container
+  // for (const child of container.children) {
+  //   container.removeChild(child);
+  //   child.destroy();
+  // }
+
   const floorContainer = new PIXI.Container();
   floorContainer.name = LayerName.Floor;
   container.addChild(floorContainer);

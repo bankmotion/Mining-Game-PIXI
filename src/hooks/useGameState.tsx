@@ -15,6 +15,7 @@ import { getAvailableMinerPositions } from "@/lib/minerSprite";
 import { generateOresForMine } from "@/lib/oresLogic";
 import { findPath } from "@/lib/pathFindingLogic";
 import { getRandomNumber } from "@/utils/utils";
+import * as PIXI from "pixi.js";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -71,6 +72,7 @@ export const useGameState = () => {
         miners: newState.miners ?? prevState.miners,
         rails: newState.rails ?? prevState.rails,
         ores: newState.ores ?? prevState.ores,
+        grounds: newState.grounds ?? prevState.grounds,
       };
 
       return mergedState;
@@ -292,7 +294,9 @@ export const useGameState = () => {
         duration: 5000,
       });
 
-      return unlockMine(prevState, mineId);
+      const newState = unlockMine(prevState, mineId);
+
+      return newState;
     });
   };
 
@@ -322,10 +326,7 @@ export const useGameState = () => {
       // Then generate new ores for this mine
       const newOres = generateOresForMine(mineId, newState);
 
-      return {
-        ...newState,
-        ores: newOres,
-      };
+      return { ...newState, ores: newOres };
     });
   };
 

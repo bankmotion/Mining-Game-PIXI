@@ -1,18 +1,18 @@
 import * as PIXI from "pixi.js";
 
 import { Game } from "@/constants/Game";
-import { InitialTileWidth, LayerName, SpriteName } from "@/constants/Sprites";
+import { LayerName } from "@/constants/Sprites";
 import { GameState } from "@/interfaces/GameType";
 import {
   Direction,
+  MapContainer,
   MapDimensions,
   MapPosition,
   MinerSpriteData,
 } from "@/interfaces/MapTypes";
 import { Miner } from "@/interfaces/MinerTypes";
 import { Ore } from "@/interfaces/OreTypes";
-import { Rail } from "@/interfaces/RailType";
-import { createTilesetTexture } from "@/utils/spriteLoader";
+import { createGround } from "./groundLogic";
 import {
   createMapContainer,
   drawDoorSprite,
@@ -27,14 +27,17 @@ import {
   MineCartRoutes,
 } from "./mineCartLogic";
 import {
+  createMiner,
   findValidMinerPositions,
   updateMinerPositionsRandomly,
 } from "./minersLogic";
-import { findValidOrePositions, updateOrePositions } from "./oresLogic";
+import {
+  findValidOrePositions,
+  generateInitialOres,
+  updateOrePositions,
+} from "./oresLogic";
 import { createOreSprite } from "./oreSprite";
 import { updateRailPositions } from "./railLogic";
-import { GroundType } from "@/interfaces/GroundType";
-import { createGround } from "./groundLogic";
 
 // Constants
 export const minerSprites = new Map<string, MinerSpriteData>();
@@ -136,8 +139,10 @@ export const updateFloorLayerByBounds = (
   const startY = center.y - Math.floor(availableArea.height / 2);
   const endX = startX + availableArea.width;
 
-  gameState.basePosition.x = Math.floor((startX + endX) / 2);
-  gameState.basePosition.y = startY;
+  const updatedBasePosition = {
+    x: Math.floor((startX + endX) / 2),
+    y: startY,
+  };
 
   updateMapLayerType(
     gameState.mapLayerType,
@@ -163,6 +168,8 @@ export const updateFloorLayerByBounds = (
       }
     }
   }
+
+  return { updatedBasePosition };
 };
 
 const isPositionInBounds = (
@@ -345,96 +352,137 @@ const updateWallTile = (gameState: GameState): void => {
   }
 };
 
+export const initialDataUpdate = (gameState: GameState): GameState => {
+  const { mapDimensions } = gameState;
+
+  const activeMine = gameState.mines[gameState.activeMine];
+  if (!activeMine) {
+    throw new Error("Active mine not found");
+  }
+
+  const center = calculateMapCenter(gameState.mapDimensions);
+
+  const { updatedBasePosition } = updateFloorLayerByBounds(
+    gameState,
+    center,
+    activeMine.availableArea
+  );
+
+  updateWallTile(gameState);
+  const { updatedRails } = updateRailPositions(
+    { ...gameState, basePosition: updatedBasePosition },
+    activeMine
+  );
+  const { updatedGrounds } = createGround(gameState);
+
+  // Generate initial ores for the starter mine
+  const initialOres = generateInitialOres(
+    20,
+    mapDimensions.width,
+    mapDimensions.height
+  );
+
+  // Create the first miner
+
+  const validOrePositions = findValidOrePositions(gameState, updatedGrounds);
+  const { updatedOres } = updateOrePositions(
+    gameState,
+    validOrePositions,
+    activeMine.rareOreChance || 1
+  );
+  updatedOres.map((ore) =>
+    updateMapLayerType(gameState.mapLayerType, ore.position, LayerName.Ore)
+  );
+
+  // Create miner tiles
+  const validMinerPositions = findValidMinerPositions(gameState);
+  const { updatedMiners } = updateMinerPositionsRandomly(
+    gameState,
+    validMinerPositions
+  );
+
+  return {
+    ...gameState,
+    basePosition: updatedBasePosition,
+    rails: updatedRails,
+    ores: updatedOres,
+    miners: updatedMiners,
+    grounds: updatedGrounds,
+  };
+};
+
+export const drawSprites = (
+  gameState: GameState,
+  containers: MapContainer,
+  onBaseClick: () => void,
+  onOreClick: (ore: Ore) => void
+) => {
+  const { rails, ores, miners, grounds } = gameState;
+  drawDoorSprite(gameState, containers, onBaseClick);
+  drawFloorTiles(gameState, containers);
+  drawWallAndMountainTiles(gameState, containers);
+  drawRailTiles(gameState, containers, rails);
+  drawGroundTiles(containers, grounds);
+
+  updateMapLayerType(
+    gameState.mapLayerType,
+    gameState.basePosition,
+    LayerName.Doors
+  );
+
+  // Create ore tiles
+  ores.forEach((ore) => {
+    createOreSprite(gameState, containers, ore, onOreClick);
+  });
+
+  // create mine cart sprites
+  createMineCartRoute(gameState.mapLayerType, {
+    x: gameState.basePosition.x,
+    y: gameState.basePosition.y + 1,
+  });
+
+  const mineCartSprite = createMineCartSprite(MineCartRoutes[0], 0);
+  containers.mineCart.addChild(mineCartSprite);
+};
+
 // Main Function
 export const renderMapLayers = async (
-  app: PIXI.Application,
   container: PIXI.Container,
   gameState: GameState,
-  miners: Miner[],
-  ores: Ore[],
   onOreClick: (ore: Ore) => void,
   updateGameState: (gameState: GameState) => void,
-  isBlackout: boolean,
   onBaseClick?: () => void
 ): Promise<void> => {
   try {
+    console.log("renderMapLayers");
     // Create rail tiles
-    const activeMine = gameState.mines[gameState.activeMine];
-    if (!activeMine) {
-      throw new Error("Active mine not found");
-    }
-
     const containers = createMapContainer(container);
+    console.log("current game state", gameState);
 
-    const center = calculateMapCenter(gameState.mapDimensions);
+    let updatedGameState = {
+      ...gameState,
+    };
 
-    let updatedRails: Rail[] = [...gameState.rails];
-    let updatedOres: Ore[] = [...ores];
-    let updatedMiners: Miner[] = [...miners];
-    let updatedGrounds: GroundType[] = [...gameState.grounds];
-
+    // if the game is not loaded, we need to initialize the game state
     if (!Game.loadedStatus) {
-      updateFloorLayerByBounds(gameState, center, activeMine.availableArea);
-      updateWallTile(gameState);
-      updatedRails = updateRailPositions(gameState, activeMine);
-      updatedGrounds = createGround(gameState);
+      console.log("hellop update");
+      updatedGameState = {
+        ...updatedGameState,
+        mapLayerType: [],
+      };
+      updatedGameState = initialDataUpdate(updatedGameState);
 
-      const validOrePositions = findValidOrePositions(gameState, updatedGrounds);
-      updateOrePositions(
-        updatedOres,
-        validOrePositions,
-        activeMine.rareOreChance || 1
-      );
-      updatedOres.map((ore) =>
-        updateMapLayerType(gameState.mapLayerType, ore.position, LayerName.Ore)
-      );
-
-      // Create miner tiles
-      const validMinerPositions = findValidMinerPositions(gameState);
-      updateMinerPositionsRandomly(
-        updatedMiners,
-        validMinerPositions,
-        gameState.activeMine,
-        gameState.mapDimensions
-      );
+      updateGameState(updatedGameState);
     } else {
-      updatedOres = [...gameState.ores];
-      updatedMiners = [...gameState.miners];
+      // updatedGameState = {
+      //   ...updatedGameState,
+      //   ores: gameState.ores,
+      //   miners: gameState.miners,
+      // };
     }
 
-    drawDoorSprite(gameState, containers, onBaseClick);
-    drawFloorTiles(gameState, containers);
-    drawWallAndMountainTiles(gameState, containers);
-    drawRailTiles(gameState, containers, updatedRails);
-    drawGroundTiles(containers, updatedGrounds);
-
-    updateMapLayerType(
-      gameState.mapLayerType,
-      gameState.basePosition,
-      LayerName.Doors
-    );
-
-    // Create ore tiles
-    updatedOres.forEach((ore) => {
-      createOreSprite(gameState, containers, ore, onOreClick, isBlackout);
-    });
-
-    // create mine cart sprites
-    createMineCartRoute(gameState.mapLayerType, {
-      x: gameState.basePosition.x,
-      y: gameState.basePosition.y + 1,
-    });
-
-    const mineCartSprite = createMineCartSprite(MineCartRoutes[0], 0);
-    containers.mineCart.addChild(mineCartSprite);
-
-    updateGameState({
-      ...gameState,
-      rails: updatedRails,
-      ores: updatedOres,
-      miners: updatedMiners,
-      grounds: updatedGrounds,
-    });
+    console.log("updated game state", updatedGameState);
+    drawSprites(updatedGameState, containers, onBaseClick, onOreClick);
   } catch (error) {
     console.error("Error rendering map layers:", error);
     throw error;

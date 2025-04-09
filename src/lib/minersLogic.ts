@@ -108,23 +108,23 @@ export const findValidMinerPositions = (
 };
 
 export const updateMinerPositionsRandomly = (
-  miners: Miner[],
-  validPositions: MapPosition[],
-  activeMine: string,
-  mapDimensions: MapDimensions
-): void => {
+  gameState: GameState,
+  validPositions: MapPosition[]
+): { updatedMiners: Miner[] } => {
+  const updatedMiners = [...gameState.miners];
+
   // Get the mine configuration
-  const mine = MineTypes.find((m) => m.id === activeMine);
+  const mine = MineTypes.find((m) => m.id === gameState.activeMine);
   if (!mine) return;
 
   // Generate new positions for miners
   const generatedPositions = generateMinerPositions(
     validPositions,
-    miners.length
+    gameState.miners.length
   );
 
   // Update each miner's position
-  miners.forEach((miner, index) => {
+  updatedMiners.forEach((miner, index) => {
     if (generatedPositions[index]) {
       miner.movement = {
         ...miner.movement,
@@ -137,6 +137,8 @@ export const updateMinerPositionsRandomly = (
       };
     }
   });
+
+  return { updatedMiners };
 };
 
 // Helper function to generate miner positions
