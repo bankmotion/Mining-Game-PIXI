@@ -46,12 +46,10 @@ export const PixiMiningArea = ({
   useEffect(() => {
     if (!appRef.current || !gameContainerRef.current) return;
 
+    console.log("switching mine");
     gameContainerRef.current.removeChildren();
 
-    initAttemptedRef.current = false;
-    initCompletedRef.current = false;
     setLoading(true);
-    setLoadingProgress(5);
 
     const initializeGame = async () => {
       try {
@@ -60,8 +58,6 @@ export const PixiMiningArea = ({
         await renderMapLayers(
           gameContainerRef.current,
           gameState,
-          gameState.miners,
-          gameState.ores,
           onOreClick,
           updateGameState,
           onBaseClick
@@ -69,13 +65,10 @@ export const PixiMiningArea = ({
 
         // Mark initialization as complete
         console.log("Initialization complete!");
-        initCompletedRef.current = true;
-        setLoadingProgress(100);
         setTimeout(() => setLoading(false), 500);
       } catch (error) {
         console.error("Failed to initialize game:", error);
         setLoadingError("Failed to initialize game. Using fallback renderer.");
-        setLoadingProgress(100);
         setTimeout(() => setLoading(false), 500);
       }
     };

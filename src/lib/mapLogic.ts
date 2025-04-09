@@ -353,8 +353,6 @@ const updateWallTile = (gameState: GameState): void => {
 };
 
 export const initialDataUpdate = (gameState: GameState): GameState => {
-  const { mapDimensions } = gameState;
-
   const activeMine = gameState.mines[gameState.activeMine];
   if (!activeMine) {
     throw new Error("Active mine not found");
@@ -374,15 +372,6 @@ export const initialDataUpdate = (gameState: GameState): GameState => {
     activeMine
   );
   const { updatedGrounds } = createGround(gameState);
-
-  // Generate initial ores for the starter mine
-  const initialOres = generateInitialOres(
-    20,
-    mapDimensions.width,
-    mapDimensions.height
-  );
-
-  // Create the first miner
 
   const validOrePositions = findValidOrePositions(gameState, updatedGrounds);
   const { updatedOres } = updateOrePositions(
@@ -465,6 +454,7 @@ export const renderMapLayers = async (
 
     // if the game is not loaded, we need to initialize the game state
     if (!Game.loadedStatus) {
+      Game.loadedStatus = true;
       console.log("hellop update");
       updatedGameState = {
         ...updatedGameState,

@@ -1,3 +1,4 @@
+import { Game } from "@/constants/Game";
 import { MineTypes } from "@/constants/Mine";
 import { CalculateUpgradeCost, Upgrades } from "@/constants/Upgrades";
 import { EnergySource } from "@/interfaces/EnergyTypes";
@@ -322,11 +323,9 @@ export const useGameState = () => {
 
       // First update the active mine
       const newState = setActiveMine(prevState, mineId);
+      Game.loadedStatus = false;
 
-      // Then generate new ores for this mine
-      const newOres = generateOresForMine(mineId, newState);
-
-      return { ...newState, ores: newOres };
+      return { ...newState };
     });
   };
 
