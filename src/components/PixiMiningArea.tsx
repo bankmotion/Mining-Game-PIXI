@@ -65,11 +65,11 @@ export const PixiMiningArea = ({
 
         // Mark initialization as complete
         console.log("Initialization complete!");
-        setTimeout(() => setLoading(false), 500);
+        setTimeout(() => setLoading(false), 1000);
       } catch (error) {
         console.error("Failed to initialize game:", error);
         setLoadingError("Failed to initialize game. Using fallback renderer.");
-        setTimeout(() => setLoading(false), 500);
+        setTimeout(() => setLoading(false), 1000);
       }
     };
 

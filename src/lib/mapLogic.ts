@@ -358,6 +358,7 @@ export const initialDataUpdate = (gameState: GameState): GameState => {
     throw new Error("Active mine not found");
   }
 
+  gameState.mapLayerType = [];
   const center = calculateMapCenter(gameState.mapDimensions);
 
   const { updatedBasePosition } = updateFloorLayerByBounds(
@@ -455,20 +456,9 @@ export const renderMapLayers = async (
     // if the game is not loaded, we need to initialize the game state
     if (!Game.loadedStatus) {
       Game.loadedStatus = true;
-      console.log("hellop update");
-      updatedGameState = {
-        ...updatedGameState,
-        mapLayerType: [],
-      };
       updatedGameState = initialDataUpdate(updatedGameState);
 
       updateGameState(updatedGameState);
-    } else {
-      // updatedGameState = {
-      //   ...updatedGameState,
-      //   ores: gameState.ores,
-      //   miners: gameState.miners,
-      // };
     }
 
     console.log("updated game state", updatedGameState);
