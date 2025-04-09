@@ -17,6 +17,7 @@ import {
   createMapContainer,
   drawDoorSprite,
   drawFloorTiles,
+  drawGroundTiles,
   drawRailTiles,
   drawWallAndMountainTiles,
 } from "./mapSprite";
@@ -32,6 +33,8 @@ import {
 import { findValidOrePositions, updateOrePositions } from "./oresLogic";
 import { createOreSprite } from "./oreSprite";
 import { updateRailPositions } from "./railLogic";
+import { GroundType } from "@/interfaces/GroundType";
+import { createGround } from "./groundLogic";
 
 // Constants
 export const minerSprites = new Map<string, MinerSpriteData>();
@@ -368,13 +371,15 @@ export const renderMapLayers = async (
     let updatedRails: Rail[] = [...gameState.rails];
     let updatedOres: Ore[] = [...ores];
     let updatedMiners: Miner[] = [...miners];
+    let updatedGrounds: GroundType[] = [...gameState.grounds];
 
     if (!Game.loadedStatus) {
       updateFloorLayerByBounds(gameState, center, activeMine.availableArea);
       updateWallTile(gameState);
       updatedRails = updateRailPositions(gameState, activeMine);
+      updatedGrounds = createGround(gameState);
 
-      const validOrePositions = findValidOrePositions(gameState);
+      const validOrePositions = findValidOrePositions(gameState, updatedGrounds);
       updateOrePositions(
         updatedOres,
         validOrePositions,
@@ -401,6 +406,7 @@ export const renderMapLayers = async (
     drawFloorTiles(gameState, containers);
     drawWallAndMountainTiles(gameState, containers);
     drawRailTiles(gameState, containers, updatedRails);
+    drawGroundTiles(containers, updatedGrounds);
 
     updateMapLayerType(
       gameState.mapLayerType,
@@ -427,6 +433,7 @@ export const renderMapLayers = async (
       rails: updatedRails,
       ores: updatedOres,
       miners: updatedMiners,
+      grounds: updatedGrounds,
     });
   } catch (error) {
     console.error("Error rendering map layers:", error);

@@ -5,11 +5,13 @@ import { Miner } from "./MinerTypes";
 import { MineType } from "./MineType";
 import { Ore, OreType } from "./OreTypes";
 import { Rail } from "./RailType";
+import { GroundType } from "./GroundType";
 
 export interface GameState {
   miners: Miner[]; // Array of miners
   rails: Rail[]; // Array of rails
   ores: Ore[]; // Array of ores
+  grounds: GroundType[]; // Array of grounds
   resources: Record<OreType, number>; // Record of resources
   resourceRate: Record<OreType, number>; // Record of resource rates
   money: number; // Total amount of money

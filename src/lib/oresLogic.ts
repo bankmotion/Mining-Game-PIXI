@@ -5,6 +5,7 @@ import { MapPosition } from "@/interfaces/MapTypes";
 import { Miner } from "@/interfaces/MinerTypes";
 import { Ore, OreType } from "@/interfaces/OreTypes";
 import { calculateDistance } from "./minersLogic";
+import { GroundType } from "@/interfaces/GroundType";
 
 // Create a new ore
 export const createOre = (
@@ -75,7 +76,8 @@ export const generateOresAtPositions = (
 
 // Function to find valid positions for ores on the map
 export const findValidOrePositions = (
-  gameState: GameState
+  gameState: GameState,
+  grounds: GroundType[]
 ): Array<{ x: number; y: number }> => {
   const validPositions: Array<{ x: number; y: number }> = [];
 
@@ -97,7 +99,10 @@ export const findValidOrePositions = (
       // Check if the position is valid (has floor and no wall)
       if (
         gameState.mapLayerType[y] &&
-        gameState.mapLayerType[y][x] === LayerName.Floor
+        gameState.mapLayerType[y][x] === LayerName.Floor &&
+        !grounds.some(
+          (ground) => ground.position.x === x && ground.position.y === y
+        )
       ) {
         validPositions.push({
           x,

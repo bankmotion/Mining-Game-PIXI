@@ -78,6 +78,24 @@ export enum MineCartsData {
   End = 9,
 }
 
+export enum GroundSpriteData {
+  B = 56,
+  R = 220,
+  L = 228,
+  T = 392,
+  T_B = 98,
+  L_R = 221,
+  B_R = 138,
+  B_L = 142,
+  T_R = 306,
+  T_L = 310,
+  B_L_R = 139,
+  T_B_R = 180,
+  T_B_L = 184,
+  T_L_R = 307,
+  Empty = 222,
+}
+
 export const FloorData = [
   {
     id: 60,

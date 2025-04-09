@@ -462,6 +462,7 @@ export const initializeGameState = (): GameState => {
   return {
     miners: [],
     rails: [],
+    grounds: [],
     ores: [],
     resources: {
       coal: 0,

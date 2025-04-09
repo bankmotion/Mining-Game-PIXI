@@ -1,3 +1,5 @@
+import { MapPosition } from "@/interfaces/MapTypes";
+
 export const getRandomTileIdByChance = (
   data: { id: number; chance: number }[]
 ): number => {
@@ -21,4 +23,8 @@ export const getRandomNumber = (first: number, last: number): number => {
 
   // Generate random number between first and last (inclusive)
   return Math.floor(Math.random() * (last - first + 1)) + first;
+};
+
+export const posToKey = (pos: MapPosition) => {
+  return `${pos.x}-${pos.y}`;
 };

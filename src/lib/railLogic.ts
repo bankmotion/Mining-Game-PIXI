@@ -6,40 +6,6 @@ import { Rail } from "@/interfaces/RailType";
 import { getRandomNumber } from "@/utils/utils";
 import { updateMapLayerType } from "./mapLogic";
 
-// export const findValidRailPositions = (
-//   tileCountX: number,
-//   tileCountY: number
-// ): MapPosition[] => {
-//   const validPositions: MapPosition[] = [];
-
-//   // Find valid positions within the available area
-//   for (let y = 0; y < tileCountY; y++) {
-//     for (let x = 0; x < tileCountX; x++) {
-//       // Skip if out of bounds
-//       if (x < 0 || x >= tileCountX || y < 0 || y >= tileCountY) continue;
-
-//       // Check if the position is valid (has floor and no wall)
-//       if (MapLayerType[y] && MapLayerType[y][x] === LayerName.Floor) {
-//         validPositions.push({
-//           x,
-//           y,
-//         });
-//       }
-//     }
-//   }
-
-//   // Shuffle the positions
-//   for (let i = validPositions.length - 1; i > 0; i--) {
-//     const j = Math.floor(Math.random() * (i + 1));
-//     [validPositions[i], validPositions[j]] = [
-//       validPositions[j],
-//       validPositions[i],
-//     ];
-//   }
-
-//   return validPositions;
-// };
-
 export const updateRailPositions = (
   gameState: GameState,
   activeMine: MineType

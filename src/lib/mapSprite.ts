@@ -23,6 +23,7 @@ import { createRailSprite } from "./railMap";
 import { Rail } from "@/interfaces/RailType";
 import { createTilesetTexture } from "@/utils/spriteLoader";
 import { createPulseEffect } from "./effectSprite";
+import { GroundType } from "@/interfaces/GroundType";
 
 export const createMapContainer = (container: PIXI.Container): MapContainer => {
   const floorContainer = new PIXI.Container();
@@ -186,5 +187,15 @@ export const drawRailTiles = (
   for (const rail of rails) {
     const railSprite = createRailSprite(gameState, rail, containers);
     containers.rail.addChild(railSprite);
+  }
+};
+
+export const drawGroundTiles = (
+  containers: MapContainer,
+  grounds: GroundType[]
+) => {
+  for (const ground of grounds) {
+    const { position, type } = ground;
+    updateMapType(containers.floor, position, SpriteName.WallsFloors, type);
   }
 };
