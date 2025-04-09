@@ -138,6 +138,7 @@ export const updateFloorLayerByBounds = (
   const startX = center.x - Math.floor(availableArea.width / 2);
   const startY = center.y - Math.floor(availableArea.height / 2);
   const endX = startX + availableArea.width;
+  console.log(startX, startY, endX, availableArea.width, availableArea.height);
 
   const updatedBasePosition = {
     x: Math.floor((startX + endX) / 2),
@@ -146,7 +147,7 @@ export const updateFloorLayerByBounds = (
 
   updateMapLayerType(
     gameState.mapLayerType,
-    gameState.basePosition,
+    updatedBasePosition,
     LayerName.Doors
   );
 
@@ -359,6 +360,7 @@ export const initialDataUpdate = (gameState: GameState): GameState => {
   }
 
   gameState.mapLayerType = [];
+  console.log([...gameState.mapLayerType]);
   const center = calculateMapCenter(gameState.mapDimensions);
 
   const { updatedBasePosition } = updateFloorLayerByBounds(
@@ -366,8 +368,14 @@ export const initialDataUpdate = (gameState: GameState): GameState => {
     center,
     activeMine.availableArea
   );
+  console.log(updatedBasePosition);
+  console.log([...gameState.mapLayerType]);
+  gameState.mapLayerType.forEach((row, i) => {
+    console.log([...row], i);
+  });
 
   updateWallTile(gameState);
+  console.log([...gameState.mapLayerType]);
   const { updatedRails } = updateRailPositions(
     { ...gameState, basePosition: updatedBasePosition },
     activeMine
@@ -444,10 +452,8 @@ export const renderMapLayers = async (
   onBaseClick?: () => void
 ): Promise<void> => {
   try {
-    console.log("renderMapLayers");
     // Create rail tiles
     const containers = createMapContainer(container);
-    console.log("current game state", gameState);
 
     let updatedGameState = {
       ...gameState,
