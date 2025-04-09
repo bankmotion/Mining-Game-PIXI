@@ -511,7 +511,7 @@ export const initializeGameState = (): GameState => {
     upgrades: {},
     tick: 0,
     lastUpdateTime: Date.now(),
-    activeMine: "advanced",
+    activeMine: "starter",
     mines,
     basePosition: { x: 0, y: 0 },
     mapDimensions: { width: 0, height: 0 },

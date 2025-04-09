@@ -360,7 +360,6 @@ export const initialDataUpdate = (gameState: GameState): GameState => {
   }
 
   gameState.mapLayerType = [];
-  console.log([...gameState.mapLayerType]);
   const center = calculateMapCenter(gameState.mapDimensions);
 
   const { updatedBasePosition } = updateFloorLayerByBounds(
@@ -368,14 +367,8 @@ export const initialDataUpdate = (gameState: GameState): GameState => {
     center,
     activeMine.availableArea
   );
-  console.log(updatedBasePosition);
-  console.log([...gameState.mapLayerType]);
-  gameState.mapLayerType.forEach((row, i) => {
-    console.log([...row], i);
-  });
 
   updateWallTile(gameState);
-  console.log([...gameState.mapLayerType]);
   const { updatedRails } = updateRailPositions(
     { ...gameState, basePosition: updatedBasePosition },
     activeMine

@@ -21,7 +21,7 @@ export const MineTypes: MineType[] = [
     name: "Advanced Excavation",
     description: "A more advanced mining area with better resource yield.",
     cost: 1000,
-    unlocked: true,
+    unlocked: false,
     resourceMultiplier: 2,
     rareOreChance: 1.5,
     oreCount: 25,
