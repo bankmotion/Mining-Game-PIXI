@@ -1,18 +1,24 @@
-import { useState, useEffect, useRef } from 'react';
-import { createMiner } from '@/lib/miners';
-import { generateInitialOres } from '@/lib/ores';
-import { 
-  GameState, 
-  calculateUpgradeCost, 
-  initializeGameState, 
-  updateGameState, 
-  upgrades, 
-  unlockMine, 
-  setActiveMine,
-  generateOresForMine,
-  mineTypes
-} from '@/lib/gameLogic';
-import { toast } from 'sonner';
+import { Game } from "@/constants/Game";
+import { MineTypes } from "@/constants/Mine";
+import { CalculateUpgradeCost, Upgrades } from "@/constants/Upgrades";
+import { EnergySource } from "@/interfaces/EnergyTypes";
+import { GameState } from "@/interfaces/GameType";
+import { MinerState } from "@/interfaces/MinerTypes";
+import { Ore } from "@/interfaces/OreTypes";
+import { buildEnergySource, upgradeEnergySource } from "@/lib/energyLogic";
+import {
+  initializeGameState,
+  updateGameStateWithDeltaTime,
+} from "@/lib/gameLogic";
+import { setActiveMine, unlockMine } from "@/lib/mineLogic";
+import { createMiner } from "@/lib/minersLogic";
+import { getAvailableMinerPositions } from "@/lib/minerSprite";
+import { generateOresForMine } from "@/lib/oresLogic";
+import { findPath } from "@/lib/pathFindingLogic";
+import { getRandomNumber } from "@/utils/utils";
+import * as PIXI from "pixi.js";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 export const useGameState = () => {
   const [gameState, setGameState] = useState<GameState>(initializeGameState);
@@ -21,31 +27,17 @@ export const useGameState = () => {
   const lastUpdateTimeRef = useRef<number>(Date.now());
   const moneyHistoryRef = useRef<{ timestamp: number; value: number }[]>([]);
   const lastMoneyRef = useRef<number>(0);
-  
+
   // Initialize game state
   useEffect(() => {
-    // Generate initial ores for the starter mine
-    const initialOres = generateInitialOres(20, 100, 100);
-    
-    // Create the first miner
-    const initialMiner = createMiner('basic', { x: 50, y: 50 });
-    
-    setGameState(prevState => {
-      const initialState = {
-        ...prevState,
-        miners: [initialMiner],
-        ores: initialOres,
-        lastUpdateTime: Date.now(),
-      };
-      lastMoneyRef.current = initialState.money;
-      return initialState;
-    });
-    
-    toast.success('Welcome to DEFI Miners! 🪨⛏️', {
-      description: 'Your first miner is ready to work. Watch as they collect resources automatically!',
+    lastMoneyRef.current = gameState.money;
+
+    toast.success("Welcome to DEFI Miners! 🪨⛏️", {
+      description:
+        "Your first miner is ready to work. Watch as they collect resources automatically!",
       duration: 5000,
     });
-    
+
     // Cleanup
     return () => {
       if (gameLoopRef.current !== null) {
@@ -53,64 +45,102 @@ export const useGameState = () => {
       }
     };
   }, []);
-  
+
+  const updateGameState = (newState: Partial<GameState>) => {
+    setGameState((prevState) => {
+      // Handle nested objects explicitly
+      const mergedState = {
+        ...prevState,
+        ...newState,
+        // Deep merge for nested objects that should be preserved
+        resources: {
+          ...prevState.resources,
+          ...newState.resources,
+        },
+        resourceRate: {
+          ...prevState.resourceRate,
+          ...newState.resourceRate,
+        },
+        upgrades: {
+          ...prevState.upgrades,
+          ...newState.upgrades,
+        },
+        mines: {
+          ...prevState.mines,
+          ...newState.mines,
+        },
+        // Arrays - decide whether to replace or merge
+        miners: newState.miners ?? prevState.miners,
+        rails: newState.rails ?? prevState.rails,
+        ores: newState.ores ?? prevState.ores,
+        grounds: newState.grounds ?? prevState.grounds,
+      };
+
+      return mergedState;
+    });
+  };
+
   // Game loop
   useEffect(() => {
     if (isPaused) {
       return;
     }
-    
+
     const gameLoop = () => {
       const now = Date.now();
       const deltaTime = (now - lastUpdateTimeRef.current) / 1000; // Convert to seconds
       lastUpdateTimeRef.current = now;
-      
+
       // Limit delta time to prevent large jumps
       const cappedDeltaTime = Math.min(deltaTime, 0.1);
-      
+
       // Update game state
-      setGameState(prevState => {
-        const newState = updateGameState(prevState, cappedDeltaTime);
-        
+      setGameState((prevState) => {
+        const newState = updateGameStateWithDeltaTime(
+          prevState,
+          cappedDeltaTime
+        );
+
         // Calculate money rate based on the change in money
         if (newState.money !== lastMoneyRef.current) {
           // Add current money to history with timestamp
           moneyHistoryRef.current.push({
             timestamp: now,
-            value: newState.money
+            value: newState.money,
           });
-          
+
           // Only keep last 5 seconds of history
           const cutoffTime = now - 5000;
           moneyHistoryRef.current = moneyHistoryRef.current.filter(
-            entry => entry.timestamp >= cutoffTime
+            (entry) => entry.timestamp >= cutoffTime
           );
-          
+
           // Calculate rate based on history when we have at least 2 data points
           if (moneyHistoryRef.current.length >= 2) {
             const oldest = moneyHistoryRef.current[0];
-            const newest = moneyHistoryRef.current[moneyHistoryRef.current.length - 1];
+            const newest =
+              moneyHistoryRef.current[moneyHistoryRef.current.length - 1];
             const timeDiff = (newest.timestamp - oldest.timestamp) / 1000; // in seconds
-            
+
             if (timeDiff > 0) {
               const valueDiff = newest.value - oldest.value;
               newState.moneyRate = valueDiff / timeDiff;
             }
           }
-          
+
           // Update last money reference
           lastMoneyRef.current = newState.money;
         }
-        
+
         return newState;
       });
-      
+
       // Continue the loop
       gameLoopRef.current = requestAnimationFrame(gameLoop);
     };
-    
+
     gameLoopRef.current = requestAnimationFrame(gameLoop);
-    
+
     // Cleanup
     return () => {
       if (gameLoopRef.current !== null) {
@@ -118,33 +148,33 @@ export const useGameState = () => {
       }
     };
   }, [isPaused]);
-  
+
   // Buy an upgrade
   const buyUpgrade = (upgradeId: string) => {
-    setGameState(prevState => {
+    setGameState((prevState) => {
       const currentLevel = prevState.upgrades[upgradeId] || 0;
-      const upgrade = upgrades.find(u => u.id === upgradeId);
-      
+      const upgrade = Upgrades.find((u) => u.id === upgradeId);
+
       if (!upgrade) return prevState;
-      
+
       // Check if max level reached
       if (upgrade.maxLevel && currentLevel >= upgrade.maxLevel) {
         toast.error(`Maximum level reached for ${upgrade.name}`);
         return prevState;
       }
-      
-      const cost = calculateUpgradeCost(upgrade, currentLevel);
-      
+
+      const cost = CalculateUpgradeCost(upgrade, currentLevel);
+
       if (prevState.money < cost) {
         toast.error(`Not enough money to purchase ${upgrade.name}`);
         return prevState;
       }
-      
+
       // Apply the upgrade
       const newState = upgrade.effect(prevState, currentLevel + 1);
-      
+
       toast.success(`Purchased ${upgrade.name} (Level ${currentLevel + 1})`);
-      
+
       return {
         ...newState,
         money: newState.money - cost,
@@ -155,11 +185,15 @@ export const useGameState = () => {
       };
     });
   };
-  
+
   // Hire a new miner
-  const hireMiner = (type: 'basic' | 'expert' | 'hauler' | 'prospector' | 'engineer') => {
-    setGameState(prevState => {
-      const minerCount = prevState.miners.filter(m => m.type === type).length;
+  const hireMiner = (
+    type: "basic" | "expert" | "hauler" | "prospector" | "engineer"
+  ) => {
+    setGameState((prevState) => {
+      const minerCount = prevState.miners.filter(
+        (m) => m.type === type && m.isBot
+      ).length;
       const baseCost = {
         basic: 10,
         expert: 50,
@@ -167,48 +201,60 @@ export const useGameState = () => {
         prospector: 100,
         engineer: 150,
       }[type];
-      
+
       const cost = Math.floor(baseCost * Math.pow(1.2, minerCount));
-      
+      console.log(cost);
+
       if (prevState.money < cost) {
         toast.error(`Not enough money to hire a new ${type} miner`);
         return prevState;
       }
-      
-      // Find a random position that's not too close to existing miners
-      let randomX, randomY;
-      let attempts = 0;
-      const minDistance = 15; // Increased minimum distance between miners
-      
-      do {
-        // Generate random position within the mining area (20-80% range)
-        randomX = Math.floor(20 + Math.random() * 60);
-        randomY = Math.floor(20 + Math.random() * 60);
-        
-        // Check if this position is far enough from other miners
-        const isFarEnough = prevState.miners.every(miner => {
-          const dx = miner.position.x - randomX;
-          const dy = miner.position.y - randomY;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          return distance > minDistance;
-        });
-        
-        if (isFarEnough || attempts > 50) break; // Either found a good spot or tried too many times
-        attempts++;
-      } while (true);
-      
+
+      const mine = gameState.mines[gameState.activeMine];
+      if (!mine) {
+        console.error("Active mine not found");
+        return prevState;
+      }
+
+      // Get available tiles
+      const availableTiles = getAvailableMinerPositions(gameState);
+
+      const randomTile =
+        availableTiles[getRandomNumber(0, availableTiles.length - 1)];
+
       // Create specialized expert miners
       let newMiner;
-      if (type === 'expert') {
-        const oreTypes = ['gold', 'crystal', 'gem', 'legendary', 'platinum', 'uranium'];
-        const randomOreType = oreTypes[Math.floor(Math.random() * oreTypes.length)];
-        newMiner = createMiner(type, { x: randomX, y: randomY }, randomOreType as any);
-        toast.success(`Hired a new expert miner specialized in ${randomOreType}: ${newMiner.name}`);
+      if (type === "expert") {
+        const oreTypes = [
+          "gold",
+          "crystal",
+          "gem",
+          "legendary",
+          "platinum",
+          "uranium",
+        ] as const;
+        const randomOreType =
+          oreTypes[Math.floor(Math.random() * oreTypes.length)];
+        newMiner = createMiner(
+          type,
+          { x: randomTile.x, y: randomTile.y },
+          gameState.mapDimensions,
+          true,
+          randomOreType
+        );
+        toast.success(
+          `Hired a new expert miner specialized in ${randomOreType}: ${newMiner.name}`
+        );
       } else {
-        newMiner = createMiner(type, { x: randomX, y: randomY });
+        newMiner = createMiner(
+          type,
+          { x: randomTile.x, y: randomTile.y },
+          gameState.mapDimensions,
+          true
+        );
         toast.success(`Hired a new ${type} miner: ${newMiner.name}`);
       }
-      
+
       return {
         ...prevState,
         miners: [...prevState.miners, newMiner],
@@ -216,84 +262,204 @@ export const useGameState = () => {
       };
     });
   };
-  
+
   // Toggle pause state
   const togglePause = () => {
-    setIsPaused(prev => !prev);
-    
+    setIsPaused((prev) => !prev);
+
     if (isPaused) {
-      toast.info('Game resumed');
+      toast.info("Game resumed");
       lastUpdateTimeRef.current = Date.now(); // Reset timer to avoid large jumps
     } else {
-      toast.info('Game paused');
+      toast.info("Game paused");
     }
   };
-  
+
   // Unlock a new mine
   const unlockNewMine = (mineId: string) => {
-    setGameState(prevState => {
+    setGameState((prevState) => {
       const mine = prevState.mines[mineId];
-      
+
       if (!mine || mine.unlocked) {
         toast.error(`Mine already unlocked or doesn't exist`);
         return prevState;
       }
-      
+
       if (prevState.money < mine.cost) {
         toast.error(`Not enough money to unlock ${mine.name}`);
         return prevState;
       }
-      
+
       toast.success(`Unlocked ${mine.name}!`, {
         description: `You now have access to better resources. Click on the mine to start mining there.`,
         duration: 5000,
       });
-      
-      return unlockMine(prevState, mineId);
+
+      const newState = unlockMine(prevState, mineId);
+
+      return newState;
     });
   };
-  
+
   // Switch to a different mine
   const switchMine = (mineId: string) => {
-    setGameState(prevState => {
+    setGameState((prevState) => {
       const mine = prevState.mines[mineId];
-      
+
       if (!mine || !mine.unlocked) {
         toast.error(`Mine not unlocked or doesn't exist`);
         return prevState;
       }
-      
+
       if (prevState.activeMine === mineId) {
         toast.info(`Already mining at ${mine.name}`);
         return prevState;
       }
-      
+
       toast.success(`Switched to ${mine.name}`, {
         description: `Your miners will now work in this new location.`,
         duration: 3000,
       });
-      
+
       // First update the active mine
       const newState = setActiveMine(prevState, mineId);
-      
-      // Then generate new ores for this mine
-      const newOres = generateOresForMine(mineId, newState);
-      
+      Game.loadedStatus = false;
+
+      return { ...newState };
+    });
+  };
+
+  // Handle base click - make all miners return to base
+  const handleBaseClick = () => {
+    setGameState((prevState) => {
+      const activeMine = prevState.mines[prevState.activeMine];
+      if (!activeMine) return prevState;
+
+      const updatedMiners = prevState.miners.map((miner) => {
+        // If miner is a bot, don't change their state
+        if (miner.isBot) return miner;
+
+        return {
+          ...miner,
+          state: "returning" as MinerState,
+          targetOreId: undefined,
+          movement: {
+            ...miner.movement,
+            targetTilePos: prevState.basePosition,
+            path: findPath(
+              prevState.mapLayerType,
+              miner.movement.currentTilePos,
+              prevState.basePosition
+            ),
+            currentPathIndex: 0,
+            isMoving: true,
+          },
+        };
+      });
+
       return {
-        ...newState,
-        ores: newOres,
+        ...prevState,
+        miners: updatedMiners,
       };
     });
   };
-  
+
+  // Handle ore click - make miners target the clicked ore
+  const handleOreClick = (ore: Ore) => {
+    setGameState((prevState) => {
+      const updatedMiners = prevState.miners.map((miner) => {
+        // If miner is a bot, don't change their state
+        if (miner.isBot) return miner;
+
+        // If miner is already mining or moving to this ore, don't change their state
+        if (
+          miner.targetOreId === ore.id &&
+          (miner.state === "mining" || miner.state === "moving")
+        ) {
+          return miner;
+        }
+
+        // If miner is resting or returning to base, let them complete that first
+        if (miner.state === "resting" || miner.state === "returning") {
+          return miner;
+        }
+
+        // Otherwise, make the miner move to the ore
+        return {
+          ...miner,
+          state: "moving" as MinerState,
+          targetOreId: ore.id,
+          movement: {
+            ...miner.movement,
+            targetTilePos: {
+              x: ore.position.x,
+              y: ore.position.y,
+            },
+            path: findPath(
+              gameState.mapLayerType,
+              miner.movement.currentTilePos,
+              {
+                x: ore.position.x,
+                y: ore.position.y,
+              }
+            ),
+            isMoving: true,
+            moveProgress: 0,
+            currentPathIndex: 0,
+          },
+        };
+      });
+
+      return {
+        ...prevState,
+        miners: updatedMiners,
+      };
+    });
+  };
+
+  // Build a new energy source
+  const buildNewEnergySource = (type: EnergySource) => {
+    setGameState((prevState) => {
+      const newState = buildEnergySource(prevState, type);
+
+      if (newState === prevState) {
+        toast.error(`Not enough money to build this energy source`);
+      } else {
+        toast.success(`Built a new ${type} energy source`);
+      }
+
+      return newState;
+    });
+  };
+
+  // Upgrade an existing energy source
+  const upgradeExistingEnergySource = (sourceId: string) => {
+    setGameState((prevState) => {
+      const newState = upgradeEnergySource(prevState, sourceId);
+
+      if (newState === prevState) {
+        toast.error("Cannot upgrade energy source");
+      } else {
+        toast.success("Energy source upgraded!");
+      }
+
+      return newState;
+    });
+  };
+
   return {
     gameState,
+    updateGameState,
     isPaused,
     togglePause,
     buyUpgrade,
     hireMiner,
     unlockNewMine,
     switchMine,
-    availableMines: mineTypes,
+    availableMines: MineTypes,
+    handleBaseClick,
+    handleOreClick,
+    buildNewEnergySource,
+    upgradeExistingEnergySource,
   };
 };

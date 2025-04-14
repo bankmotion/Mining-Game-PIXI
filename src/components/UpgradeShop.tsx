@@ -1,25 +1,39 @@
-
-import { Button } from '@/components/ui/button';
-import { upgrades, calculateUpgradeCost } from '@/lib/gameLogic';
-import { cn, formatNumber } from '@/lib/utils';
-import { Pickaxe, Bot, Package, FileScan } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { EnergySourceData } from "@/constants/Energy";
+import { CalculateUpgradeCost, Upgrades } from "@/constants/Upgrades";
+import { EnergySource, EnergySourceType } from "@/interfaces/EnergyTypes";
+import { cn, formatNumber } from "@/lib/utils";
+import {
+  Pickaxe,
+  Bot,
+  Package,
+  FileScan,
+  Sun,
+  Wind,
+  Flame,
+  Atom,
+  Zap,
+} from "lucide-react";
 
 interface UpgradeShopProps {
   money: number;
   upgradeLevels: Record<string, number>;
   onUpgrade: (upgradeId: string) => void;
+  energySources: EnergySourceType[];
+  onBuildEnergySource: (type: EnergySource) => void;
+  onUpgradeEnergySource: (sourceId: string) => void;
 }
 
 // Map upgrade IDs to icons
 const UpgradeIcon = ({ id }: { id: string }) => {
   switch (id) {
-    case 'pickaxe':
+    case "pickaxe":
       return <Pickaxe className="w-4 h-4" />;
-    case 'boots':
+    case "boots":
       return <Bot className="w-4 h-4" />;
-    case 'backpack':
+    case "backpack":
       return <Package className="w-4 h-4" />;
-    case 'scanner':
+    case "scanner":
       return <FileScan className="w-4 h-4" />;
     default:
       return null;
@@ -29,38 +43,68 @@ const UpgradeIcon = ({ id }: { id: string }) => {
 // Add upgrade effect descriptions to make benefits clearer
 const getUpgradeEffectDescription = (id: string, level: number): string => {
   switch (id) {
-    case 'pickaxe':
+    case "pickaxe":
       return `+${level * 30}% mining efficiency`;
-    case 'boots':
+    case "boots":
       return `+${level * 25}% movement speed`;
-    case 'backpack':
+    case "backpack":
       return `+${level * 40}% carrying capacity`;
-    case 'scanner':
+    case "scanner":
       return `+${level * 20}% rare ore chance`;
     default:
-      return '';
+      return "";
   }
 };
 
-export const UpgradeShop = ({ money, upgradeLevels, onUpgrade }: UpgradeShopProps) => {
+// Add energy source icons
+const EnergySourceIcon = ({ type }: { type: EnergySource }) => {
+  switch (type) {
+    case "solar":
+      return <Sun className="w-4 h-4 text-yellow-400" />;
+    case "wind":
+      return <Wind className="w-4 h-4 text-blue-400" />;
+    case "geothermal":
+      return <Flame className="w-4 h-4 text-orange-400" />;
+    case "nuclear":
+      return <Atom className="w-4 h-4 text-green-400" />;
+    default:
+      return <Zap className="w-4 h4" />;
+  }
+};
+
+export const UpgradeShop = ({
+  money,
+  upgradeLevels,
+  onUpgrade,
+}: UpgradeShopProps) => {
   return (
     <div className="p-4 animate-fade-in">
-      <h2 className="text-xl font-bold mb-5 pixel-font text-center">Upgrade Shop</h2>
-      
+      <h2 className="text-xl font-bold mb-5 pixel-font text-center">
+        Upgrade Shop
+      </h2>
+
+      {/* Mining Upgrades Section */}
+      <h3 className="text-lg font-bold mb-3 pixel-font">Mining Upgrades</h3>
+
       <div className="space-y-3">
-        {upgrades.map((upgrade, index) => {
+        {Upgrades.map((upgrade, index) => {
           const level = upgradeLevels[upgrade.id] || 0;
-          const cost = calculateUpgradeCost(upgrade, level);
+          const cost = CalculateUpgradeCost(upgrade, level);
           const canAfford = money >= cost;
           const maxLevelReached = upgrade.maxLevel && level >= upgrade.maxLevel;
-          const effectDescription = getUpgradeEffectDescription(upgrade.id, level);
-          
+          const effectDescription = getUpgradeEffectDescription(
+            upgrade.id,
+            level
+          );
+
           return (
-            <div 
+            <div
               key={upgrade.id}
               className={cn(
                 "p-3 rounded border-2 transition-all pixel-container",
-                canAfford ? "border-primary/50 bg-secondary/40" : "border-gray-700/50 bg-secondary/20 opacity-70"
+                canAfford
+                  ? "border-primary/50 bg-secondary/40"
+                  : "border-gray-700/50 bg-secondary/20 opacity-70"
               )}
               style={{ animationDelay: `${index * 0.1}s` }}
             >
@@ -72,30 +116,37 @@ export const UpgradeShop = ({ money, upgradeLevels, onUpgrade }: UpgradeShopProp
                   <span className="font-medium pixel-font">{upgrade.name}</span>
                 </div>
                 <span className="text-xs bg-secondary/70 px-2 py-0.5 rounded">
-                  Level {level}{upgrade.maxLevel ? `/${upgrade.maxLevel}` : ''}
+                  Level {level}
+                  {upgrade.maxLevel ? `/${upgrade.maxLevel}` : ""}
                 </span>
               </div>
-              
-              <p className="text-xs text-muted-foreground mb-2">{upgrade.description}</p>
-              
+
+              <p className="text-xs text-muted-foreground mb-2">
+                {upgrade.description}
+              </p>
+
               {level > 0 && (
-                <p className="text-xs text-green-500 mb-2 font-semibold">Current: {effectDescription}</p>
+                <p className="text-xs text-green-500 mb-2 font-semibold">
+                  Current: {effectDescription}
+                </p>
               )}
-              
+
               <div className="flex items-center justify-between">
                 <span className="text-sm font-mono">${formatNumber(cost)}</span>
-                
-                <Button 
-                  size="sm" 
-                  variant={canAfford ? "secondary" : "outline"} 
+
+                <Button
+                  size="sm"
+                  variant={canAfford ? "secondary" : "outline"}
                   onClick={() => onUpgrade(upgrade.id)}
                   disabled={!canAfford || maxLevelReached}
                   className={cn(
-                    "h-7 text-xs pixel-font", 
-                    canAfford && !maxLevelReached && "border border-primary/50 hover:bg-primary/20"
+                    "h-7 text-xs pixel-font",
+                    canAfford &&
+                      !maxLevelReached &&
+                      "border border-primary/50 hover:bg-primary/20"
                   )}
                 >
-                  {maxLevelReached ? 'Maxed' : 'Upgrade'}
+                  {maxLevelReached ? "Maxed" : "Upgrade"}
                 </Button>
               </div>
             </div>
